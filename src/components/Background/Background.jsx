@@ -1,0 +1,176 @@
+import React, { useRef, useEffect, useMemo, memo } from 'react';
+import { DESKTOP_SLOTS, MOBILE_SLOTS } from '../../config/generateSlots';
+import Slot from './Slot';
+import styles from './Background.module.css';
+
+/** Choose slot set based on viewport width */
+function useDeviceSlots() {
+  // Evaluated once at mount — no resize listener needed
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+  return isDesktop ? DESKTOP_SLOTS : MOBILE_SLOTS;
+}
+
+/**
+ * Adaptive slot assignment — proportional dispersion + coordinate stretch.
+ *
+ * Step 1 — Proportional split: each layer gets N × (layerSize/total) slots,
+ * so images are always spread across all layers regardless of count.
+ *
+ * Step 2 — Coordinate stretch: measure how far the active slot set reaches
+ * from screen center vs. how far the full slot set reaches. Scale all active
+ * positions outward from center by that ratio so they always fill the full
+ * visual space, whether there are 3 images or 84.
+ *
+ * n=3  → 3 images scattered across the full screen, plenty of breathing room
+ * n=20 → sparse galaxy filling the viewport
+ * n=84 → stretch factor = 1.0, identical to the perfect full-fill layout
+ */
+function computeAssignment(slots, imageIds) {
+  if (!imageIds || imageIds.length === 0) {
+    return slots.map(s => ({ ...s, imageId: null }));
+  }
+
+  const n = imageIds.length;
+
+  const layer1Slots = slots.filter(s => s.layer === 1);
+  const layer2Slots = slots.filter(s => s.layer === 2);
+  const layer3Slots = slots.filter(s => s.layer === 3);
+
+  // Step 1 — L2-biased targets.
+  // L1 (center) is hidden behind the quiz card. L3 (corners) bleeds off-screen.
+  // L2 (middle ring) is the most visible zone — give it 65% of N.
+  // L3 gets 10%, L1 gets whatever remains to reach N.
+  // At n=84 the layer caps kick in and all 84 slots fill exactly as designed.
+  const l2Target = Math.min(layer2Slots.length, Math.round(n * 0.65));
+  const l3Target = Math.min(layer3Slots.length, Math.round(n * 0.10));
+  const l1Target = Math.min(layer1Slots.length, n - l2Target - l3Target);
+
+  const activeIds = new Set();
+  const strideSelect = (layerSlots, take) => {
+    if (take <= 0) return;
+    const stride = layerSlots.length / take;
+    for (let i = 0; i < take; i++) {
+      activeIds.add(layerSlots[Math.floor(i * stride)].id);
+    }
+  };
+  strideSelect(layer3Slots, l3Target);
+  strideSelect(layer2Slots, l2Target);
+  strideSelect(layer1Slots, l1Target);
+
+  // Step 2 — Coordinate stretch
+  // Average radius from center (50,50) for all slots vs. only active slots.
+  // Stretching active positions by fullRadius/activeRadius fills the same
+  // visual area as the full set, keeping the layout from collapsing inward.
+  const radius = s => Math.sqrt((s.x - 50) ** 2 + (s.y - 50) ** 2);
+  const avg = arr => arr.reduce((sum, s) => sum + radius(s), 0) / arr.length;
+
+  const activeSlots = slots.filter(s => activeIds.has(s.id));
+  const fullRadius = avg(slots);
+  const activeRadius = avg(activeSlots);
+  // Only stretch when active set is smaller; cap at 1.5× to avoid blowing off-screen
+  const stretch = activeRadius > 0 ? Math.min(1.5, fullRadius / activeRadius) : 1;
+
+  let imgIdx = 0;
+  return slots.map(s => {
+    if (!activeIds.has(s.id)) return { ...s, imageId: null };
+
+    const sx = stretch === 1 ? s.x : 50 + (s.x - 50) * stretch;
+    const sy = stretch === 1 ? s.y : 50 + (s.y - 50) * stretch;
+
+    return { ...s, x: sx, y: sy, imageId: imageIds[imgIdx++] ?? null };
+  });
+}
+
+/**
+ * Background — 60 permanent slots with drift, parallax, and staggered image swap.
+ * Wrapped in React.memo, entirely prop-driven.
+ */
+const Background = memo(function Background({ imageIds, blurred }) {
+  const canvasRef = useRef(null);
+  const layer1Ref = useRef(null);
+  const layer2Ref = useRef(null);
+  const layer3Ref = useRef(null);
+
+  const slots = useDeviceSlots();
+  const isDesktop = slots === DESKTOP_SLOTS;
+
+  const assignedSlots = useMemo(
+    () => computeAssignment(slots, imageIds),
+    [imageIds, slots]
+  );
+
+  // Split assigned slots by layer for rendering
+  const layer1Assigned = useMemo(() => assignedSlots.filter(s => s.layer === 1), [assignedSlots]);
+  const layer2Assigned = useMemo(() => assignedSlots.filter(s => s.layer === 2), [assignedSlots]);
+  const layer3Assigned = useMemo(() => assignedSlots.filter(s => s.layer === 3), [assignedSlots]);
+
+  // Mouse parallax — desktop only
+  useEffect(() => {
+    if (!isDesktop) return;
+
+    let targetX = 0, targetY = 0;
+    let currentX = 0, currentY = 0;
+    let rafId;
+
+    const onMouseMove = (e) => {
+      targetX = (e.clientX / window.innerWidth - 0.5) * 2;
+      targetY = (e.clientY / window.innerHeight - 0.5) * 2;
+    };
+
+    const tick = () => {
+      currentX += (targetX - currentX) * 0.055;
+      currentY += (targetY - currentY) * 0.055;
+
+      if (layer1Ref.current) {
+        layer1Ref.current.style.transform =
+          `translate(${currentX * 7}px, ${currentY * 5}px)`;
+      }
+      if (layer2Ref.current) {
+        layer2Ref.current.style.transform =
+          `translate(${currentX * 17}px, ${currentY * 13}px)`;
+      }
+      if (layer3Ref.current) {
+        layer3Ref.current.style.transform =
+          `translate(${currentX * 29}px, ${currentY * 22}px)`;
+      }
+
+      rafId = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    rafId = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      cancelAnimationFrame(rafId);
+    };
+  }, [isDesktop]);
+
+  return (
+    <div
+      ref={canvasRef}
+      className={`${styles.canvas} ${blurred ? styles.blurred : ''}`}
+    >
+      <div ref={layer1Ref} className={styles.layer}>
+        {layer1Assigned.map(slot => (
+          <Slot key={slot.id} slot={slot} />
+        ))}
+      </div>
+      <div ref={layer2Ref} className={styles.layer}>
+        {layer2Assigned.map(slot => (
+          <Slot key={slot.id} slot={slot} />
+        ))}
+      </div>
+      <div ref={layer3Ref} className={styles.layer}>
+        {layer3Assigned.map(slot => (
+          <Slot key={slot.id} slot={slot} />
+        ))}
+      </div>
+      {(!imageIds || imageIds.length === 0) && (
+        <p className={styles.emptyHint}>Coming soon — keep exploring</p>
+      )}
+    </div>
+  );
+});
+
+export default Background;
