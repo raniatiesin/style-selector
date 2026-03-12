@@ -5,6 +5,7 @@
   display: flex;
   z-index: 200;
   overflow: hidden;
+  min-height: 0;
 }
 
 /* Left panel — selected style detail */
@@ -17,6 +18,8 @@
   padding: 40px 28px;
   gap: 20px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   scrollbar-width: none;
 }
 
@@ -59,6 +62,8 @@
   padding: 40px 32px;
   gap: 24px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   scrollbar-width: none;
   position: relative;
 }
@@ -78,17 +83,21 @@
 @media (max-width: 767px) {
   .splitLayout {
     flex-direction: column;
+    height: 100dvh;
   }
 
   .leftPanel {
     flex: 0 0 auto;
     width: 100%;
-    padding: 24px 20px;
+    max-height: 42dvh;
+    min-height: 0;
+    padding: 20px 18px;
   }
 
   .rightPanel {
     flex: 1;
-    padding: 12px 20px 24px;
+    min-height: 0;
+    padding: 14px 18px 22px;
   }
 
   .carouselGrid {

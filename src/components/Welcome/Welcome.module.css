@@ -26,10 +26,18 @@
 
 @media (max-width: 767px) {
   .card {
-    padding: 40px 28px;
+    padding: 34px 22px;
     max-width: 92vw;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
+  }
+
+  .makeBtn {
+    margin-top: var(--space-40);
+    padding: 14px 40px;
   }
 }
 

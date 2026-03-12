@@ -11,6 +11,13 @@ const Slot = memo(function Slot({ slot }) {
   const imgRef = useRef(null);
   const timelineRef = useRef(null);
   const creepRef = useRef(null);
+  const isMobileViewport = typeof window !== 'undefined'
+    && window.matchMedia('(max-width: 767px)').matches;
+  const boundedX = isMobileViewport ? Math.max(4, Math.min(96, slot.x)) : slot.x;
+  const boundedY = isMobileViewport ? Math.max(4, Math.min(96, slot.y)) : slot.y;
+  const slotWidth = isMobileViewport
+    ? `clamp(42px, ${slot.width}vw, 128px)`
+    : `${slot.width}vw`;
 
   // Drift animation + ambient vertical creep — mounted once, killed on unmount
   useEffect(() => {
@@ -51,11 +58,22 @@ const Slot = memo(function Slot({ slot }) {
     });
     creepRef.current = creep;
 
+    const shouldAnimate = Boolean(slot.imageId);
+    tl.paused(!shouldAnimate);
+    creep.paused(!shouldAnimate);
+
     return () => {
       tl.kill();
       creep.kill();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Pause background motion for slots without active images.
+  useEffect(() => {
+    const shouldAnimate = Boolean(slot.imageId);
+    if (timelineRef.current) timelineRef.current.paused(!shouldAnimate);
+    if (creepRef.current) creepRef.current.paused(!shouldAnimate);
+  }, [slot.imageId]);
 
   // Image crossfade — only when imageId changes
   useEffect(() => {
@@ -86,9 +104,9 @@ const Slot = memo(function Slot({ slot }) {
       ref={slotRef}
       className={styles.slot}
       style={{
-        left: `${slot.x}%`,
-        top: `${slot.y}%`,
-        width: `${slot.width}vw`,
+        left: `${boundedX}%`,
+        top: `${boundedY}%`,
+        width: slotWidth,
         aspectRatio: slot.aspectRatio,
         opacity: slot.opacity,
         borderRadius: `${slot.borderRadius}px`,

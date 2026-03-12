@@ -9,7 +9,7 @@ export default function StyleCarousel({ styleId, similarity, onClick }) {
   const containerRef = useRef(null);
   const stripRef = useRef(null);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [loadedSegments, setLoadedSegments] = useState({});
+  const [loadedSegmentsState, setLoadedSegmentsState] = useState({ styleId: null, segments: {} });
   const dragStartX = useRef(0);
   const isDragging = useRef(false);
   const currentOffset = useRef(0);
@@ -17,18 +17,34 @@ export default function StyleCarousel({ styleId, similarity, onClick }) {
   // Load segment images lazily from Supabase Storage
   // Segments 2–6 are lazy-loaded; segment 1 (rep) is local in /images/rep/
   useEffect(() => {
+    let cancelled = false;
+
     const urls = Array.from({ length: 5 }, (_, i) =>
       `${SEGMENTS_BASE}/${styleId}/${i + 2}.webp`
     );
 
-    urls.forEach((url, i) => {
+    Promise.all(urls.map(url => new Promise(resolve => {
       const img = new Image();
+      img.onload = () => resolve(url);
+      img.onerror = () => resolve(null);
       img.src = url;
-      img.onload = () => {
-        setLoadedSegments(prev => ({ ...prev, [i]: url }));
-      };
+    }))).then(results => {
+      if (cancelled) return;
+      const next = {};
+      results.forEach((url, i) => {
+        if (url) next[i] = url;
+      });
+      setLoadedSegmentsState({ styleId, segments: next });
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, [styleId]);
+
+  const loadedSegments = loadedSegmentsState.styleId === styleId
+    ? loadedSegmentsState.segments
+    : {};
 
   const getCarouselWidth = useCallback(() => {
     return containerRef.current?.clientWidth || 200;

@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "generate-manifest": "node scripts/generate-manifest-dev.cjs"
+    "generate-manifest": "node scripts/generate-manifest-dev.cjs",
+    "push:check-vercel": "node scripts/push-and-check-vercel.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",

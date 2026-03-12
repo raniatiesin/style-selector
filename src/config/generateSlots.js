@@ -249,4 +249,4 @@ export function generateSlots(count, { platform = 'desktop', seed = 42 } = {}) {
 
 // Pre-generated for the two platforms at standard counts
 export const DESKTOP_SLOTS = generateSlots(84, { platform: 'desktop', seed: 42 });
-export const MOBILE_SLOTS  = generateSlots(40, { platform: 'mobile',  seed: 42 });
+export const MOBILE_SLOTS  = generateSlots(20, { platform: 'mobile',  seed: 42 });

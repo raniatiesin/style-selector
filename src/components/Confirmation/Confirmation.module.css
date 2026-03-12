@@ -27,8 +27,11 @@
 
 @media (max-width: 767px) {
   .content {
-    padding: 36px 28px;
+    padding: 30px 22px;
     max-width: 92vw;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     width: auto;
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
