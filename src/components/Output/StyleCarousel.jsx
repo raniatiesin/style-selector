@@ -29,7 +29,13 @@ function loadSegment(url) {
   return promise;
 }
 
-export default function StyleCarousel({ styleId, similarity, onClick }) {
+export default function StyleCarousel({
+  styleId,
+  similarity,
+  onClick,
+  isActive = true,
+  shouldLoadSegments = true,
+}) {
   const containerRef = useRef(null);
   const stripRef = useRef(null);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -41,6 +47,8 @@ export default function StyleCarousel({ styleId, similarity, onClick }) {
   // Load segment images lazily from Supabase Storage
   // Segments 2–6 are lazy-loaded; segment 1 (rep) is local in /images/rep/
   useEffect(() => {
+    if (!shouldLoadSegments) return;
+
     let cancelled = false;
 
     const urls = Array.from({ length: 5 }, (_, i) =>
@@ -59,9 +67,9 @@ export default function StyleCarousel({ styleId, similarity, onClick }) {
     return () => {
       cancelled = true;
     };
-  }, [styleId]);
+  }, [styleId, shouldLoadSegments]);
 
-  const loadedSegments = loadedSegmentsState.styleId === styleId
+  const loadedSegments = shouldLoadSegments && loadedSegmentsState.styleId === styleId
     ? loadedSegmentsState.segments
     : {};
 
@@ -129,9 +137,9 @@ export default function StyleCarousel({ styleId, similarity, onClick }) {
     <div
       ref={containerRef}
       className={styles.carouselContainer}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
+      onPointerDown={isActive ? handlePointerDown : undefined}
+      onPointerMove={isActive ? handlePointerMove : undefined}
+      onPointerUp={isActive ? handlePointerUp : undefined}
     >
       {similarity != null && (
         <span className={styles.similarityBadge}>

@@ -44,6 +44,7 @@ export default function OutputScreen() {
   const carouselGridRef = useRef(null);
   const mobileDeckRef = useRef(null);
   const mobileCardRefs = useRef([]);
+  const viewportResizeDebounceRef = useRef(null);
   const leftPanelRef = useRef(null);
   const loadingRef = useRef(null);
   const lineRef = useRef(null);
@@ -79,17 +80,31 @@ export default function OutputScreen() {
   const jumpToQuizStep = useQuizStore(s => s.jumpToQuizStep);
 
   useEffect(() => {
-    const updateViewportHeight = () => {
+    const applyViewportHeight = () => {
       setViewportHeight(window.visualViewport?.height || window.innerHeight);
     };
 
-    updateViewportHeight();
+    const updateViewportHeight = () => {
+      if (viewportResizeDebounceRef.current !== null) {
+        clearTimeout(viewportResizeDebounceRef.current);
+      }
+      viewportResizeDebounceRef.current = setTimeout(() => {
+        viewportResizeDebounceRef.current = null;
+        applyViewportHeight();
+      }, 120);
+    };
+
+    applyViewportHeight();
     window.addEventListener('resize', updateViewportHeight);
     window.visualViewport?.addEventListener('resize', updateViewportHeight);
 
     return () => {
       window.removeEventListener('resize', updateViewportHeight);
       window.visualViewport?.removeEventListener('resize', updateViewportHeight);
+      if (viewportResizeDebounceRef.current !== null) {
+        clearTimeout(viewportResizeDebounceRef.current);
+        viewportResizeDebounceRef.current = null;
+      }
     };
   }, []);
 
@@ -147,6 +162,7 @@ export default function OutputScreen() {
       mobileActiveTags.slice(6, 12),
     ];
   }, [mobileActiveTags]);
+  const mobileCardIndex = currentCardIndex;
 
   const queueVersionedCardNav = useCallback((version, task) => {
     if (mobileNavTimeoutRef.current !== null) {
@@ -574,6 +590,8 @@ export default function OutputScreen() {
                         <StyleCarousel
                           styleId={result.id}
                           similarity={result.similarity}
+                          isActive={index === mobileCardIndex}
+                          shouldLoadSegments={Math.abs(index - mobileCardIndex) <= 1}
                           onClick={undefined}
                         />
                       </div>
