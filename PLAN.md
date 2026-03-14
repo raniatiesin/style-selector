@@ -385,3 +385,27 @@ VERIFY:
   [x] npm run perf:probe -- http://127.0.0.1:5173  ->  FPS >= 58, long tasks = 0
 
 DONE WHEN: Mobile tags stay with cards and verification gates pass.
+
+## MILESTONE 15 — Desktop shared padding + left button swipe lane
+# Status: [DONE]
+# Result: Desktop-only output CSS refined in src/components/Output/Output.module.css with shared panel padding between left and right sections, left panel image centering reinforcement, and horizontal swipe lane for left-panel button row when buttons do not fit. Button size styles were not changed and no component files were edited.
+# Scope control: CSS-only change in Output.module.css desktop path; mobile media-query behavior unchanged.
+# Verification: eslint pass, build pass, perf probe FPS 59.5 long tasks 0, p50 62ms, p95 85ms.
+
+TASK:
+  Desktop-only request:
+  1) Share panel padding rhythm across left and right output sections.
+  2) Keep selected image centered in left section.
+  3) Allow left-panel button row to scroll horizontally when controls overflow.
+  4) Keep button sizes unchanged and avoid component edits.
+
+VERIFY:
+  [x] Output.module.css updated only
+  [x] OutputScreen.jsx unchanged
+  [x] Left-panel button row supports horizontal swipe/scroll on overflow
+  [x] Button style block unchanged (size-related declarations untouched)
+  [x] npx eslint src/ --ext .js,.jsx --max-warnings 0  ->  pass
+  [x] npm run build  ->  pass
+  [x] npm run perf:probe -- http://127.0.0.1:5173  ->  FPS >= 58 threshold not required by this milestone request, long tasks = 0
+
+DONE WHEN: Desktop layout uses shared padding, centered selected image, and swipeable left button row without component or button-size edits.
