@@ -370,21 +370,54 @@
 @media (min-width: 768px) {
   .leftPanel,
   .rightPanel {
-    padding: 40px 32px;
+    padding: 32px;
   }
 
-  .leftPanel .buttonRow {
-    width: 100%;
+  .leftPanel {
     justify-content: flex-start;
-    flex-wrap: nowrap;
+    gap: 12px;
+    overflow: hidden;
+  }
+
+  .selectedCarouselWrap {
+    max-width: min(240px, 70%);
+    align-self: center;
+  }
+
+  .rightPanel {
+    align-items: flex-end;
+  }
+
+  .carouselGrid {
+    max-width: 760px;
+    gap: 14px;
+    margin-left: auto;
+  }
+
+  .leftPanel .tallyGrid {
+    display: grid;
+    grid-template-rows: repeat(2, min-content);
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    justify-content: flex-start;
+    align-content: start;
+    gap: 6px 8px;
+    max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
 
-  .leftPanel .buttonRow::-webkit-scrollbar {
+  .leftPanel .tallyGrid::-webkit-scrollbar {
     display: none;
+  }
+
+  .leftPanel .buttonRow {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: nowrap;
+    overflow: visible;
   }
 }
 

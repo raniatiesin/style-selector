@@ -409,3 +409,29 @@ VERIFY:
   [x] npm run perf:probe -- http://127.0.0.1:5173  ->  FPS >= 58 threshold not required by this milestone request, long tasks = 0
 
 DONE WHEN: Desktop layout uses shared padding, centered selected image, and swipeable left button row without component or button-size edits.
+
+## MILESTONE 16 — Desktop right-shift grid + static buttons + two-row swipe tags
+# Status: [DONE]
+# Result: Desktop-only tuning in src/components/Output/Output.module.css made right carousel grid smaller and closer to the right, enforced shared section padding, ensured left panel fits without vertical scrolling, moved swipe behavior to a two-row tag lane, and restored static left-panel Confirm/Find Similar buttons.
+# Scope control: Output.module.css only; no component edits and no mobile media-query path edits.
+# Verification: eslint pass, build pass, perf probe FPS 59.9 long tasks 0, p50 64ms, p95 69ms.
+
+TASK:
+  Desktop-only request:
+  1) Make right grid a bit smaller and right-shifted.
+  2) Keep left panel fitting without vertical scrolling.
+  3) Make only two tag rows swipeable.
+  4) Keep Confirm/Find Similar static on initial image selection.
+  5) Keep left/right section padding shared and consistent.
+
+VERIFY:
+  [x] `.rightPanel` desktop alignment to right edge
+  [x] `.carouselGrid` reduced width/gap and right-shifted
+  [x] `.leftPanel` desktop vertical overflow disabled
+  [x] `.leftPanel .tallyGrid` desktop set to two-row horizontal swipe lane
+  [x] `.leftPanel .buttonRow` desktop is static (no horizontal scroll)
+  [x] npx eslint src/ --ext .js,.jsx --max-warnings 0  ->  pass
+  [x] npm run build  ->  pass
+  [x] npm run perf:probe -- http://127.0.0.1:5173  ->  FPS 59.9, long tasks 0
+
+DONE WHEN: Desktop layout is tightened with static buttons and two-row swipe tags while all verification gates pass.
