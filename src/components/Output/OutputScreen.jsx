@@ -51,8 +51,7 @@ export default function OutputScreen() {
   const textRef = useRef(null);
   const subTextRef = useRef(null);
   const loadingTlRef = useRef(null);
-  const mobileNavVersionRef = useRef(0);
-  const mobileNavTimeoutRef = useRef(null);
+  const mobileScrollRafRef = useRef(null);
   const [showLoading, setShowLoading] = useState(true);
   const [viewportHeight, setViewportHeight] = useState(() => window.visualViewport?.height || window.innerHeight);
   const [isMobileCoarse, setIsMobileCoarse] = useState(false);
@@ -127,9 +126,9 @@ export default function OutputScreen() {
 
   useEffect(() => {
     return () => {
-      if (mobileNavTimeoutRef.current !== null) {
-        clearTimeout(mobileNavTimeoutRef.current);
-        mobileNavTimeoutRef.current = null;
+      if (mobileScrollRafRef.current !== null) {
+        cancelAnimationFrame(mobileScrollRafRef.current);
+        mobileScrollRafRef.current = null;
       }
     };
   }, []);
@@ -145,37 +144,7 @@ export default function OutputScreen() {
     return getStyleTally(selectedCarousel).split(', ').filter(Boolean);
   }, [selectedCarousel]);
 
-  const mobileActiveResult = useMemo(() => {
-    if (outputResults.length === 0) return null;
-    const safeIndex = Math.min(currentCardIndex, outputResults.length - 1);
-    return outputResults[safeIndex] || null;
-  }, [outputResults, currentCardIndex]);
-
-  const mobileActiveTags = useMemo(() => {
-    if (!mobileActiveResult) return [];
-    return getStyleTally(mobileActiveResult.id).split(', ').filter(Boolean);
-  }, [mobileActiveResult]);
-
-  const mobileTagRows = useMemo(() => {
-    return [
-      mobileActiveTags.slice(0, 6),
-      mobileActiveTags.slice(6, 12),
-    ];
-  }, [mobileActiveTags]);
   const mobileCardIndex = currentCardIndex;
-
-  const queueVersionedCardNav = useCallback((version, task) => {
-    if (mobileNavTimeoutRef.current !== null) {
-      clearTimeout(mobileNavTimeoutRef.current);
-      mobileNavTimeoutRef.current = null;
-    }
-
-    mobileNavTimeoutRef.current = setTimeout(() => {
-      mobileNavTimeoutRef.current = null;
-      if (mobileNavVersionRef.current !== version) return;
-      task();
-    }, 0);
-  }, []);
 
   // Compute results on mount — POST tally to /api/search
   useEffect(() => {
@@ -223,6 +192,45 @@ export default function OutputScreen() {
     mobileCardRefs.current = [];
     setCurrentCardIndex(0);
   }, [outputResults]);
+
+  useEffect(() => {
+    if (!isMobileCoarse || showLoading || outputResults.length === 0) return;
+
+    const deck = mobileDeckRef.current;
+    if (!deck) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let bestIndex = null;
+        let bestRatio = 0;
+
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const index = Number(entry.target.getAttribute('data-card-index'));
+          if (!Number.isFinite(index)) return;
+          if (entry.intersectionRatio > bestRatio) {
+            bestRatio = entry.intersectionRatio;
+            bestIndex = index;
+          }
+        });
+
+        if (bestIndex === null) return;
+        setCurrentCardIndex((prev) => (prev === bestIndex ? prev : bestIndex));
+      },
+      {
+        root: deck,
+        threshold: [0.55, 0.7, 0.85],
+      }
+    );
+
+    mobileCardRefs.current.forEach((node, index) => {
+      if (!node) return;
+      node.setAttribute('data-card-index', String(index));
+      observer.observe(node);
+    });
+
+    return () => observer.disconnect();
+  }, [isMobileCoarse, showLoading, outputResults]);
 
   useEffect(() => {
     if (!isMobileCoarse || showLoading || outputResults.length === 0) return;
@@ -440,27 +448,31 @@ export default function OutputScreen() {
   const handleMobileDeckScroll = useCallback(() => {
     if (!isMobileCoarse) return;
 
+    if (mobileScrollRafRef.current !== null) return;
+
     const deck = mobileDeckRef.current;
     if (!deck) return;
 
-    const viewportMiddle = deck.scrollTop + (deck.clientHeight / 2);
-    let nearestIndex = currentCardIndex;
-    let nearestDistance = Number.POSITIVE_INFINITY;
+    mobileScrollRafRef.current = requestAnimationFrame(() => {
+      mobileScrollRafRef.current = null;
 
-    mobileCardRefs.current.forEach((node, index) => {
-      if (!node) return;
-      const center = node.offsetTop + (node.offsetHeight / 2);
-      const distance = Math.abs(center - viewportMiddle);
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearestIndex = index;
-      }
+      const viewportMiddle = deck.scrollTop + (deck.clientHeight / 2);
+      let nearestIndex = 0;
+      let nearestDistance = Number.POSITIVE_INFINITY;
+
+      mobileCardRefs.current.forEach((node, index) => {
+        if (!node) return;
+        const center = node.offsetTop + (node.offsetHeight / 2);
+        const distance = Math.abs(center - viewportMiddle);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestIndex = index;
+        }
+      });
+
+      setCurrentCardIndex((prev) => (prev === nearestIndex ? prev : nearestIndex));
     });
-
-    if (nearestIndex === currentCardIndex) return;
-    const version = ++mobileNavVersionRef.current;
-    queueVersionedCardNav(version, () => setCurrentCardIndex(nearestIndex));
-  }, [isMobileCoarse, currentCardIndex, queueVersionedCardNav]);
+  }, [isMobileCoarse]);
 
   return (
     <>
@@ -545,25 +557,6 @@ export default function OutputScreen() {
 
             {isMobileCoarse ? (
               <>
-                <div className={styles.mobileTopZone}>
-                  <div className={styles.mobileTagRibbon}>
-                    {mobileTagRows.map((row, rowIndex) => (
-                      <div key={rowIndex} className={styles.mobileTagRow}>
-                        {row.map((tag, indexInRow) => {
-                          const categoryIndex = rowIndex === 0 ? indexInRow : indexInRow + 6;
-                          return (
-                            <TagPill
-                              key={`${rowIndex}-${indexInRow}`}
-                              label={tag}
-                              onClick={() => handleTagClick(categoryIndex)}
-                            />
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 <div className={styles.mobileCardTracker}>
                   {outputResults.map((result, index) => (
                     <div
@@ -579,23 +572,52 @@ export default function OutputScreen() {
                   onScroll={handleMobileDeckScroll}
                 >
                   {outputResults.map((result, index) => (
-                    <div
-                      key={result.id}
-                      ref={(node) => {
-                        mobileCardRefs.current[index] = node;
-                      }}
-                      className={styles.mobileCardSlot}
-                    >
-                      <div className={styles.mobileCardFrame}>
-                        <StyleCarousel
-                          styleId={result.id}
-                          similarity={result.similarity}
-                          isActive={index === mobileCardIndex}
-                          shouldLoadSegments={Math.abs(index - mobileCardIndex) <= 1}
-                          onClick={undefined}
-                        />
-                      </div>
-                    </div>
+                    (() => {
+                      const cardTags = getStyleTally(result.id).split(', ').filter(Boolean);
+                      const row1 = cardTags.slice(0, 6);
+                      const row2 = cardTags.slice(6, 12);
+
+                      return (
+                        <div
+                          key={result.id}
+                          ref={(node) => {
+                            mobileCardRefs.current[index] = node;
+                          }}
+                          className={styles.mobileCardSlot}
+                        >
+                          <div className={styles.mobileSlotTagRibbon}>
+                            <div className={styles.mobileTagRow}>
+                              {row1.map((tag, indexInRow) => (
+                                <TagPill
+                                  key={`r1-${result.id}-${indexInRow}`}
+                                  label={tag}
+                                  onClick={() => handleTagClick(indexInRow)}
+                                />
+                              ))}
+                            </div>
+                            <div className={styles.mobileTagRow}>
+                              {row2.map((tag, indexInRow) => (
+                                <TagPill
+                                  key={`r2-${result.id}-${indexInRow}`}
+                                  label={tag}
+                                  onClick={() => handleTagClick(indexInRow + 6)}
+                                />
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className={styles.mobileCardFrame}>
+                            <StyleCarousel
+                              styleId={result.id}
+                              similarity={result.similarity}
+                              isActive={index === mobileCardIndex}
+                              shouldLoadSegments={Math.abs(index - mobileCardIndex) <= 1}
+                              onClick={undefined}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()
                   ))}
                 </div>
 

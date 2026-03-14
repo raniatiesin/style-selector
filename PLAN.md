@@ -341,3 +341,47 @@ DONE WHEN: Mobile tilt is integrated via the existing parallax loop and all veri
 ## Phase 2 entry gate (tilt parallax)
 # DO NOT BEGIN until Phase 1 sign-off is complete.
 # See Phase 2 spec: PHASE2.md (not yet written — write after Phase 1 closes).
+
+## MILESTONE 13 — Desktop output panel breathing room
+# Status: [DONE]
+# Result: Updated desktop left panel spacing in src/components/Output/Output.module.css by increasing `.leftPanel` vertical padding from 40px to 60px while preserving layout structure/split ratio. Confirmed `.leftPanel` retains `overflow-y: auto` so tall selected carousel/tag content scrolls instead of clipping.
+# Scope control: no desktop grid/flex structure changes, no split-ratio changes, no logic/API changes.
+# Verification: eslint pass, build pass, perf probe FPS 59.9 long tasks 0, p50 63ms, p95 67ms.
+
+TASK:
+  Desktop-only Output fix:
+  1) Increase `.leftPanel` top/bottom padding.
+  2) Ensure `.leftPanel` scroll behavior for overflow.
+  3) Keep existing desktop split/layout unchanged.
+
+VERIFY:
+  [x] `.leftPanel` vertical padding increased (desktop path)
+  [x] `.leftPanel` uses `overflow-y: auto`
+  [x] npx eslint src/ --ext .js,.jsx --max-warnings 0  ->  pass
+  [x] npm run build  ->  pass
+  [x] npm run perf:probe -- http://127.0.0.1:5173  ->  FPS >= 58, long tasks = 0
+
+DONE WHEN: Desktop left panel content is no longer clipped and all gates pass.
+
+## MILESTONE 14 — Mobile tags in-slot + top-zone cleanup
+# Status: [DONE]
+# Result: Mobile deck already renders per-card tag rows inside each `.mobileCardSlot` in src/components/Output/OutputScreen.jsx using per-result tally slicing (`row1`/`row2`). Removed obsolete shared top-zone CSS remnants (`.mobileTopZone` and `.mobileTagRibbon`) from src/components/Output/Output.module.css so no shared ribbon appears above the deck.
+# Scope control: no desktop path edits for this milestone, no TagPill component/style changes, fixed mobile bottom buttons and side tracker retained.
+# Verification: eslint pass, build pass, perf probe FPS 59.9 long tasks 0, p50 63ms, p95 67ms.
+
+TASK:
+  Mobile-only Output fix:
+  1) Ensure tags are rendered in each card slot and scroll with card image.
+  2) Remove shared top-zone tag UI above deck.
+  3) Keep fixed controls/tracker behavior unchanged.
+
+VERIFY:
+  [x] Per-card `cardTags`/`row1`/`row2` rendering present in mobile `outputResults.map`
+  [x] No shared `.mobileTopZone` / `.mobileTagRibbon` CSS block remains
+  [x] `.mobileBottomZone` buttons remain fixed path (unchanged)
+  [x] Mobile tracker dots path remains fixed (unchanged)
+  [x] npx eslint src/ --ext .js,.jsx --max-warnings 0  ->  pass
+  [x] npm run build  ->  pass
+  [x] npm run perf:probe -- http://127.0.0.1:5173  ->  FPS >= 58, long tasks = 0
+
+DONE WHEN: Mobile tags stay with cards and verification gates pass.

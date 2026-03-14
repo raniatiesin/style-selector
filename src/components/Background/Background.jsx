@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useMemo, memo } from 'react';
 import { DESKTOP_SLOTS, MOBILE_SLOTS } from '../../config/generateSlots';
-import { useQuizStore } from '../../store/quizStore';
 import Slot from './Slot';
 import styles from './Background.module.css';
 
@@ -112,11 +111,9 @@ const Background = memo(function Background({ imageIds, blurred }) {
   const layer1Ref = useRef(null);
   const layer2Ref = useRef(null);
   const layer3Ref = useRef(null);
-  const screen = useQuizStore(state => state.screen);
 
   const slots = useDeviceSlots();
   const isDesktop = slots === DESKTOP_SLOTS;
-  const hasQuizStarted = screen !== 'welcome';
 
   const assignedSlots = useMemo(
     () => computeAssignment(slots, imageIds),
@@ -222,7 +219,7 @@ const Background = memo(function Background({ imageIds, blurred }) {
 
     if (isDesktop) {
       window.addEventListener('mousemove', onMouseMove, { passive: true });
-    } else if (canUseTilt && hasQuizStarted) {
+    } else if (canUseTilt) {
       const needsPermission =
         typeof window.DeviceOrientationEvent.requestPermission === 'function';
 
@@ -252,7 +249,7 @@ const Background = memo(function Background({ imageIds, blurred }) {
       }
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [isDesktop, hasQuizStarted]);
+  }, [isDesktop]);
 
   return (
     <div

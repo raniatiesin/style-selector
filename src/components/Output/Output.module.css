@@ -16,7 +16,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 28px;
+  padding: 60px 28px;
   gap: 20px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -106,7 +106,7 @@
     justify-content: stretch;
     align-items: stretch;
     min-height: 0;
-    padding: calc(env(safe-area-inset-top, 0px) + 8px) 16px 12px;
+    padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 12px;
     gap: 12px;
     overflow: hidden;
   }
@@ -117,20 +117,6 @@
 
   .selectedCarouselWrap {
     max-width: min(220px, 68vw);
-  }
-
-  .mobileTopZone {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .mobileTagRibbon {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
   }
 
   .mobileTagRow {
@@ -166,6 +152,7 @@
   }
 
   .mobileCardSlot {
+    position: relative;
     min-height: calc(var(--output-vh, 100dvh) - (env(safe-area-inset-top, 0px) + 170px));
     display: flex;
     align-items: center;
@@ -173,6 +160,18 @@
     scroll-snap-align: start;
     scroll-snap-stop: always;
     padding: 10px 0;
+  }
+
+  .mobileSlotTagRibbon {
+    position: absolute;
+    top: 14px;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    pointer-events: auto;
   }
 
   .mobileCardFrame {
@@ -199,14 +198,18 @@
     width: 3px;
     height: 3px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.32);
-    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.28);
+    opacity: 0.58;
+    transform: scale(1);
+    transform-origin: center;
+    transition: transform 220ms ease, opacity 220ms ease, background-color 220ms ease, border-radius 220ms ease;
   }
 
   .mobileTrackerDotActive {
-    height: 18px;
     border-radius: 2px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.92);
+    opacity: 1;
+    transform: scaleY(6);
   }
 
   .mobileBottomZone {

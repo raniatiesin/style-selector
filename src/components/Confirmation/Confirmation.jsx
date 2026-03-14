@@ -38,6 +38,7 @@ export default function Confirmation() {
   const submitting = useQuizStore(s => s.submitting);
   const submitted = useQuizStore(s => s.submitted);
   const submitConfirmation = useQuizStore(s => s.submitConfirmation);
+  const setScreen = useQuizStore(s => s.setScreen);
 
   // Entrance animation
   useEffect(() => {
@@ -99,13 +100,26 @@ export default function Confirmation() {
             onChange={e => { setEmail(e.target.value); setErrors(p => ({ ...p, email: false })); }}
             autoComplete="email"
           />
-          <button
-            className={styles.submitBtn}
-            onClick={handleSubmit}
-            disabled={submitting}
-          >
-            {submitting ? '...' : '→'}
-          </button>
+          <div className={styles.actionsRow}>
+            <button
+              className={styles.backBtn}
+              onClick={() => setScreen('output')}
+              type="button"
+              disabled={submitting}
+              aria-label="Back"
+            >
+              ←
+            </button>
+            <button
+              className={styles.submitBtn}
+              onClick={handleSubmit}
+              type="button"
+              disabled={submitting}
+              aria-label="Submit"
+            >
+              {submitting ? '...' : '→'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
