@@ -306,6 +306,23 @@ VERIFY:
 
 DONE WHEN: Priority preload path is active for immediate background slots and all verification gates pass.
 
+## MILESTONE 12 — Mobile tilt parallax (single-loop)
+# Status: [DONE]
+# Result: Added mobile tilt parallax integration in src/components/Background/Background.jsx by feeding device orientation into the existing parallax target/current path and existing RAF tick.
+# Input policy: gated by coarse pointer + non-reduced-motion. iOS permission request runs on first eligible touch after quiz start; denied/blocked permission is silent no-op. Android/older iOS attaches directly when supported.
+# Verification: eslint pass, build pass, perf probe FPS 59.8 long tasks 0, p50 63ms, p95 93ms.
+
+TASK:
+  Implement mobile tilt without adding any second motion engine or second RAF loop.
+  Reuse existing parallax function/path and batch orientation updates through the same render tick.
+
+VERIFY:
+  [x] npx eslint src/ --ext .js,.jsx --max-warnings 0  ->  pass
+  [x] npm run build  ->  pass
+  [x] npm run perf:probe -- http://127.0.0.1:5173  ->  FPS 59.8, long tasks 0, p50 63ms, p95 93ms
+
+DONE WHEN: Mobile tilt is integrated via the existing parallax loop and all verification gates pass.
+
 ## Phase 1 sign-off checklist
 # All must be TRUE before Phase 2 begins.
 

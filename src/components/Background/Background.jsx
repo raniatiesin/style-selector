@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useMemo, memo } from 'react';
 import { DESKTOP_SLOTS, MOBILE_SLOTS } from '../../config/generateSlots';
+import { useQuizStore } from '../../store/quizStore';
 import Slot from './Slot';
 import styles from './Background.module.css';
 
@@ -111,9 +112,11 @@ const Background = memo(function Background({ imageIds, blurred }) {
   const layer1Ref = useRef(null);
   const layer2Ref = useRef(null);
   const layer3Ref = useRef(null);
+  const screen = useQuizStore(state => state.screen);
 
   const slots = useDeviceSlots();
   const isDesktop = slots === DESKTOP_SLOTS;
+  const hasQuizStarted = screen !== 'welcome';
 
   const assignedSlots = useMemo(
     () => computeAssignment(slots, imageIds),
@@ -125,15 +128,41 @@ const Background = memo(function Background({ imageIds, blurred }) {
   const layer2Assigned = useMemo(() => assignedSlots.filter(s => s.layer === 2), [assignedSlots]);
   const layer3Assigned = useMemo(() => assignedSlots.filter(s => s.layer === 3), [assignedSlots]);
 
-  // Mouse parallax — desktop only
+  // Parallax input:
+  // - Desktop: mousemove
+  // - Mobile (coarse pointer, no reduced-motion): device tilt
+  // Both feed the same target/current values and single RAF loop.
   useEffect(() => {
-    if (!isDesktop) return;
+    const supportsOrientation = typeof window !== 'undefined' && 'DeviceOrientationEvent' in window;
+    const canUseTilt =
+      !isDesktop &&
+      supportsOrientation &&
+      window.matchMedia('(pointer: coarse)').matches &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     let targetX = 0, targetY = 0;
     let currentX = 0, currentY = 0;
+    let pendingTilt = null;
     let rafId = 0;
     let running = false;
-    let lastMoveTs = 0;
+    let lastInputTs = 0;
+    let orientationAttached = false;
+    let firstTouchHandler = null;
+
+    const applyParallax = (x, y) => {
+      if (layer1Ref.current) {
+        layer1Ref.current.style.transform =
+          `translate(${x * 7}px, ${y * 5}px)`;
+      }
+      if (layer2Ref.current) {
+        layer2Ref.current.style.transform =
+          `translate(${x * 17}px, ${y * 13}px)`;
+      }
+      if (layer3Ref.current) {
+        layer3Ref.current.style.transform =
+          `translate(${x * 29}px, ${y * 22}px)`;
+      }
+    };
 
     const startTick = () => {
       if (running) return;
@@ -144,31 +173,44 @@ const Background = memo(function Background({ imageIds, blurred }) {
     const onMouseMove = (e) => {
       targetX = (e.clientX / window.innerWidth - 0.5) * 2;
       targetY = (e.clientY / window.innerHeight - 0.5) * 2;
-      lastMoveTs = performance.now();
+      lastInputTs = performance.now();
       startTick();
     };
 
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    const onDeviceOrientation = (event) => {
+      const gamma = typeof event.gamma === 'number' ? event.gamma : 0;
+      const beta = typeof event.beta === 'number' ? event.beta : 0;
+      pendingTilt = {
+        x: clamp(gamma / 30, -1, 1),
+        y: clamp(beta / 45, -1, 1),
+      };
+      lastInputTs = performance.now();
+      startTick();
+    };
+
+    const attachOrientation = () => {
+      if (orientationAttached) return;
+      window.addEventListener('deviceorientation', onDeviceOrientation, { passive: true });
+      orientationAttached = true;
+    };
+
     const tick = () => {
+      if (pendingTilt) {
+        targetX = pendingTilt.x;
+        targetY = pendingTilt.y;
+        pendingTilt = null;
+      }
+
       currentX += (targetX - currentX) * 0.055;
       currentY += (targetY - currentY) * 0.055;
-
-      if (layer1Ref.current) {
-        layer1Ref.current.style.transform =
-          `translate(${currentX * 7}px, ${currentY * 5}px)`;
-      }
-      if (layer2Ref.current) {
-        layer2Ref.current.style.transform =
-          `translate(${currentX * 17}px, ${currentY * 13}px)`;
-      }
-      if (layer3Ref.current) {
-        layer3Ref.current.style.transform =
-          `translate(${currentX * 29}px, ${currentY * 22}px)`;
-      }
+      applyParallax(currentX, currentY);
 
       const settling =
         Math.abs(targetX - currentX) > 0.002 ||
         Math.abs(targetY - currentY) > 0.002;
-      const recentlyMoved = performance.now() - lastMoveTs < 260;
+      const recentlyMoved = performance.now() - lastInputTs < 260;
 
       if (settling || recentlyMoved) {
         rafId = requestAnimationFrame(tick);
@@ -178,13 +220,39 @@ const Background = memo(function Background({ imageIds, blurred }) {
       }
     };
 
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    if (isDesktop) {
+      window.addEventListener('mousemove', onMouseMove, { passive: true });
+    } else if (canUseTilt && hasQuizStarted) {
+      const needsPermission =
+        typeof window.DeviceOrientationEvent.requestPermission === 'function';
+
+      if (needsPermission) {
+        firstTouchHandler = () => {
+          window.DeviceOrientationEvent.requestPermission()
+            .then(permission => {
+              if (permission === 'granted') attachOrientation();
+            })
+            .catch(() => {
+              // Silent no-op on denied/blocked permission.
+            });
+        };
+        window.addEventListener('touchstart', firstTouchHandler, { passive: true, once: true });
+      } else {
+        attachOrientation();
+      }
+    }
 
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
+      if (firstTouchHandler) {
+        window.removeEventListener('touchstart', firstTouchHandler);
+      }
+      if (orientationAttached) {
+        window.removeEventListener('deviceorientation', onDeviceOrientation);
+      }
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [isDesktop]);
+  }, [isDesktop, hasQuizStarted]);
 
   return (
     <div
