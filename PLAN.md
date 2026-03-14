@@ -286,6 +286,26 @@ VERIFY:
 
 DONE WHEN: All requested gates pass and metrics are recorded.
 
+## MILESTONE 11 — Desktop background preload priority
+# Status: [DONE]
+# Result: Immediate background slot preload path switched to priority loading in src/components/Quiz/Quiz.jsx.
+# Scope control: no edits to OutputScreen.jsx, StyleCarousel.jsx, or mobile layout CSS.
+# Verification: eslint pass, build pass, perf probe FPS 59.9 long tasks 0, p50 63ms, p95 76ms.
+
+TASK:
+  Improve desktop background slot image responsiveness by bypassing requestIdleCallback for immediate slot preloads only.
+  Keep speculative branch warming on idle path.
+
+VERIFY:
+  [x] src/components/Quiz/Quiz.jsx immediate updateBackground preload uses preloadImagesPriority
+  [x] OutputScreen.jsx unchanged
+  [x] StyleCarousel.jsx unchanged
+  [x] npx eslint src/ --ext .js,.jsx --max-warnings 0  ->  pass
+  [x] npm run build  ->  pass
+  [x] npm run perf:probe  ->  FPS >= 58, long tasks = 0
+
+DONE WHEN: Priority preload path is active for immediate background slots and all verification gates pass.
+
 ## Phase 1 sign-off checklist
 # All must be TRUE before Phase 2 begins.
 

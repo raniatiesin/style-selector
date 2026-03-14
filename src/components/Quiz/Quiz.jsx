@@ -4,7 +4,7 @@ import { useQuizStore } from '../../store/quizStore';
 import { resolveStep, MAINS } from '../../config/questionTree';
 import { filterImages, selectForSlots } from '../../utils/filter';
 import { getManifest } from '../../utils/dataCache';
-import { preloadImages } from '../../utils/preloader';
+import { preloadImages, preloadImagesPriority } from '../../utils/preloader';
 import { DESKTOP_SLOTS, MOBILE_SLOTS } from '../../config/generateSlots';
 import { triggerAnswerPulse } from '../Background/answerPulse';
 import ProgressBar from './ProgressBar';
@@ -67,7 +67,7 @@ export default function Quiz() {
     const ids = selected.map(s => s.id);
     setActiveImageIds(ids);
 
-    preloadImages(ids.slice(0, 20));
+    preloadImagesPriority(ids.slice(0, 20));
   }, [setActiveImageIds]);
 
   const queueBackgroundUpdate = useCallback((categoryIndex, catState) => {
