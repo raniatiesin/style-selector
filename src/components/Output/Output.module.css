@@ -15,22 +15,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 60px 28px;
-  gap: 20px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
-}
-
-.leftPanel::-webkit-scrollbar {
-  width: 4px;
-}
-
-.leftPanel::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  justify-content: flex-start;
+  padding: 28px 24px;
+  gap: 12px;
 }
 
 .leftHeading {
@@ -45,17 +32,22 @@
 }
 
 .tallyGrid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  max-width: min(420px, 100%);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  max-width: 100%;
   width: 100%;
+}
+
+.tallyGrid button {
+  width: 100%;
+  padding: 4px 8px;
+  font-size: 0.62rem;
 }
 
 .selectedCarouselWrap {
   width: 100%;
-  max-width: min(340px, 92vw);
+  max-width: min(260px, 80%);
 }
 
 /* Right panel — similarity carousels */
@@ -63,9 +55,10 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   padding: 40px 32px;
+  padding-right: 48px;
   gap: 24px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -86,9 +79,10 @@
 .carouselGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  max-width: 900px;
+  gap: 14px;
+  max-width: 720px;
   width: 100%;
+  margin-left: auto;
 }
 
 @media (max-width: 767px) {
