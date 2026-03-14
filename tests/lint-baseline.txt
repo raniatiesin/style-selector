@@ -1,0 +1,5 @@
+M2 lint baseline
+Date: 2026-03-14
+Command: npx eslint src/ --ext .js,.jsx --max-warnings 0
+Result: exit 0
+Pre-existing src lint errors: none found.

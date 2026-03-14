@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "generate-manifest": "node scripts/generate-manifest-dev.cjs",
-    "push:check-vercel": "node scripts/push-and-check-vercel.cjs"
+    "perf:probe": "node scripts/perf-probe.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
@@ -29,6 +29,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "playwright": "^1.58.2",
     "sharp": "^0.34.5",
     "vite": "^7.3.1"
   }

@@ -3,6 +3,21 @@ import { DESKTOP_SLOTS, MOBILE_SLOTS } from '../../config/generateSlots';
 import Slot from './Slot';
 import styles from './Background.module.css';
 
+function areImageIdsEqual(prevIds, nextIds) {
+  if (prevIds === nextIds) return true;
+  if (!Array.isArray(prevIds) || !Array.isArray(nextIds)) return false;
+  if (prevIds.length !== nextIds.length) return false;
+  for (let i = 0; i < prevIds.length; i++) {
+    if (prevIds[i] !== nextIds[i]) return false;
+  }
+  return true;
+}
+
+function areBackgroundPropsEqual(prevProps, nextProps) {
+  if (prevProps.blurred !== nextProps.blurred) return false;
+  return areImageIdsEqual(prevProps.imageIds, nextProps.imageIds);
+}
+
 /** Choose slot set based on viewport width */
 function useDeviceSlots() {
   // Evaluated once at mount — no resize listener needed
@@ -31,6 +46,7 @@ function computeAssignment(slots, imageIds) {
   }
 
   const n = imageIds.length;
+  const isMobileSlots = slots === MOBILE_SLOTS;
 
   const layer1Slots = slots.filter(s => s.layer === 1);
   const layer2Slots = slots.filter(s => s.layer === 2);
@@ -41,8 +57,12 @@ function computeAssignment(slots, imageIds) {
   // L2 (middle ring) is the most visible zone — give it 65% of N.
   // L3 gets 10%, L1 gets whatever remains to reach N.
   // At n=84 the layer caps kick in and all 84 slots fill exactly as designed.
-  const l2Target = Math.min(layer2Slots.length, Math.round(n * 0.65));
-  const l3Target = Math.min(layer3Slots.length, Math.round(n * 0.10));
+  const l2Ratio = isMobileSlots ? 0.55 : 0.65;
+  const l3Ratio = isMobileSlots ? 0.22 : 0.10;
+  const l2Target = Math.min(layer2Slots.length, Math.round(n * l2Ratio));
+  let l3Base = Math.round(n * l3Ratio);
+  if (isMobileSlots && n >= 9) l3Base = Math.max(3, l3Base);
+  const l3Target = Math.min(layer3Slots.length, l3Base);
   const l1Target = Math.min(layer1Slots.length, n - l2Target - l3Target);
 
   const activeIds = new Set();
@@ -68,7 +88,8 @@ function computeAssignment(slots, imageIds) {
   const fullRadius = avg(slots);
   const activeRadius = avg(activeSlots);
   // Only stretch when active set is smaller; cap at 1.5× to avoid blowing off-screen
-  const stretch = activeRadius > 0 ? Math.min(1.5, fullRadius / activeRadius) : 1;
+  const maxStretch = isMobileSlots && n <= 15 ? 1.7 : 1.5;
+  const stretch = activeRadius > 0 ? Math.min(maxStretch, fullRadius / activeRadius) : 1;
 
   let imgIdx = 0;
   return slots.map(s => {
@@ -110,11 +131,21 @@ const Background = memo(function Background({ imageIds, blurred }) {
 
     let targetX = 0, targetY = 0;
     let currentX = 0, currentY = 0;
-    let rafId;
+    let rafId = 0;
+    let running = false;
+    let lastMoveTs = 0;
+
+    const startTick = () => {
+      if (running) return;
+      running = true;
+      rafId = requestAnimationFrame(tick);
+    };
 
     const onMouseMove = (e) => {
       targetX = (e.clientX / window.innerWidth - 0.5) * 2;
       targetY = (e.clientY / window.innerHeight - 0.5) * 2;
+      lastMoveTs = performance.now();
+      startTick();
     };
 
     const tick = () => {
@@ -134,15 +165,24 @@ const Background = memo(function Background({ imageIds, blurred }) {
           `translate(${currentX * 29}px, ${currentY * 22}px)`;
       }
 
-      rafId = requestAnimationFrame(tick);
+      const settling =
+        Math.abs(targetX - currentX) > 0.002 ||
+        Math.abs(targetY - currentY) > 0.002;
+      const recentlyMoved = performance.now() - lastMoveTs < 260;
+
+      if (settling || recentlyMoved) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        running = false;
+        rafId = 0;
+      }
     };
 
     window.addEventListener('mousemove', onMouseMove, { passive: true });
-    rafId = requestAnimationFrame(tick);
 
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
-      cancelAnimationFrame(rafId);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [isDesktop]);
 
@@ -171,6 +211,6 @@ const Background = memo(function Background({ imageIds, blurred }) {
       )}
     </div>
   );
-});
+}, areBackgroundPropsEqual);
 
 export default Background;

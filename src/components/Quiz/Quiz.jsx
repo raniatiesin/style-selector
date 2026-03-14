@@ -26,6 +26,14 @@ function getCategoryState(answers, categoryIndex) {
 export default function Quiz() {
   const panelRef = useRef(null);
   const contentRef = useRef(null);
+  const canvasElementRef = useRef(null);
+  const canvasResizeDebounceRef = useRef(null);
+  const tapVersionRef = useRef(0);
+  const deferredWorkTimeoutRef = useRef(null);
+  const warmedSeedsRef = useRef(new Set());
+  const preloadTimeoutRef = useRef(null);
+  const preloadIdleRef = useRef(null);
+  const backgroundRafRef = useRef(null);
 
   const currentStep = useQuizStore(s => s.currentStep);
   const answers = useQuizStore(s => s.answers);
@@ -62,11 +70,165 @@ export default function Quiz() {
     preloadImages(ids.slice(0, 20));
   }, [setActiveImageIds]);
 
+  const queueBackgroundUpdate = useCallback((categoryIndex, catState) => {
+    if (backgroundRafRef.current !== null) {
+      cancelAnimationFrame(backgroundRafRef.current);
+    }
+    backgroundRafRef.current = requestAnimationFrame(() => {
+      backgroundRafRef.current = null;
+      updateBackground(categoryIndex, catState);
+    });
+  }, [updateBackground]);
+
+  const preloadCategoryState = useCallback((manifest, categoryIndex, catState, maxImages = 14) => {
+    if (!catState.main) return;
+    const seed = `${categoryIndex}:${catState.main}:${catState.sub}:${catState.subsub}`;
+    if (warmedSeedsRef.current.has(seed)) return;
+
+    const filtered = filterImages(manifest, categoryIndex, catState);
+    const ids = selectForSlots(filtered, SLOT_COUNT, seed).map(s => s.id);
+    if (ids.length === 0) return;
+
+    warmedSeedsRef.current.add(seed);
+    preloadImages(ids.slice(0, maxImages));
+  }, []);
+
+  const preloadUpcomingStages = useCallback((stepIndex, sourceAnswers) => {
+    const manifest = getManifest();
+    if (!manifest) return;
+
+    const categoryIndex = Math.floor(stepIndex / 3);
+    const level = stepIndex % 3;
+    const catState = getCategoryState(sourceAnswers, categoryIndex);
+
+    // Warm defaults for the next two categories while user is in the current one.
+    for (let offset = 1; offset <= 2; offset++) {
+      const nextCat = categoryIndex + offset;
+      if (nextCat > 11) break;
+      const defaultMain = MAINS[nextCat].options[0];
+      preloadCategoryState(manifest, nextCat, { main: defaultMain, sub: null, subsub: null }, 12);
+    }
+
+    // Warm likely immediate branches in the current category.
+    if (level === 0 && catState.main) {
+      const subStep = resolveStep(categoryIndex * 3 + 1, {
+        ...sourceAnswers,
+        [categoryIndex * 3]: catState.main,
+      });
+      subStep?.options?.slice(0, 2).forEach(sub => {
+        preloadCategoryState(manifest, categoryIndex, { main: catState.main, sub, subsub: null }, 10);
+      });
+    }
+
+    if (level <= 1 && catState.main && catState.sub) {
+      const subsubStep = resolveStep(categoryIndex * 3 + 2, {
+        ...sourceAnswers,
+        [categoryIndex * 3]: catState.main,
+        [categoryIndex * 3 + 1]: catState.sub,
+      });
+      subsubStep?.options?.slice(0, 2).forEach(subsub => {
+        preloadCategoryState(manifest, categoryIndex, { main: catState.main, sub: catState.sub, subsub }, 8);
+      });
+    }
+  }, [preloadCategoryState]);
+
+  const clearScheduledUpcomingPreload = useCallback(() => {
+    if (preloadTimeoutRef.current !== null) {
+      clearTimeout(preloadTimeoutRef.current);
+      preloadTimeoutRef.current = null;
+    }
+
+    if (
+      preloadIdleRef.current !== null &&
+      typeof window !== 'undefined' &&
+      typeof window.cancelIdleCallback === 'function'
+    ) {
+      window.cancelIdleCallback(preloadIdleRef.current);
+    }
+
+    preloadIdleRef.current = null;
+  }, []);
+
+  const scheduleUpcomingPreload = useCallback((stepIndex, sourceAnswers) => {
+    clearScheduledUpcomingPreload();
+
+    preloadTimeoutRef.current = setTimeout(() => {
+      preloadTimeoutRef.current = null;
+
+      if (
+        typeof window !== 'undefined' &&
+        typeof window.requestIdleCallback === 'function'
+      ) {
+        preloadIdleRef.current = window.requestIdleCallback(() => {
+          preloadIdleRef.current = null;
+          preloadUpcomingStages(stepIndex, sourceAnswers);
+        }, { timeout: 300 });
+        return;
+      }
+
+      preloadUpcomingStages(stepIndex, sourceAnswers);
+    }, 80);
+  }, [clearScheduledUpcomingPreload, preloadUpcomingStages]);
+
+  const queueVersionedDeferredWork = useCallback((version, task) => {
+    if (deferredWorkTimeoutRef.current !== null) {
+      clearTimeout(deferredWorkTimeoutRef.current);
+      deferredWorkTimeoutRef.current = null;
+    }
+
+    deferredWorkTimeoutRef.current = setTimeout(() => {
+      deferredWorkTimeoutRef.current = null;
+      if (tapVersionRef.current !== version) return;
+      task();
+    }, 0);
+  }, []);
+
+  useEffect(() => {
+    const cacheCanvasElement = () => {
+      canvasElementRef.current = document.querySelector('[class*="canvas"]');
+    };
+
+    const onResize = () => {
+      if (canvasResizeDebounceRef.current !== null) {
+        clearTimeout(canvasResizeDebounceRef.current);
+      }
+      canvasResizeDebounceRef.current = setTimeout(() => {
+        canvasResizeDebounceRef.current = null;
+        cacheCanvasElement();
+      }, 150);
+    };
+
+    cacheCanvasElement();
+    window.addEventListener('resize', onResize, { passive: true });
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      if (canvasResizeDebounceRef.current !== null) {
+        clearTimeout(canvasResizeDebounceRef.current);
+        canvasResizeDebounceRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearScheduledUpcomingPreload();
+      if (backgroundRafRef.current !== null) {
+        cancelAnimationFrame(backgroundRafRef.current);
+      }
+      if (deferredWorkTimeoutRef.current !== null) {
+        clearTimeout(deferredWorkTimeoutRef.current);
+        deferredWorkTimeoutRef.current = null;
+      }
+    };
+  }, [clearScheduledUpcomingPreload]);
+
   // Initial background on mount — filter category 0 with its default MAIN
   useEffect(() => {
     const defaultMain = MAINS[0].options[0];
     selectAnswer(0, defaultMain);
-    updateBackground(0, { main: defaultMain, sub: null, subsub: null });
+    queueBackgroundUpdate(0, { main: defaultMain, sub: null, subsub: null });
+    scheduleUpcomingPreload(0, { 0: defaultMain });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSelect = useCallback((value) => {
@@ -92,15 +254,20 @@ export default function Quiz() {
     }
 
     // Trigger answer pulse
-    const canvas = document.querySelector('[class*="canvas"]');
-    triggerAnswerPulse(canvas);
+    triggerAnswerPulse(canvasElementRef.current);
 
     // Refilter with the updated category state
     const catState = getCategoryState(updatedAnswers, categoryIndex);
-    updateBackground(categoryIndex, catState);
-  }, [currentStep, answers, selectAnswer, updateBackground]);
+    const tapVersion = ++tapVersionRef.current;
+    queueVersionedDeferredWork(tapVersion, () => {
+      queueBackgroundUpdate(categoryIndex, catState);
+      scheduleUpcomingPreload(currentStep, updatedAnswers);
+    });
+  }, [currentStep, answers, selectAnswer, queueBackgroundUpdate, scheduleUpcomingPreload, queueVersionedDeferredWork]);
 
   const handleNext = useCallback(() => {
+    const tapVersion = ++tapVersionRef.current;
+
     // Auto-commit the visually-displayed default if the user never explicitly clicked an option.
     const { currentStep: cs, answers: ans, selectAnswer: save } = useQuizStore.getState();
     if (!ans[cs]) {
@@ -144,15 +311,10 @@ export default function Quiz() {
         if (isNewCategory) {
           const defaultMain = MAINS[newCat].options[0];
           save(newCat * 3, defaultMain);
-          updateBackground(newCat, { main: defaultMain, sub: null, subsub: null });
-          if (newCat < 11) {
-            const mf = getManifest();
-            if (mf) {
-              const nextMain = MAINS[newCat + 1].options[0];
-              const nf = filterImages(mf, newCat + 1, { main: nextMain, sub: null, subsub: null });
-              preloadImages(selectForSlots(nf, SLOT_COUNT, `${newCat + 1}:${nextMain}:null:null`).map(s => s.id));
-            }
-          }
+          queueVersionedDeferredWork(tapVersion, () => {
+            queueBackgroundUpdate(newCat, { main: defaultMain, sub: null, subsub: null });
+            scheduleUpcomingPreload(newStep, { ...useQuizStore.getState().answers, [newCat * 3]: defaultMain });
+          });
         } else {
           // Auto-save default for the arriving step so the filter narrows
           const curAns = useQuizStore.getState().answers;
@@ -161,7 +323,10 @@ export default function Quiz() {
             if (stepData?.options[0]) save(newStep, stepData.options[0]);
           }
           const freshAns = useQuizStore.getState().answers;
-          updateBackground(newCat, getCategoryState(freshAns, newCat));
+          queueVersionedDeferredWork(tapVersion, () => {
+            queueBackgroundUpdate(newCat, getCategoryState(freshAns, newCat));
+            scheduleUpcomingPreload(newStep, freshAns);
+          });
         }
       }
       return;
@@ -171,9 +336,9 @@ export default function Quiz() {
     gsap.timeline()
       .to(contentEl, {
         opacity: 0,
-        y: -4,
-        duration: 0.08,
-        ease: 'power2.in',
+        y: -8,
+        duration: 0.015,
+        ease: 'power2.out',
         onComplete: () => {
           advanceStep();
 
@@ -185,15 +350,10 @@ export default function Quiz() {
             if (isNewCategory) {
               const defaultMain = MAINS[newCat].options[0];
               freshSave(newCat * 3, defaultMain);
-              updateBackground(newCat, { main: defaultMain, sub: null, subsub: null });
-              if (newCat < 11) {
-                const mf = getManifest();
-                if (mf) {
-                  const nextMain = MAINS[newCat + 1].options[0];
-                  const nf = filterImages(mf, newCat + 1, { main: nextMain, sub: null, subsub: null });
-                  preloadImages(selectForSlots(nf, SLOT_COUNT, `${newCat + 1}:${nextMain}:null:null`).map(s => s.id));
-                }
-              }
+              queueVersionedDeferredWork(tapVersion, () => {
+                queueBackgroundUpdate(newCat, { main: defaultMain, sub: null, subsub: null });
+                scheduleUpcomingPreload(newCs, { ...useQuizStore.getState().answers, [newCat * 3]: defaultMain });
+              });
             } else {
               // Auto-save default for the arriving step so the filter narrows
               if (!freshAns[newCs]) {
@@ -201,19 +361,22 @@ export default function Quiz() {
                 if (stepData?.options[0]) freshSave(newCs, stepData.options[0]);
               }
               const latestAns = useQuizStore.getState().answers;
-              updateBackground(newCat, getCategoryState(latestAns, newCat));
+              queueVersionedDeferredWork(tapVersion, () => {
+                queueBackgroundUpdate(newCat, getCategoryState(latestAns, newCat));
+                scheduleUpcomingPreload(newCs, latestAns);
+              });
             }
           }
         },
       })
-      .set(contentEl, { y: 4 })
+      .set(contentEl, { y: 8 })
       .to(contentEl, {
         opacity: 1,
         y: 0,
-        duration: 0.12,
+        duration: 0.08,
         ease: 'power2.out',
       });
-  }, [advanceStep, updateBackground]);
+  }, [advanceStep, queueBackgroundUpdate, scheduleUpcomingPreload, queueVersionedDeferredWork]);
 
   if (!step) return null;
 
@@ -230,8 +393,8 @@ export default function Quiz() {
                 className={`${styles.option} ${selectedOption === opt ? styles.selected : ''}`}
                 onClick={(e) => {
                   gsap.timeline()
-                    .to(e.currentTarget, { scale: 0.96, duration: 0.04, ease: 'power2.in' })
-                    .to(e.currentTarget, { scale: 1.0, duration: 0.18, ease: 'elastic.out(1.2, 0.75)' });
+                    .to(e.currentTarget, { scale: 0.98, duration: 0.03, ease: 'power2.out' })
+                    .to(e.currentTarget, { scale: 1.0, duration: 0.09, ease: 'power2.out' });
                   handleSelect(opt);
                 }}
               >

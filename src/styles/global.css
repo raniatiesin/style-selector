@@ -64,6 +64,7 @@ button {
   cursor: pointer;
   background: none;
   border: none;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 

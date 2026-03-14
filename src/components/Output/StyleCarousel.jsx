@@ -4,6 +4,30 @@ import styles from './Output.module.css';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SEGMENTS_BASE = `${SUPABASE_URL}/storage/v1/object/public/segments`;
+const segmentUrlCache = new Set();
+const segmentInFlight = new Map();
+
+function loadSegment(url) {
+  if (segmentUrlCache.has(url)) return Promise.resolve(url);
+  if (segmentInFlight.has(url)) return segmentInFlight.get(url);
+
+  const promise = new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      segmentUrlCache.add(url);
+      segmentInFlight.delete(url);
+      resolve(url);
+    };
+    img.onerror = () => {
+      segmentInFlight.delete(url);
+      resolve(null);
+    };
+    img.src = url;
+  });
+
+  segmentInFlight.set(url, promise);
+  return promise;
+}
 
 export default function StyleCarousel({ styleId, similarity, onClick }) {
   const containerRef = useRef(null);
@@ -23,12 +47,7 @@ export default function StyleCarousel({ styleId, similarity, onClick }) {
       `${SEGMENTS_BASE}/${styleId}/${i + 2}.webp`
     );
 
-    Promise.all(urls.map(url => new Promise(resolve => {
-      const img = new Image();
-      img.onload = () => resolve(url);
-      img.onerror = () => resolve(null);
-      img.src = url;
-    }))).then(results => {
+    Promise.all(urls.map(url => loadSegment(url))).then(results => {
       if (cancelled) return;
       const next = {};
       results.forEach((url, i) => {
@@ -72,22 +91,22 @@ export default function StyleCarousel({ styleId, similarity, onClick }) {
 
   // Pointer events for swipe
   const handlePointerDown = (e) => {
-    dragStartX.current = e.clientX;
+    dragStartX.current = e.pageX;
     isDragging.current = true;
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e) => {
     if (!isDragging.current) return;
-    const delta = e.clientX - dragStartX.current;
+    const delta = e.pageX - dragStartX.current;
     gsap.set(stripRef.current, { x: currentOffset.current + delta });
   };
 
   const handlePointerUp = (e) => {
     if (!isDragging.current) return;
     isDragging.current = false;
-    const delta = e.clientX - dragStartX.current;
-    const threshold = 40;
+    const delta = e.pageX - dragStartX.current;
+    const threshold = Math.min(80, Math.max(36, window.innerWidth * 0.1));
 
     if (Math.abs(delta) < 5) {
       // This was a click, not a drag

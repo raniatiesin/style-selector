@@ -50,6 +50,7 @@ export default function OutputScreen() {
   const subTextRef = useRef(null);
   const loadingTlRef = useRef(null);
   const [showLoading, setShowLoading] = useState(true);
+  const [viewportHeight, setViewportHeight] = useState(() => window.visualViewport?.height || window.innerHeight);
 
   // Find-similar loading overlay refs
   const simLoadRef = useRef(null);
@@ -73,6 +74,21 @@ export default function OutputScreen() {
   const setIsSearching = useQuizStore(s => s.setIsSearching);
   const prepareConfirmation = useQuizStore(s => s.prepareConfirmation);
   const jumpToQuizStep = useQuizStore(s => s.jumpToQuizStep);
+
+  useEffect(() => {
+    const updateViewportHeight = () => {
+      setViewportHeight(window.visualViewport?.height || window.innerHeight);
+    };
+
+    updateViewportHeight();
+    window.addEventListener('resize', updateViewportHeight);
+    window.visualViewport?.addEventListener('resize', updateViewportHeight);
+
+    return () => {
+      window.removeEventListener('resize', updateViewportHeight);
+      window.visualViewport?.removeEventListener('resize', updateViewportHeight);
+    };
+  }, []);
 
   // User's tally tags from quiz answers
   const userTags = useMemo(() => {
@@ -255,16 +271,13 @@ export default function OutputScreen() {
         setSimLoading(false);
         setIsSearching(false);
 
-        // Stagger new carousels in after next render
-        requestAnimationFrame(() => {
-          const items = carouselGridRef.current?.children;
-          if (items) {
-            gsap.fromTo(Array.from(items),
-              { opacity: 0, y: 24 },
-              { opacity: 1, y: 0, duration: 0.5, stagger: STAGGER.carousels, ease: EASE.confident }
-            );
-          }
-        });
+        const items = carouselGridRef.current?.children;
+        if (items) {
+          gsap.fromTo(Array.from(items),
+            { opacity: 0, y: 24 },
+            { opacity: 1, y: 0, duration: 0.5, stagger: STAGGER.carousels, ease: EASE.confident }
+          );
+        }
       },
     });
 
@@ -367,7 +380,7 @@ export default function OutputScreen() {
 
       {/* Split layout — rendered once loading exits */}
       {!showLoading && (
-        <div className={styles.splitLayout}>
+        <div className={styles.splitLayout} style={{ '--output-vh': `${Math.round(viewportHeight)}px` }}>
           {/* Left panel */}
           <div ref={leftPanelRef} className={styles.leftPanel} style={{ opacity: 0 }}>
 

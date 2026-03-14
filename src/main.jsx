@@ -1,4 +1,3 @@
-import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { loadAllData } from './utils/dataCache';
 import { preloadImagesAsync } from './utils/preloader';
@@ -14,9 +13,5 @@ loadAllData().then(async () => {
   const toPreload = WELCOME_IMAGE_IDS.slice(0, slotCount);
   await preloadImagesAsync(toPreload, { threshold: 1.0, maxMs: 2500 });
 
-  createRoot(document.getElementById('root')).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
+  createRoot(document.getElementById('root')).render(<App />);
 });
