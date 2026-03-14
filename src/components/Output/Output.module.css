@@ -119,6 +119,239 @@
   .selectedCarouselWrap {
     max-width: min(220px, 68vw);
   }
+
+  .mobileDeck {
+    position: fixed;
+    inset: 0;
+    height: var(--output-vh, 100dvh);
+    width: 100%;
+    overflow: hidden;
+    z-index: 200;
+  }
+
+  .mobileCardsWrap {
+    position: absolute;
+    inset: 0;
+    will-change: transform;
+  }
+
+  .mobileCard {
+    position: relative;
+    width: 100%;
+    height: var(--output-vh, 100dvh);
+    overflow: hidden;
+  }
+
+  .mobileCard .carouselContainer {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    background: var(--bg);
+  }
+
+  .mobileCard .carouselContainer:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: transparent;
+  }
+
+  .mobileCard .dots,
+  .mobileCard .carouselArrow,
+  .mobileCard .similarityBadge {
+    display: none;
+  }
+
+  .mobileTopScrim {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 220px;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.66) 0%, rgba(0, 0, 0, 0) 100%);
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .mobileBottomScrim {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 220px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.66) 0%, rgba(0, 0, 0, 0) 100%);
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .mobileTopZone {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    padding: calc(env(safe-area-inset-top, 0px) + 48px) 14px 0;
+  }
+
+  .mobileNavRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .mobileIconBtn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.38);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.95);
+    font-family: var(--font);
+    font-size: 0.88rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .mobileIconBtn:disabled {
+    opacity: 0.42;
+  }
+
+  .mobileMatchBadge {
+    background: rgba(0, 0, 0, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.95);
+    font-family: var(--font);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 4px 9px;
+    border-radius: 20px;
+  }
+
+  .mobileTagRibbon {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .mobileTagRow {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobileTagRow::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobileTagPill {
+    flex-shrink: 0;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.88);
+    font-family: var(--font);
+    font-size: 0.56rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: 5px 10px;
+  }
+
+  .mobileSideProgress {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .mobileProgressDot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transition: all 0.2s ease;
+  }
+
+  .mobileProgressDotActive {
+    height: 18px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .mobileBottomZone {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    padding: 10px 14px calc(env(safe-area-inset-bottom, 0px) + 28px);
+  }
+
+  .mobileSlideDots {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 13px;
+  }
+
+  .mobileSlideDot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    transition: all 0.2s ease;
+  }
+
+  .mobileSlideDotActive {
+    width: 14px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .mobileButtonsRow {
+    display: flex;
+    gap: 9px;
+  }
+
+  .mobileConfirmBtn,
+  .mobileFindBtn {
+    flex: 1;
+    padding: 14px 0;
+    border-radius: 32px;
+    font-family: var(--font);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+  }
+
+  .mobileConfirmBtn {
+    background: #ffffff;
+    color: #111111;
+  }
+
+  .mobileFindBtn {
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.38);
+    color: rgba(255, 255, 255, 1);
+  }
 }
 
 /* Carousel container */
