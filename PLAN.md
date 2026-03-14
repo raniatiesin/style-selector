@@ -261,6 +261,31 @@ HUMAN STEPS (post-deploy):
 
 DONE WHEN: Build clean, human smoke confirms no regression.
 
+## MILESTONE 10 — Mobile Output six-issue hardening
+# Status: [DONE]
+# Result: Mobile Output fixes applied in src/components/Output (no StyleCarousel internals changed):
+# - Removed dead top gap by reclaiming safe-area spacing.
+# - Restored native vertical card paging/snap container behavior.
+# - Removed obscuring mobile scrim pseudo-overlays from card frame.
+# - Rebalanced card slot sizing to preserve 2/3 card visibility without crop.
+# - Kept match % on existing carousel overlay badge path (removed separate top badge).
+# - Ensured slide dots are visible with z-index/overflow adjustments.
+# - Mobile image click action remains disabled to avoid tap-flicker during scroll/swipe.
+# Verification: eslint pass, build pass, perf probe FPS 59.6 long tasks 0, p50 69ms, p95 84ms.
+
+TASK:
+  Fix mobile Output layout issues only (desktop unchanged), then run:
+  1) npx eslint src/ --ext .js,.jsx --max-warnings 0
+  2) npm run build
+  3) npm run perf:probe -- http://127.0.0.1:5173
+
+VERIFY:
+  [x] npx eslint src/ --ext .js,.jsx --max-warnings 0  ->  pass
+  [x] npm run build  ->  pass
+  [x] npm run perf:probe  ->  FPS >= 58, long tasks = 0
+
+DONE WHEN: All requested gates pass and metrics are recorded.
+
 ## Phase 1 sign-off checklist
 # All must be TRUE before Phase 2 begins.
 

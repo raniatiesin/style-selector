@@ -106,7 +106,7 @@
     justify-content: stretch;
     align-items: stretch;
     min-height: 0;
-    padding: 52px 16px 20px;
+    padding: calc(env(safe-area-inset-top, 0px) + 8px) 16px 12px;
     gap: 12px;
     overflow: hidden;
   }
@@ -124,13 +124,13 @@
     z-index: 2;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
   }
 
   .mobileTagRibbon {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
   }
 
   .mobileTagRow {
@@ -148,8 +148,10 @@
   .mobileCardDeck {
     position: relative;
     flex: 1;
+    height: 100%;
+    max-height: 100%;
     min-height: 0;
-    overflow-y: auto;
+    overflow-y: scroll;
     scroll-snap-type: y mandatory;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
@@ -164,43 +166,20 @@
   }
 
   .mobileCardSlot {
-    min-height: calc(var(--output-vh, 100dvh) - 220px);
+    min-height: calc(var(--output-vh, 100dvh) - (env(safe-area-inset-top, 0px) + 170px));
     display: flex;
     align-items: center;
     justify-content: center;
-    scroll-snap-align: center;
+    scroll-snap-align: start;
     scroll-snap-stop: always;
-    padding: 20px 0;
+    padding: 10px 0;
   }
 
   .mobileCardFrame {
     position: relative;
-    width: 85vw;
-    max-width: 360px;
+    width: clamp(300px, 85vw, 360px);
+    overflow: visible;
     -webkit-tap-highlight-color: transparent;
-    touch-action: pan-x;
-  }
-
-  .mobileCardFrame::before,
-  .mobileCardFrame::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    z-index: 3;
-    pointer-events: none;
-  }
-
-  .mobileCardFrame::before {
-    top: 0;
-    height: 28%;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0));
-  }
-
-  .mobileCardFrame::after {
-    bottom: 0;
-    height: 24%;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0));
   }
 
   .mobileCardTracker {
@@ -233,7 +212,7 @@
   .mobileBottomZone {
     position: relative;
     z-index: 2;
-    padding-bottom: 6px;
+    padding-bottom: 0;
   }
 
   .mobileBottomZone .buttonRow {
@@ -296,6 +275,7 @@
   transform: translateX(-50%);
   display: flex;
   gap: 4px;
+  z-index: 6;
 }
 
 .dot {
