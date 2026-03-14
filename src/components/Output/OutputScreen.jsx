@@ -43,14 +43,21 @@ function getStyleTally(styleId) {
 
 export default function OutputScreen() {
   const carouselGridRef = useRef(null);
+  const mobileDeckRef = useRef(null);
+  const mobileCardRefs = useRef([]);
   const leftPanelRef = useRef(null);
   const loadingRef = useRef(null);
   const lineRef = useRef(null);
   const textRef = useRef(null);
   const subTextRef = useRef(null);
   const loadingTlRef = useRef(null);
+  const mobileNavVersionRef = useRef(0);
+  const mobileNavTimeoutRef = useRef(null);
+  const touchStartRef = useRef({ x: 0, y: 0 });
   const [showLoading, setShowLoading] = useState(true);
   const [viewportHeight, setViewportHeight] = useState(() => window.visualViewport?.height || window.innerHeight);
+  const [isMobileCoarse, setIsMobileCoarse] = useState(false);
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
 
   // Find-similar loading overlay refs
   const simLoadRef = useRef(null);
@@ -59,24 +66,6 @@ export default function OutputScreen() {
   const simTlRef = useRef(null);
   const [simLoading, setSimLoading] = useState(false);
   const [pendingSimResults, setPendingSimResults] = useState(null);
-  const mobileCardsWrapRef = useRef(null);
-  const mobileCardRefs = useRef([]);
-  const cardNavVersionRef = useRef(0);
-  const cardNavTimeoutRef = useRef(null);
-  const cardSwipeRef = useRef({
-    dragging: false,
-    axis: null,
-    startX: 0,
-    startY: 0,
-    offsetY: 0,
-  });
-  const [isMobileViewport, setIsMobileViewport] = useState(() => window.matchMedia('(max-width: 767px)').matches);
-  const [isTouchLikeInput, setIsTouchLikeInput] = useState(() => {
-    return window.matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-  });
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [currentSlideCount, setCurrentSlideCount] = useState(6);
 
   const answers = useQuizStore(s => s.answers);
   const outputResults = useQuizStore(s => s.outputResults);
@@ -92,62 +81,6 @@ export default function OutputScreen() {
   const setIsSearching = useQuizStore(s => s.setIsSearching);
   const prepareConfirmation = useQuizStore(s => s.prepareConfirmation);
   const jumpToQuizStep = useQuizStore(s => s.jumpToQuizStep);
-
-  const isMobileLayout = isMobileViewport;
-
-  const applyMobileDeckTransform = useCallback((cardIndex, offset = 0, animate = false) => {
-    if (!mobileCardsWrapRef.current) return;
-    const targetY = -(cardIndex * viewportHeight) + offset;
-    if (animate) {
-      gsap.to(mobileCardsWrapRef.current, {
-        y: targetY,
-        duration: 0.32,
-        ease: 'power2.out',
-      });
-      return;
-    }
-    gsap.set(mobileCardsWrapRef.current, { y: targetY });
-  }, [viewportHeight]);
-
-  const queueCardIndexUpdate = useCallback((index, animate = true) => {
-    const maxIndex = Math.max(0, outputResults.length - 1);
-    const clamped = Math.max(0, Math.min(maxIndex, index));
-    const version = ++cardNavVersionRef.current;
-
-    if (cardNavTimeoutRef.current !== null) {
-      clearTimeout(cardNavTimeoutRef.current);
-      cardNavTimeoutRef.current = null;
-    }
-
-    cardNavTimeoutRef.current = setTimeout(() => {
-      cardNavTimeoutRef.current = null;
-      if (cardNavVersionRef.current !== version) return;
-      setCurrentCardIndex(clamped);
-      applyMobileDeckTransform(clamped, 0, animate);
-    }, 0);
-  }, [outputResults.length, applyMobileDeckTransform]);
-
-  const readCurrentSlideState = useCallback((cardIndex) => {
-    const cardEl = mobileCardRefs.current[cardIndex];
-    if (!cardEl) {
-      setCurrentSlideIndex(0);
-      setCurrentSlideCount(6);
-      return;
-    }
-
-    const dots = Array.from(cardEl.querySelectorAll(`.${styles.dot}`));
-    setCurrentSlideCount(dots.length || 6);
-
-    const activeIdx = dots.findIndex(dot => dot.classList.contains(styles.active));
-    setCurrentSlideIndex(activeIdx >= 0 ? activeIdx : 0);
-  }, []);
-
-  const handleMobileConfirm = useCallback(() => {
-    const active = outputResults[currentCardIndex];
-    if (!active) return;
-    setSelectedCarousel(active.id);
-    prepareConfirmation();
-  }, [outputResults, currentCardIndex, setSelectedCarousel, prepareConfirmation]);
 
   useEffect(() => {
     const updateViewportHeight = () => {
@@ -165,28 +98,27 @@ export default function OutputScreen() {
   }, []);
 
   useEffect(() => {
-    const updateInputAndViewportMode = () => {
-      setIsMobileViewport(window.matchMedia('(max-width: 767px)').matches);
-      setIsTouchLikeInput(
-        window.matchMedia('(pointer: coarse)').matches ||
-        ('ontouchstart' in window) ||
-        (navigator.maxTouchPoints > 0)
-      );
+    const query = window.matchMedia('(max-width: 767px) and (pointer: coarse)');
+
+    const updateMobileMode = () => {
+      setIsMobileCoarse(query.matches);
     };
 
-    updateInputAndViewportMode();
-    window.addEventListener('resize', updateInputAndViewportMode);
+    updateMobileMode();
+    query.addEventListener('change', updateMobileMode);
+    window.addEventListener('resize', updateMobileMode);
 
     return () => {
-      window.removeEventListener('resize', updateInputAndViewportMode);
+      query.removeEventListener('change', updateMobileMode);
+      window.removeEventListener('resize', updateMobileMode);
     };
   }, []);
 
   useEffect(() => {
     return () => {
-      if (cardNavTimeoutRef.current !== null) {
-        clearTimeout(cardNavTimeoutRef.current);
-        cardNavTimeoutRef.current = null;
+      if (mobileNavTimeoutRef.current !== null) {
+        clearTimeout(mobileNavTimeoutRef.current);
+        mobileNavTimeoutRef.current = null;
       }
     };
   }, []);
@@ -204,21 +136,52 @@ export default function OutputScreen() {
 
   const mobileActiveResult = useMemo(() => {
     if (outputResults.length === 0) return null;
-    return outputResults[Math.min(currentCardIndex, outputResults.length - 1)] || null;
+    const safeIndex = Math.min(currentCardIndex, outputResults.length - 1);
+    return outputResults[safeIndex] || null;
   }, [outputResults, currentCardIndex]);
 
-  const mobileOverlayTags = useMemo(() => {
-    if (!mobileActiveResult) return userTags;
+  const mobileActiveTags = useMemo(() => {
+    if (!mobileActiveResult) return [];
     return getStyleTally(mobileActiveResult.id).split(', ').filter(Boolean);
-  }, [mobileActiveResult, userTags]);
+  }, [mobileActiveResult]);
 
   const mobileTagRows = useMemo(() => {
-    const splitAt = Math.ceil(mobileOverlayTags.length / 2);
     return [
-      mobileOverlayTags.slice(0, splitAt),
-      mobileOverlayTags.slice(splitAt),
+      mobileActiveTags.slice(0, 6),
+      mobileActiveTags.slice(6, 12),
     ];
-  }, [mobileOverlayTags]);
+  }, [mobileActiveTags]);
+
+  const mobileMatchPercent = mobileActiveResult?.similarity != null
+    ? `${Math.round(mobileActiveResult.similarity * 100)}%`
+    : '--';
+
+  const queueVersionedCardNav = useCallback((version, task) => {
+    if (mobileNavTimeoutRef.current !== null) {
+      clearTimeout(mobileNavTimeoutRef.current);
+      mobileNavTimeoutRef.current = null;
+    }
+
+    mobileNavTimeoutRef.current = setTimeout(() => {
+      mobileNavTimeoutRef.current = null;
+      if (mobileNavVersionRef.current !== version) return;
+      task();
+    }, 0);
+  }, []);
+
+  const moveToCard = useCallback((nextIndex, { scroll = true } = {}) => {
+    if (outputResults.length === 0) return;
+
+    const clamped = Math.max(0, Math.min(outputResults.length - 1, nextIndex));
+    const version = ++mobileNavVersionRef.current;
+
+    queueVersionedCardNav(version, () => {
+      setCurrentCardIndex(clamped);
+      if (!scroll) return;
+      const target = mobileCardRefs.current[clamped];
+      target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+  }, [outputResults.length, queueVersionedCardNav]);
 
   // Compute results on mount — POST tally to /api/search
   useEffect(() => {
@@ -261,6 +224,21 @@ export default function OutputScreen() {
     if (outputResults.length === 0) return;
     preloadImagesPriority(outputResults.map(r => r.id));
   }, [outputResults]);
+
+  useEffect(() => {
+    mobileCardRefs.current = [];
+    setCurrentCardIndex(0);
+  }, [outputResults]);
+
+  useEffect(() => {
+    if (!isMobileCoarse || showLoading || outputResults.length === 0) return;
+
+    const safeIndex = Math.min(currentCardIndex, outputResults.length - 1);
+    const activeResult = outputResults[safeIndex];
+    if (!activeResult) return;
+    if (selectedCarousel === activeResult.id) return;
+    setSelectedCarousel(activeResult.id);
+  }, [isMobileCoarse, showLoading, outputResults, currentCardIndex, selectedCarousel, setSelectedCarousel]);
 
   // Loading screen entrance animation
   useEffect(() => {
@@ -333,8 +311,6 @@ export default function OutputScreen() {
   useEffect(() => {
     if (showLoading || outputResults.length === 0) return;
 
-    if (isMobileLayout) return;
-
     // Left panel fade in
     if (leftPanelRef.current) {
       gsap.fromTo(leftPanelRef.current,
@@ -352,7 +328,7 @@ export default function OutputScreen() {
         { opacity: 1, y: 0, duration: 0.5, stagger: STAGGER.carousels, ease: EASE.confident, delay: 0.15 }
       );
     }
-  }, [showLoading, outputResults, isMobileLayout]);
+  }, [showLoading, outputResults]);
 
   // Find-similar loading entrance animation
   useEffect(() => {
@@ -392,11 +368,6 @@ export default function OutputScreen() {
         setSimLoading(false);
         setIsSearching(false);
 
-        if (isMobileLayout) {
-          queueCardIndexUpdate(0, false);
-          return;
-        }
-
         const items = carouselGridRef.current?.children;
         if (items) {
           gsap.fromTo(Array.from(items),
@@ -419,151 +390,7 @@ export default function OutputScreen() {
       opacity: 0,
       duration: DUR.fast, ease: EASE.in,
     }, `-=${DUR.fast}`);
-  }, [simLoading, pendingSimResults, setOutputResults, setIsSearching, isMobileLayout, queueCardIndexUpdate]);
-
-  useEffect(() => {
-    if (!isMobileLayout || showLoading) return;
-    applyMobileDeckTransform(currentCardIndex, 0, false);
-  }, [isMobileLayout, showLoading, currentCardIndex, viewportHeight, applyMobileDeckTransform]);
-
-  useEffect(() => {
-    if (!isMobileLayout) return;
-    if (outputResults.length === 0) {
-      setCurrentCardIndex(0);
-      setCurrentSlideIndex(0);
-      return;
-    }
-
-    if (currentCardIndex > outputResults.length - 1) {
-      queueCardIndexUpdate(outputResults.length - 1, false);
-      return;
-    }
-
-    if (!selectedCarousel) {
-      setSelectedCarousel(outputResults[0].id);
-      return;
-    }
-
-    const selectedIndex = outputResults.findIndex(r => r.id === selectedCarousel);
-    if (selectedIndex >= 0 && selectedIndex !== currentCardIndex) {
-      queueCardIndexUpdate(selectedIndex, false);
-    }
-  }, [
-    isMobileLayout,
-    outputResults,
-    selectedCarousel,
-    currentCardIndex,
-    queueCardIndexUpdate,
-    setSelectedCarousel,
-  ]);
-
-  useEffect(() => {
-    if (!isMobileLayout || outputResults.length === 0) return;
-    const active = outputResults[currentCardIndex];
-    if (active && selectedCarousel !== active.id) {
-      setSelectedCarousel(active.id);
-    }
-  }, [isMobileLayout, outputResults, currentCardIndex, selectedCarousel, setSelectedCarousel]);
-
-  useEffect(() => {
-    if (!isMobileLayout || showLoading || outputResults.length === 0) return;
-
-    const cardEl = mobileCardRefs.current[currentCardIndex];
-    if (!cardEl) {
-      setCurrentSlideIndex(0);
-      setCurrentSlideCount(6);
-      return;
-    }
-
-    const update = () => readCurrentSlideState(currentCardIndex);
-    update();
-
-    const observer = new MutationObserver(update);
-    const dots = cardEl.querySelectorAll(`.${styles.dot}`);
-    dots.forEach(dot => {
-      observer.observe(dot, { attributes: true, attributeFilter: ['class'] });
-    });
-
-    return () => observer.disconnect();
-  }, [isMobileLayout, showLoading, outputResults.length, currentCardIndex, readCurrentSlideState]);
-
-  const handleMobileDeckPointerDown = useCallback((e) => {
-    if (!isMobileLayout || !isTouchLikeInput || showLoading || simLoading) return;
-
-    cardSwipeRef.current.dragging = true;
-    cardSwipeRef.current.axis = null;
-    cardSwipeRef.current.startX = e.pageX;
-    cardSwipeRef.current.startY = e.pageY;
-    cardSwipeRef.current.offsetY = 0;
-  }, [isMobileLayout, isTouchLikeInput, showLoading, simLoading]);
-
-  const handleMobileDeckPointerMove = useCallback((e) => {
-    if (!isMobileLayout || !isTouchLikeInput) return;
-    if (!cardSwipeRef.current.dragging) return;
-
-    const deltaX = e.pageX - cardSwipeRef.current.startX;
-    const deltaY = e.pageY - cardSwipeRef.current.startY;
-
-    if (!cardSwipeRef.current.axis && (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6)) {
-      cardSwipeRef.current.axis = Math.abs(deltaY) > Math.abs(deltaX) ? 'y' : 'x';
-    }
-
-    if (cardSwipeRef.current.axis !== 'y') return;
-
-    cardSwipeRef.current.offsetY = deltaY;
-    applyMobileDeckTransform(currentCardIndex, deltaY, false);
-  }, [isMobileLayout, isTouchLikeInput, currentCardIndex, applyMobileDeckTransform]);
-
-  const handleMobileDeckPointerUp = useCallback((e) => {
-    if (!isMobileLayout || !isTouchLikeInput) return;
-    if (!cardSwipeRef.current.dragging) return;
-
-    const deltaY = e.pageY - cardSwipeRef.current.startY;
-    const axis = cardSwipeRef.current.axis;
-
-    cardSwipeRef.current.dragging = false;
-    cardSwipeRef.current.axis = null;
-    cardSwipeRef.current.offsetY = 0;
-
-    if (axis !== 'y') {
-      applyMobileDeckTransform(currentCardIndex, 0, true);
-      return;
-    }
-
-    const threshold = Math.min(120, Math.max(50, viewportHeight * 0.1));
-    let nextIndex = currentCardIndex;
-
-    if (deltaY < -threshold && currentCardIndex < outputResults.length - 1) {
-      nextIndex = currentCardIndex + 1;
-    } else if (deltaY > threshold && currentCardIndex > 0) {
-      nextIndex = currentCardIndex - 1;
-    }
-
-    if (nextIndex !== currentCardIndex) {
-      queueCardIndexUpdate(nextIndex, true);
-      return;
-    }
-
-    applyMobileDeckTransform(currentCardIndex, 0, true);
-  }, [
-    isMobileLayout,
-    isTouchLikeInput,
-    currentCardIndex,
-    outputResults.length,
-    viewportHeight,
-    queueCardIndexUpdate,
-    applyMobileDeckTransform,
-  ]);
-
-  const handleMobileDeckPointerCancel = useCallback(() => {
-    if (!isMobileLayout || !isTouchLikeInput) return;
-    if (!cardSwipeRef.current.dragging) return;
-
-    cardSwipeRef.current.dragging = false;
-    cardSwipeRef.current.axis = null;
-    cardSwipeRef.current.offsetY = 0;
-    applyMobileDeckTransform(currentCardIndex, 0, true);
-  }, [isMobileLayout, isTouchLikeInput, currentCardIndex, applyMobileDeckTransform]);
+  }, [simLoading, pendingSimResults, setOutputResults, setIsSearching]);
 
   // Carousel click → just select it on the left panel
   const handleCarouselClick = useCallback((styleId) => {
@@ -571,22 +398,14 @@ export default function OutputScreen() {
   }, [setSelectedCarousel]);
 
   const handleFindSimilar = useCallback(async () => {
-    const styleIdForSimilar = isMobileLayout
-      ? (outputResults[currentCardIndex]?.id || selectedCarousel)
-      : selectedCarousel;
-
-    if (!styleIdForSimilar || simLoading) return;
-
-    if (styleIdForSimilar !== selectedCarousel) {
-      setSelectedCarousel(styleIdForSimilar);
-    }
+    if (!selectedCarousel || simLoading) return;
 
     pushToHistory();
     setIsSearching(true);
 
     // Exit current carousels → show loading overlay
     const carousels = carouselGridRef.current?.children;
-    if (!isMobileLayout && carousels) {
+    if (carousels) {
       gsap.timeline()
         .to(Array.from(carousels), {
           opacity: 0, y: -10,
@@ -605,7 +424,7 @@ export default function OutputScreen() {
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ styleId: styleIdForSimilar, sessionId }),
+        body: JSON.stringify({ styleId: selectedCarousel, sessionId }),
       });
 
       if (!res.ok) throw new Error('Find similar failed');
@@ -618,18 +437,7 @@ export default function OutputScreen() {
       setSimLoading(false);
       setIsSearching(false);
     }
-  }, [
-    selectedCarousel,
-    sessionId,
-    simLoading,
-    pushToHistory,
-    setOutputResults,
-    setIsSearching,
-    isMobileLayout,
-    outputResults,
-    currentCardIndex,
-    setSelectedCarousel,
-  ]);
+  }, [selectedCarousel, sessionId, simLoading, pushToHistory, setOutputResults, setIsSearching]);
 
   const handleBack = useCallback(() => {
     popHistory();
@@ -638,6 +446,54 @@ export default function OutputScreen() {
   const handleTagClick = useCallback((categoryIndex) => {
     jumpToQuizStep(categoryIndex * 3);
   }, [jumpToQuizStep]);
+
+  const handleMobileDeckScroll = useCallback(() => {
+    if (!isMobileCoarse) return;
+
+    const deck = mobileDeckRef.current;
+    if (!deck) return;
+
+    const viewportMiddle = deck.scrollTop + (deck.clientHeight / 2);
+    let nearestIndex = currentCardIndex;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    mobileCardRefs.current.forEach((node, index) => {
+      if (!node) return;
+      const center = node.offsetTop + (node.offsetHeight / 2);
+      const distance = Math.abs(center - viewportMiddle);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+
+    if (nearestIndex === currentCardIndex) return;
+    const version = ++mobileNavVersionRef.current;
+    queueVersionedCardNav(version, () => setCurrentCardIndex(nearestIndex));
+  }, [isMobileCoarse, currentCardIndex, queueVersionedCardNav]);
+
+  const handleMobileTouchStart = useCallback((event) => {
+    const touch = event.touches?.[0];
+    if (!touch) return;
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handleMobileTouchEnd = useCallback((event) => {
+    if (!isMobileCoarse) return;
+
+    const touch = event.changedTouches?.[0];
+    if (!touch) return;
+
+    const dx = touch.clientX - touchStartRef.current.x;
+    const dy = touch.clientY - touchStartRef.current.y;
+    if (Math.abs(dy) < 42 || Math.abs(dy) <= Math.abs(dx)) return;
+
+    if (dy < 0) {
+      moveToCard(currentCardIndex + 1);
+    } else {
+      moveToCard(currentCardIndex - 1);
+    }
+  }, [isMobileCoarse, currentCardIndex, moveToCard]);
 
   return (
     <>
@@ -660,139 +516,15 @@ export default function OutputScreen() {
         </div>
       )}
 
-      {/* Back button — desktop only, visible after first Find Similar */}
-      {!showLoading && !isMobileLayout && outputHistory.length > 0 && (
+      {/* Back button — visible after first Find Similar */}
+      {!showLoading && outputHistory.length > 0 && (
         <button className={styles.backBtn} onClick={handleBack} type="button">
           ← Back
         </button>
       )}
 
-      {/* Mobile card deck layout */}
-      {!showLoading && isMobileLayout && (
-        <div className={styles.mobileDeck} style={{ '--output-vh': `${Math.round(viewportHeight)}px` }}>
-          <div
-            ref={mobileCardsWrapRef}
-            className={styles.mobileCardsWrap}
-            onPointerDown={handleMobileDeckPointerDown}
-            onPointerMove={handleMobileDeckPointerMove}
-            onPointerUp={handleMobileDeckPointerUp}
-            onPointerCancel={handleMobileDeckPointerCancel}
-          >
-            {outputResults.map((r, i) => (
-              <div
-                key={r.id}
-                ref={(el) => { mobileCardRefs.current[i] = el; }}
-                className={styles.mobileCard}
-              >
-                <StyleCarousel
-                  styleId={r.id}
-                  similarity={r.similarity}
-                  onClick={handleCarouselClick}
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className={styles.mobileTopScrim} />
-          <div className={styles.mobileBottomScrim} />
-
-          <div className={styles.mobileTopZone}>
-            <div className={styles.mobileNavRow}>
-              <button
-                className={styles.mobileIconBtn}
-                onClick={handleBack}
-                type="button"
-                disabled={outputHistory.length === 0}
-                aria-label="Back"
-              >
-                ←
-              </button>
-
-              <span className={styles.mobileMatchBadge}>
-                {mobileActiveResult ? `${Math.round((mobileActiveResult.similarity || 0) * 100)}%` : '--'}
-              </span>
-
-              <button
-                className={styles.mobileIconBtn}
-                type="button"
-                aria-label="More options"
-              >
-                ⋯
-              </button>
-            </div>
-
-            <div className={styles.mobileTagRibbon}>
-              {mobileTagRows.map((row, rowIdx) => (
-                <div key={rowIdx} className={styles.mobileTagRow}>
-                  {row.map((tag, i) => (
-                    <button
-                      key={`${rowIdx}-${i}-${tag}`}
-                      className={styles.mobileTagPill}
-                      onClick={() => handleTagClick(i + (rowIdx * Math.ceil(mobileOverlayTags.length / 2)))}
-                      type="button"
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.mobileSideProgress}>
-            {outputResults.map((r, i) => (
-              <div
-                key={r.id}
-                className={`${styles.mobileProgressDot} ${i === currentCardIndex ? styles.mobileProgressDotActive : ''}`}
-              />
-            ))}
-          </div>
-
-          <div className={styles.mobileBottomZone}>
-            <div className={styles.mobileSlideDots}>
-              {Array.from({ length: currentSlideCount }, (_, i) => (
-                <div
-                  key={i}
-                  className={`${styles.mobileSlideDot} ${i === currentSlideIndex ? styles.mobileSlideDotActive : ''}`}
-                />
-              ))}
-            </div>
-
-            <div className={styles.mobileButtonsRow}>
-              <button
-                className={styles.mobileConfirmBtn}
-                onClick={handleMobileConfirm}
-                type="button"
-              >
-                Confirm
-              </button>
-              <button
-                className={styles.mobileFindBtn}
-                onClick={handleFindSimilar}
-                type="button"
-              >
-                Find Similar
-              </button>
-            </div>
-          </div>
-
-          {simLoading && (
-            <div ref={simLoadRef} className={styles.simLoadingOverlay}>
-              <p ref={simTextRef} className={styles.simLoadingText} style={{ opacity: 0 }}>
-                finding similar
-              </p>
-              <div
-                ref={simLineRef}
-                className={styles.loadingLine}
-                style={{ opacity: 0, transform: 'scaleX(0)' }}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Split layout — rendered once loading exits (desktop) */}
-      {!showLoading && !isMobileLayout && (
+      {/* Split layout — rendered once loading exits */}
+      {!showLoading && (
         <div className={styles.splitLayout} style={{ '--output-vh': `${Math.round(viewportHeight)}px` }}>
           {/* Left panel */}
           <div ref={leftPanelRef} className={styles.leftPanel} style={{ opacity: 0 }}>
@@ -850,16 +582,95 @@ export default function OutputScreen() {
                 />
               </div>
             )}
-            <div ref={carouselGridRef} className={styles.carouselGrid}>
-              {outputResults.map(r => (
-                <StyleCarousel
-                  key={r.id}
-                  styleId={r.id}
-                  similarity={r.similarity}
-                  onClick={handleCarouselClick}
-                />
-              ))}
-            </div>
+
+            {isMobileCoarse ? (
+              <>
+                <div className={styles.mobileTopZone}>
+                  <span className={styles.mobileMatchBadge}>{mobileMatchPercent}</span>
+                  <div className={styles.mobileTagRibbon}>
+                    {mobileTagRows.map((row, rowIndex) => (
+                      <div key={rowIndex} className={styles.mobileTagRow}>
+                        {row.map((tag, indexInRow) => {
+                          const categoryIndex = rowIndex === 0 ? indexInRow : indexInRow + 6;
+                          return (
+                            <TagPill
+                              key={`${rowIndex}-${indexInRow}`}
+                              label={tag}
+                              onClick={() => handleTagClick(categoryIndex)}
+                            />
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.mobileCardTracker}>
+                  {outputResults.map((result, index) => (
+                    <div
+                      key={`tracker-${result.id}`}
+                      className={`${styles.mobileTrackerDot} ${index === currentCardIndex ? styles.mobileTrackerDotActive : ''}`}
+                    />
+                  ))}
+                </div>
+
+                <div
+                  ref={mobileDeckRef}
+                  className={styles.mobileCardDeck}
+                  onScroll={handleMobileDeckScroll}
+                  onTouchStart={handleMobileTouchStart}
+                  onTouchEnd={handleMobileTouchEnd}
+                >
+                  {outputResults.map((result, index) => (
+                    <div
+                      key={result.id}
+                      ref={(node) => {
+                        mobileCardRefs.current[index] = node;
+                      }}
+                      className={styles.mobileCardSlot}
+                    >
+                      <div className={styles.mobileCardFrame}>
+                        <StyleCarousel
+                          styleId={result.id}
+                          similarity={result.similarity}
+                          onClick={handleCarouselClick}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={styles.mobileBottomZone}>
+                  <div className={styles.buttonRow}>
+                    <button
+                      className={styles.confirmBtn}
+                      onClick={prepareConfirmation}
+                      type="button"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      className={styles.findSimilarBtn}
+                      onClick={handleFindSimilar}
+                      type="button"
+                    >
+                      Find Similar
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div ref={carouselGridRef} className={styles.carouselGrid}>
+                {outputResults.map(r => (
+                  <StyleCarousel
+                    key={r.id}
+                    styleId={r.id}
+                    similarity={r.similarity}
+                    onClick={handleCarouselClick}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
