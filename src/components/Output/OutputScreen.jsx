@@ -40,6 +40,15 @@ function getStyleTally(styleId) {
   return entry?.tally || '';
 }
 
+function getStyleLabel(styleId) {
+  if (!styleId) return '';
+  const numeric = Number.parseInt(String(styleId).replace(/[^0-9]/g, ''), 10);
+  if (Number.isFinite(numeric)) {
+    return `Style N. ${numeric}`;
+  }
+  return String(styleId).replace(/_/g, ' ');
+}
+
 export default function OutputScreen() {
   const carouselGridRef = useRef(null);
   const mobileDeckRef = useRef(null);
@@ -143,6 +152,8 @@ export default function OutputScreen() {
     if (!selectedCarousel) return [];
     return getStyleTally(selectedCarousel).split(', ').filter(Boolean);
   }, [selectedCarousel]);
+
+  const selectedStyleLabel = useMemo(() => getStyleLabel(selectedCarousel), [selectedCarousel]);
 
   const mobileCardIndex = currentCardIndex;
 
@@ -503,6 +514,7 @@ export default function OutputScreen() {
 
             {selectedCarousel ? (
               <>
+                <p className={styles.leftHeading}>{selectedStyleLabel}</p>
                 <div className={styles.tallyGrid}>
                   {selectedTags.map((tag, i) => (
                     <TagPill key={i} label={tag} onClick={() => handleTagClick(i)} />

@@ -380,7 +380,7 @@
   }
 
   .selectedCarouselWrap {
-    max-width: min(240px, 70%);
+    max-width: min(330px, 86%);
     align-self: center;
   }
 
@@ -418,6 +418,8 @@
     justify-content: center;
     flex-wrap: nowrap;
     overflow: visible;
+    margin-top: auto;
+    padding-top: 6px;
   }
 }
 

@@ -435,3 +435,24 @@ VERIFY:
   [x] npm run perf:probe -- http://127.0.0.1:5173  ->  FPS 59.9, long tasks 0
 
 DONE WHEN: Desktop layout is tightened with static buttons and two-row swipe tags while all verification gates pass.
+
+## MILESTONE 17 — Selected style title + larger featured card
+# Status: [DONE]
+# Result: Output selected state now shows a style label heading (for example, "Style N. 145") in the left panel, and desktop featured selected carousel size increased for stronger emphasis while keeping balanced padding and static button placement.
+# Scope control: src/components/Output/OutputScreen.jsx and src/components/Output/Output.module.css only.
+# Verification: eslint pass, build pass, perf probe FPS 59.8 long tasks 0, p50 57ms, p95 75ms.
+
+TASK:
+  1) Replace selected-state "your tally" style context with selected style label.
+  2) Increase featured selected carousel footprint by roughly 30-40%.
+  3) Keep Confirm/Find Similar in a clean static desktop position.
+
+VERIFY:
+  [x] Selected style heading rendered in selected state
+  [x] Desktop selected carousel max-width increased
+  [x] Desktop left button row remains static
+  [x] npx eslint src/ --ext .js,.jsx --max-warnings 0  ->  pass
+  [x] npm run build  ->  pass
+  [x] npm run perf:probe -- http://127.0.0.1:5173  ->  FPS 59.8, long tasks 0
+
+DONE WHEN: Selected style label appears and featured card/button presentation is improved without regressions.
