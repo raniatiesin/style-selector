@@ -4,7 +4,6 @@ import { useQuizStore } from '../../store/quizStore';
 import { getManifest } from '../../utils/dataCache';
 import { preloadImagesPriority } from '../../utils/preloader';
 import { EASE, DUR, STAGGER } from '../../config/animation';
-import { STAGES } from '../../config/questionTree';
 import StyleCarousel from './StyleCarousel';
 import TagPill from '../shared/TagPill';
 import styles from './Output.module.css';
@@ -53,7 +52,6 @@ export default function OutputScreen() {
   const loadingTlRef = useRef(null);
   const mobileNavVersionRef = useRef(0);
   const mobileNavTimeoutRef = useRef(null);
-  const touchStartRef = useRef({ x: 0, y: 0 });
   const [showLoading, setShowLoading] = useState(true);
   const [viewportHeight, setViewportHeight] = useState(() => window.visualViewport?.height || window.innerHeight);
   const [isMobileCoarse, setIsMobileCoarse] = useState(false);
@@ -69,7 +67,6 @@ export default function OutputScreen() {
 
   const answers = useQuizStore(s => s.answers);
   const outputResults = useQuizStore(s => s.outputResults);
-  const outputHistory = useQuizStore(s => s.outputHistory);
   const sessionId = useQuizStore(s => s.sessionId);
   const selectedCarousel = useQuizStore(s => s.selectedCarousel);
 
@@ -77,7 +74,6 @@ export default function OutputScreen() {
   const setSessionId = useQuizStore(s => s.setSessionId);
   const setSelectedCarousel = useQuizStore(s => s.setSelectedCarousel);
   const pushToHistory = useQuizStore(s => s.pushToHistory);
-  const popHistory = useQuizStore(s => s.popHistory);
   const setIsSearching = useQuizStore(s => s.setIsSearching);
   const prepareConfirmation = useQuizStore(s => s.prepareConfirmation);
   const jumpToQuizStep = useQuizStore(s => s.jumpToQuizStep);
@@ -152,10 +148,6 @@ export default function OutputScreen() {
     ];
   }, [mobileActiveTags]);
 
-  const mobileMatchPercent = mobileActiveResult?.similarity != null
-    ? `${Math.round(mobileActiveResult.similarity * 100)}%`
-    : '--';
-
   const queueVersionedCardNav = useCallback((version, task) => {
     if (mobileNavTimeoutRef.current !== null) {
       clearTimeout(mobileNavTimeoutRef.current);
@@ -168,20 +160,6 @@ export default function OutputScreen() {
       task();
     }, 0);
   }, []);
-
-  const moveToCard = useCallback((nextIndex, { scroll = true } = {}) => {
-    if (outputResults.length === 0) return;
-
-    const clamped = Math.max(0, Math.min(outputResults.length - 1, nextIndex));
-    const version = ++mobileNavVersionRef.current;
-
-    queueVersionedCardNav(version, () => {
-      setCurrentCardIndex(clamped);
-      if (!scroll) return;
-      const target = mobileCardRefs.current[clamped];
-      target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    });
-  }, [outputResults.length, queueVersionedCardNav]);
 
   // Compute results on mount — POST tally to /api/search
   useEffect(() => {
@@ -439,10 +417,6 @@ export default function OutputScreen() {
     }
   }, [selectedCarousel, sessionId, simLoading, pushToHistory, setOutputResults, setIsSearching]);
 
-  const handleBack = useCallback(() => {
-    popHistory();
-  }, [popHistory]);
-
   const handleTagClick = useCallback((categoryIndex) => {
     jumpToQuizStep(categoryIndex * 3);
   }, [jumpToQuizStep]);
@@ -472,29 +446,6 @@ export default function OutputScreen() {
     queueVersionedCardNav(version, () => setCurrentCardIndex(nearestIndex));
   }, [isMobileCoarse, currentCardIndex, queueVersionedCardNav]);
 
-  const handleMobileTouchStart = useCallback((event) => {
-    const touch = event.touches?.[0];
-    if (!touch) return;
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-  }, []);
-
-  const handleMobileTouchEnd = useCallback((event) => {
-    if (!isMobileCoarse) return;
-
-    const touch = event.changedTouches?.[0];
-    if (!touch) return;
-
-    const dx = touch.clientX - touchStartRef.current.x;
-    const dy = touch.clientY - touchStartRef.current.y;
-    if (Math.abs(dy) < 42 || Math.abs(dy) <= Math.abs(dx)) return;
-
-    if (dy < 0) {
-      moveToCard(currentCardIndex + 1);
-    } else {
-      moveToCard(currentCardIndex - 1);
-    }
-  }, [isMobileCoarse, currentCardIndex, moveToCard]);
-
   return (
     <>
       {/* Loading screen — visible until results arrive and exit animation completes */}
@@ -514,13 +465,6 @@ export default function OutputScreen() {
             </p>
           </div>
         </div>
-      )}
-
-      {/* Back button — visible after first Find Similar */}
-      {!showLoading && outputHistory.length > 0 && (
-        <button className={styles.backBtn} onClick={handleBack} type="button">
-          ← Back
-        </button>
       )}
 
       {/* Split layout — rendered once loading exits */}
@@ -586,7 +530,6 @@ export default function OutputScreen() {
             {isMobileCoarse ? (
               <>
                 <div className={styles.mobileTopZone}>
-                  <span className={styles.mobileMatchBadge}>{mobileMatchPercent}</span>
                   <div className={styles.mobileTagRibbon}>
                     {mobileTagRows.map((row, rowIndex) => (
                       <div key={rowIndex} className={styles.mobileTagRow}>
@@ -618,8 +561,6 @@ export default function OutputScreen() {
                   ref={mobileDeckRef}
                   className={styles.mobileCardDeck}
                   onScroll={handleMobileDeckScroll}
-                  onTouchStart={handleMobileTouchStart}
-                  onTouchEnd={handleMobileTouchEnd}
                 >
                   {outputResults.map((result, index) => (
                     <div
@@ -633,7 +574,7 @@ export default function OutputScreen() {
                         <StyleCarousel
                           styleId={result.id}
                           similarity={result.similarity}
-                          onClick={handleCarouselClick}
+                          onClick={undefined}
                         />
                       </div>
                     </div>
