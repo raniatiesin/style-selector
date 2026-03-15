@@ -15,6 +15,7 @@ function areImageIdsEqual(prevIds, nextIds) {
 
 function areBackgroundPropsEqual(prevProps, nextProps) {
   if (prevProps.blurred !== nextProps.blurred) return false;
+  if (prevProps.isOutputVisible !== nextProps.isOutputVisible) return false;
   return areImageIdsEqual(prevProps.imageIds, nextProps.imageIds);
 }
 
@@ -106,7 +107,7 @@ function computeAssignment(slots, imageIds) {
  * Background — 60 permanent slots with drift, parallax, and staggered image swap.
  * Wrapped in React.memo, entirely prop-driven.
  */
-const Background = memo(function Background({ imageIds, blurred }) {
+const Background = memo(function Background({ imageIds, blurred, isOutputVisible }) {
   const canvasRef = useRef(null);
   const layer1Ref = useRef(null);
   const layer2Ref = useRef(null);
@@ -258,17 +259,17 @@ const Background = memo(function Background({ imageIds, blurred }) {
     >
       <div ref={layer1Ref} className={styles.layer}>
         {layer1Assigned.map(slot => (
-          <Slot key={slot.id} slot={slot} />
+          <Slot key={slot.id} slot={slot} isOutputVisible={isOutputVisible} />
         ))}
       </div>
       <div ref={layer2Ref} className={styles.layer}>
         {layer2Assigned.map(slot => (
-          <Slot key={slot.id} slot={slot} />
+          <Slot key={slot.id} slot={slot} isOutputVisible={isOutputVisible} />
         ))}
       </div>
       <div ref={layer3Ref} className={styles.layer}>
         {layer3Assigned.map(slot => (
-          <Slot key={slot.id} slot={slot} />
+          <Slot key={slot.id} slot={slot} isOutputVisible={isOutputVisible} />
         ))}
       </div>
       {(!imageIds || imageIds.length === 0) && (

@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import gsap from 'gsap';
 import styles from './Output.module.css';
 
@@ -29,7 +29,7 @@ function loadSegment(url) {
   return promise;
 }
 
-export default function StyleCarousel({
+const StyleCarousel = React.memo(function StyleCarousel({
   styleId,
   similarity,
   onClick,
@@ -82,18 +82,22 @@ export default function StyleCarousel({
     setCurrentSlide(clamped);
     const width = getCarouselWidth();
     currentOffset.current = -clamped * width;
+    stripRef.current?.classList.add('animating');
     gsap.to(stripRef.current, {
       x: currentOffset.current,
       duration: 0.3,
       ease: 'power2.out',
+      onComplete: () => stripRef.current?.classList.remove('animating'),
     });
   }, [getCarouselWidth]);
 
   const snapBack = useCallback(() => {
+    stripRef.current?.classList.add('animating');
     gsap.to(stripRef.current, {
       x: currentOffset.current,
       duration: 0.2,
       ease: 'power2.out',
+      onComplete: () => stripRef.current?.classList.remove('animating'),
     });
   }, []);
 
@@ -188,4 +192,6 @@ export default function StyleCarousel({
       </div>
     </div>
   );
-}
+});
+
+export default StyleCarousel;

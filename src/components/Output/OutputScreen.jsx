@@ -60,11 +60,13 @@ export default function OutputScreen() {
   const textRef = useRef(null);
   const subTextRef = useRef(null);
   const loadingTlRef = useRef(null);
-  const mobileScrollRafRef = useRef(null);
+  const mobileNavVersionRef = useRef(0);
+  const mobileNavTimeoutRef = useRef(null);
   const [showLoading, setShowLoading] = useState(true);
   const [viewportHeight, setViewportHeight] = useState(() => window.visualViewport?.height || window.innerHeight);
   const [isMobileCoarse, setIsMobileCoarse] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   // Find-similar loading overlay refs
   const simLoadRef = useRef(null);
@@ -135,9 +137,9 @@ export default function OutputScreen() {
 
   useEffect(() => {
     return () => {
-      if (mobileScrollRafRef.current !== null) {
-        cancelAnimationFrame(mobileScrollRafRef.current);
-        mobileScrollRafRef.current = null;
+      if (mobileNavTimeoutRef.current !== null) {
+        clearTimeout(mobileNavTimeoutRef.current);
+        mobileNavTimeoutRef.current = null;
       }
     };
   }, []);
@@ -154,6 +156,13 @@ export default function OutputScreen() {
   }, [selectedCarousel]);
 
   const selectedStyleLabel = useMemo(() => getStyleLabel(selectedCarousel), [selectedCarousel]);
+
+  const mobileCardTags = useMemo(() => {
+    return outputResults.map(r => {
+      const tags = getStyleTally(r.id).split(', ').filter(Boolean);
+      return { row1: tags.slice(0, 6), row2: tags.slice(6, 12) };
+    });
+  }, [outputResults]);
 
   const mobileCardIndex = currentCardIndex;
 
@@ -205,38 +214,85 @@ export default function OutputScreen() {
   }, [outputResults]);
 
   useEffect(() => {
+    if (outputResults.length === 0) {
+      setHistoryIndex(0);
+      return;
+    }
+
+    setHistoryIndex(0);
+    const firstId = outputResults[0]?.id;
+    if (firstId && selectedCarousel !== firstId) {
+      setSelectedCarousel(firstId);
+    }
+  }, [outputResults, selectedCarousel, setSelectedCarousel]);
+
+  useEffect(() => {
+    if (!selectedCarousel || outputResults.length === 0) return;
+    const selectedIndex = outputResults.findIndex((result) => result.id === selectedCarousel);
+    if (selectedIndex < 0 || selectedIndex === historyIndex) return;
+    setHistoryIndex(selectedIndex);
+  }, [selectedCarousel, outputResults, historyIndex]);
+
+  useEffect(() => {
+    if (outputResults.length === 0) return;
+
+    const clampedIndex = Math.min(Math.max(historyIndex, 0), outputResults.length - 1);
+    if (clampedIndex !== historyIndex) {
+      setHistoryIndex(clampedIndex);
+      return;
+    }
+
+    const styleId = outputResults[clampedIndex]?.id;
+    if (styleId && selectedCarousel !== styleId) {
+      setSelectedCarousel(styleId);
+    }
+  }, [historyIndex, outputResults, selectedCarousel, setSelectedCarousel]);
+
+  useEffect(() => {
     if (!isMobileCoarse || showLoading || outputResults.length === 0) return;
 
     const deck = mobileDeckRef.current;
     if (!deck) return;
 
+    const nodeToIndex = new WeakMap();
+    mobileCardRefs.current.forEach((node, index) => {
+      if (!node) return;
+      nodeToIndex.set(node, index);
+    });
+
     const observer = new IntersectionObserver(
       (entries) => {
-        let bestIndex = null;
-        let bestRatio = 0;
+        let nextIndex = null;
 
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
-          const index = Number(entry.target.getAttribute('data-card-index'));
+          if (entry.intersectionRatio < 0.5) return;
+          const index = nodeToIndex.get(entry.target);
           if (!Number.isFinite(index)) return;
-          if (entry.intersectionRatio > bestRatio) {
-            bestRatio = entry.intersectionRatio;
-            bestIndex = index;
-          }
+          nextIndex = index;
         });
 
-        if (bestIndex === null) return;
-        setCurrentCardIndex((prev) => (prev === bestIndex ? prev : bestIndex));
+        if (nextIndex === null) return;
+
+        const version = ++mobileNavVersionRef.current;
+        if (mobileNavTimeoutRef.current !== null) {
+          clearTimeout(mobileNavTimeoutRef.current);
+        }
+
+        mobileNavTimeoutRef.current = setTimeout(() => {
+          mobileNavTimeoutRef.current = null;
+          if (mobileNavVersionRef.current !== version) return;
+          setCurrentCardIndex((prev) => (prev === nextIndex ? prev : nextIndex));
+        }, 0);
       },
       {
         root: deck,
-        threshold: [0.55, 0.7, 0.85],
+        threshold: [0.5],
       }
     );
 
-    mobileCardRefs.current.forEach((node, index) => {
+    mobileCardRefs.current.forEach((node) => {
       if (!node) return;
-      node.setAttribute('data-card-index', String(index));
       observer.observe(node);
     });
 
@@ -323,6 +379,7 @@ export default function OutputScreen() {
   // Entrance animation for split layout (after loading is gone)
   useEffect(() => {
     if (showLoading || outputResults.length === 0) return;
+    let carouselGridTween = null;
 
     // Left panel fade in
     if (leftPanelRef.current) {
@@ -335,12 +392,16 @@ export default function OutputScreen() {
     // Right panel carousels stagger in
     const carousels = carouselGridRef.current?.children;
     if (carousels) {
-      gsap.fromTo(
+      carouselGridTween = gsap.fromTo(
         Array.from(carousels),
         { opacity: 0, y: 24 },
         { opacity: 1, y: 0, duration: 0.5, stagger: STAGGER.carousels, ease: EASE.confident, delay: 0.15 }
       );
     }
+
+    return () => {
+      if (carouselGridTween) carouselGridTween.kill();
+    };
   }, [showLoading, outputResults]);
 
   // Find-similar loading entrance animation
@@ -410,6 +471,14 @@ export default function OutputScreen() {
     setSelectedCarousel(styleId);
   }, [setSelectedCarousel]);
 
+  const handleHistoryPrev = useCallback(() => {
+    setHistoryIndex((prev) => Math.max(0, prev - 1));
+  }, []);
+
+  const handleHistoryNext = useCallback(() => {
+    setHistoryIndex((prev) => Math.min(outputResults.length - 1, prev + 1));
+  }, [outputResults.length]);
+
   const handleFindSimilar = useCallback(async () => {
     if (!selectedCarousel || simLoading) return;
 
@@ -456,35 +525,6 @@ export default function OutputScreen() {
     jumpToQuizStep(categoryIndex * 3);
   }, [jumpToQuizStep]);
 
-  const handleMobileDeckScroll = useCallback(() => {
-    if (!isMobileCoarse) return;
-
-    if (mobileScrollRafRef.current !== null) return;
-
-    const deck = mobileDeckRef.current;
-    if (!deck) return;
-
-    mobileScrollRafRef.current = requestAnimationFrame(() => {
-      mobileScrollRafRef.current = null;
-
-      const viewportMiddle = deck.scrollTop + (deck.clientHeight / 2);
-      let nearestIndex = 0;
-      let nearestDistance = Number.POSITIVE_INFINITY;
-
-      mobileCardRefs.current.forEach((node, index) => {
-        if (!node) return;
-        const center = node.offsetTop + (node.offsetHeight / 2);
-        const distance = Math.abs(center - viewportMiddle);
-        if (distance < nearestDistance) {
-          nearestDistance = distance;
-          nearestIndex = index;
-        }
-      });
-
-      setCurrentCardIndex((prev) => (prev === nearestIndex ? prev : nearestIndex));
-    });
-  }, [isMobileCoarse]);
-
   return (
     <>
       {/* Loading screen — visible until results arrive and exit animation completes */}
@@ -520,8 +560,30 @@ export default function OutputScreen() {
                     <TagPill key={i} label={tag} onClick={() => handleTagClick(i)} />
                   ))}
                 </div>
-                <div className={styles.selectedCarouselWrap}>
-                  <StyleCarousel styleId={selectedCarousel} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {!isMobileCoarse && historyIndex > 0 && (
+                    <button
+                      className={`${styles.carouselArrow} ${styles.arrowLeft} ${styles.historyNavArrow}`}
+                      onClick={handleHistoryPrev}
+                      type="button"
+                      aria-label="Previous selected style"
+                    >
+                      ←
+                    </button>
+                  )}
+                  <div className={styles.selectedCarouselWrap}>
+                    <StyleCarousel styleId={selectedCarousel} />
+                  </div>
+                  {!isMobileCoarse && historyIndex < outputResults.length - 1 && (
+                    <button
+                      className={`${styles.carouselArrow} ${styles.arrowRight} ${styles.historyNavArrow}`}
+                      onClick={handleHistoryNext}
+                      type="button"
+                      aria-label="Next selected style"
+                    >
+                      →
+                    </button>
+                  )}
                 </div>
                 <div className={styles.buttonRow}>
                   <button
@@ -581,13 +643,12 @@ export default function OutputScreen() {
                 <div
                   ref={mobileDeckRef}
                   className={styles.mobileCardDeck}
-                  onScroll={handleMobileDeckScroll}
                 >
                   {outputResults.map((result, index) => (
                     (() => {
-                      const cardTags = getStyleTally(result.id).split(', ').filter(Boolean);
-                      const row1 = cardTags.slice(0, 6);
-                      const row2 = cardTags.slice(6, 12);
+                      const tags = mobileCardTags[index] || { row1: [], row2: [] };
+                      const row1 = tags.row1;
+                      const row2 = tags.row2;
 
                       return (
                         <div

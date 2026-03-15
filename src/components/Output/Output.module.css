@@ -15,7 +15,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-evenly;
   padding: 40px 32px;
   gap: 20px;
   overflow-y: hidden;
@@ -56,8 +56,8 @@
 .selectedCarouselWrap {
   width: 100%;
   max-width: min(340px, 92vw);
-  margin-left: auto;
-  margin-right: auto;
+  margin: auto;
+  margin-top: 16px;
 }
 
 /* Right panel — similarity carousels */
@@ -257,6 +257,9 @@
 .strip {
   display: flex;
   height: 100%;
+}
+
+.strip.animating {
   will-change: transform;
 }
 
@@ -353,6 +356,19 @@
   right: 4px;
 }
 
+.historyNavArrow {
+  position: static;
+  top: auto;
+  transform: none;
+  color: rgba(255, 255, 255, 0.42);
+  padding: 8px 6px;
+  line-height: 1;
+}
+
+.historyNavArrow:hover {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
 @media (max-width: 767px) {
   .carouselArrow {
     display: none;
@@ -374,7 +390,7 @@
   }
 
   .leftPanel {
-    justify-content: flex-start;
+    justify-content: space-evenly;
     gap: 12px;
     overflow: hidden;
   }

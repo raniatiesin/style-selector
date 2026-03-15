@@ -6,7 +6,7 @@ import styles from './Background.module.css';
  * Slot — single permanent DOM node in the background mosaic.
  * Never unmounts. Only imageId changes trigger re-render (custom memo).
  */
-const Slot = memo(function Slot({ slot }) {
+const Slot = memo(function Slot({ slot, isOutputVisible = false }) {
   const slotRef = useRef(null);
   const imgRef = useRef(null);
   const timelineRef = useRef(null);
@@ -58,7 +58,7 @@ const Slot = memo(function Slot({ slot }) {
     });
     creepRef.current = creep;
 
-    const shouldAnimate = Boolean(slot.imageId);
+    const shouldAnimate = Boolean(slot.imageId) && !isOutputVisible;
     tl.paused(!shouldAnimate);
     creep.paused(!shouldAnimate);
 
@@ -70,10 +70,10 @@ const Slot = memo(function Slot({ slot }) {
 
   // Pause background motion for slots without active images.
   useEffect(() => {
-    const shouldAnimate = Boolean(slot.imageId);
+    const shouldAnimate = Boolean(slot.imageId) && !isOutputVisible;
     if (timelineRef.current) timelineRef.current.paused(!shouldAnimate);
     if (creepRef.current) creepRef.current.paused(!shouldAnimate);
-  }, [slot.imageId]);
+  }, [slot.imageId, isOutputVisible]);
 
   // Image crossfade — only when imageId changes
   useEffect(() => {
@@ -122,6 +122,6 @@ const Slot = memo(function Slot({ slot }) {
       />
     </div>
   );
-}, (prev, next) => prev.slot.imageId === next.slot.imageId);
+}, (prev, next) => prev.slot.imageId === next.slot.imageId && prev.isOutputVisible === next.isOutputVisible);
 
 export default Slot;

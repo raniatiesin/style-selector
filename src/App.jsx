@@ -11,6 +11,7 @@ export default function App() {
   const screen = useQuizStore(s => s.screen);
   const activeImageIds = useQuizStore(s => s.activeImageIds);
   const blurred = screen === 'output' || screen === 'confirmation';
+  const isOutputVisible = screen === 'output';
 
   useEffect(() => {
     const el = document.getElementById('app-loading');
@@ -20,7 +21,7 @@ export default function App() {
 
   return (
     <>
-      <Background imageIds={activeImageIds} blurred={blurred} />
+      <Background imageIds={activeImageIds} blurred={blurred} isOutputVisible={isOutputVisible} />
       {screen === 'welcome' && <Welcome />}
       {screen === 'quiz' && <Quiz />}
       {screen === 'output' && <OutputScreen />}
