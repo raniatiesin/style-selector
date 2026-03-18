@@ -251,6 +251,7 @@ export default function OutputScreen() {
       mobileNavTimeoutRef.current = null;
     }
     mobileNavVersionRef.current += 1;
+    const observerVersion = mobileNavVersionRef.current;
 
     const nodeToIndex = new WeakMap();
     mobileCardRefs.current.forEach((node, index) => {
@@ -272,14 +273,13 @@ export default function OutputScreen() {
 
         if (nextIndex === null) return;
 
-        const version = ++mobileNavVersionRef.current;
         if (mobileNavTimeoutRef.current !== null) {
           clearTimeout(mobileNavTimeoutRef.current);
         }
 
         mobileNavTimeoutRef.current = setTimeout(() => {
           mobileNavTimeoutRef.current = null;
-          if (mobileNavVersionRef.current !== version) return;
+          if (mobileNavVersionRef.current !== observerVersion) return;
           setCurrentCardIndex((prev) => (prev === nextIndex ? prev : nextIndex));
         }, 0);
       },

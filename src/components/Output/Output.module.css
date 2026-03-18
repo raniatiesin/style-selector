@@ -125,6 +125,7 @@
     overflow-x: auto;
     scrollbar-width: none;
     gap: 6px;
+    padding-top: 2px;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -144,6 +145,13 @@
     scrollbar-width: none;
     touch-action: pan-y;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobileCardDeck::after {
+    content: '';
+    display: block;
+    height: 24px;
+    pointer-events: none;
   }
 
   .mobileCardDeck::-webkit-scrollbar {
