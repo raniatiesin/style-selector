@@ -255,7 +255,7 @@ export default function OutputScreen() {
       return nextHistory;
     });
     setSelectedCarousel(firstId);
-  }, [outputResults, navPosition, setSelectedCarousel]);
+  }, [outputResults, setSelectedCarousel]);
 
   useEffect(() => {
     if (!isMobileCoarse || showLoading || outputResults.length === 0) return;
