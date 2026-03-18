@@ -41,6 +41,7 @@ const StyleCarousel = React.memo(function StyleCarousel({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loadedSegmentsState, setLoadedSegmentsState] = useState({ styleId: null, segments: {} });
   const dragStartX = useRef(0);
+  const dragStartY = useRef(0);
   const dragStartTime = useRef(0);
   const isDragging = useRef(false);
   const currentOffset = useRef(0);
@@ -117,15 +118,24 @@ const StyleCarousel = React.memo(function StyleCarousel({
   // Pointer events for swipe
   const handlePointerDown = (e) => {
     dragStartX.current = e.pageX;
+    dragStartY.current = e.pageY;
     dragStartTime.current = Date.now();
     isDragging.current = true;
-    e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e) => {
     if (!isDragging.current) return;
-    const delta = e.pageX - dragStartX.current;
-    gsap.set(stripRef.current, { x: currentOffset.current + delta });
+    const deltaX = e.pageX - dragStartX.current;
+    const deltaY = e.pageY - (dragStartY.current || e.pageY);
+
+    // If vertical movement dominates, cancel drag
+    if (Math.abs(deltaY) > Math.abs(deltaX) + 5) {
+      isDragging.current = false;
+      snapBack();
+      return;
+    }
+
+    gsap.set(stripRef.current, { x: currentOffset.current + deltaX });
   };
 
   const handlePointerUp = (e) => {

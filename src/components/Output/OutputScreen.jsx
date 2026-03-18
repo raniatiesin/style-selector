@@ -214,18 +214,13 @@ export default function OutputScreen() {
   }, [outputResults]);
 
   useEffect(() => {
-    if (outputResults.length === 0) {
-      setNavHistory([]);
-      setNavPosition(-1);
+    const newResults = outputResults;
+    if (newResults.length === 0) {
       return;
     }
 
-    const firstId = outputResults[0]?.id;
-    if (!firstId) {
-      setNavHistory([]);
-      setNavPosition(-1);
-      return;
-    }
+    const firstId = newResults[0]?.id;
+    if (!firstId) return;
 
     setNavHistory([firstId]);
     setNavPosition(0);

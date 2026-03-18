@@ -140,7 +140,6 @@
     min-height: 0;
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
-    -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     scrollbar-width: none;
     touch-action: pan-y;
@@ -162,7 +161,7 @@
     gap: 6px;
     overflow: hidden;
     scroll-snap-align: center;
-    scroll-snap-stop: always;
+    scroll-snap-stop: normal;
     padding: env(safe-area-inset-top, 8px) 0 8px;
     padding-bottom: 80px;
   }
@@ -225,7 +224,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 14px 20px env(safe-area-inset-bottom, 20px);
+    padding: 14px 20px calc(env(safe-area-inset-bottom, 20px) + 2px);
     background: rgba(10, 10, 10, 0.62);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
@@ -411,6 +410,8 @@
     width: 100%;
     max-width: min(280px, 85%);
     margin: 0 auto;
+    margin-top: 0;
+    padding-top: 0;
     display: block;
   }
 
@@ -456,6 +457,18 @@
 
   .leftPanel .carouselArrow:hover {
     color: rgba(255, 255, 255, 0.92) !important;
+  }
+
+  .confirmBtn {
+    background: #ffffff;
+    color: #0a0a0a;
+    border: 1px solid #ffffff;
+  }
+
+  .confirmBtn:hover {
+    background: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
   }
 }
 
@@ -543,7 +556,7 @@
 
 /* Find-similar loading overlay */
 .simLoadingOverlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
