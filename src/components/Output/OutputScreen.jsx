@@ -245,6 +245,13 @@ export default function OutputScreen() {
     const deck = mobileDeckRef.current;
     if (!deck) return;
 
+    // Drop any deferred update from a previous observer instance.
+    if (mobileNavTimeoutRef.current !== null) {
+      clearTimeout(mobileNavTimeoutRef.current);
+      mobileNavTimeoutRef.current = null;
+    }
+    mobileNavVersionRef.current += 1;
+
     const nodeToIndex = new WeakMap();
     mobileCardRefs.current.forEach((node, index) => {
       if (!node) return;
@@ -287,7 +294,14 @@ export default function OutputScreen() {
       observer.observe(node);
     });
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (mobileNavTimeoutRef.current !== null) {
+        clearTimeout(mobileNavTimeoutRef.current);
+        mobileNavTimeoutRef.current = null;
+      }
+      mobileNavVersionRef.current += 1;
+    };
   }, [isMobileCoarse, showLoading, outputResults]);
 
   useEffect(() => {
