@@ -157,27 +157,27 @@
     position: relative;
     min-height: calc(var(--output-vh, 100dvh) - (env(safe-area-inset-top, 0px) + 170px));
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
     scroll-snap-align: start;
     scroll-snap-stop: always;
-    padding: 10px 0;
+    padding: 10px 0 0;
   }
 
   .mobileSlotTagRibbon {
-    position: absolute;
-    top: 14px;
-    left: 0;
-    right: 0;
-    z-index: 5;
     display: flex;
     flex-direction: column;
     gap: 4px;
+    width: 100%;
+    margin-bottom: 10px;
     pointer-events: auto;
   }
 
   .mobileCardFrame {
     position: relative;
+    flex: 1;
+    align-self: center;
     width: clamp(300px, 85vw, 360px);
     overflow: visible;
     -webkit-tap-highlight-color: transparent;
@@ -384,13 +384,9 @@
 }
 
 @media (min-width: 768px) {
-  .leftPanel,
-  .rightPanel {
-    padding: 32px;
-  }
-
   .leftPanel {
-    justify-content: space-evenly;
+    justify-content: center;
+    padding: clamp(16px, 3vh, 40px) clamp(16px, 2vw, 32px);
     gap: 12px;
     overflow: hidden;
   }
@@ -398,16 +394,20 @@
   .selectedCarouselWrap {
     max-width: min(330px, 86%);
     align-self: center;
+    margin: 0;
+    margin-top: 0;
   }
 
   .rightPanel {
-    align-items: flex-end;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(16px, 3vh, 40px) clamp(16px, 2vw, 40px);
   }
 
   .carouselGrid {
-    max-width: 760px;
-    gap: 14px;
-    margin-left: auto;
+    max-width: min(720px, 90%);
+    gap: clamp(10px, 1.2vw, 20px);
+    margin: 0 auto;
   }
 
   .leftPanel .tallyGrid {
