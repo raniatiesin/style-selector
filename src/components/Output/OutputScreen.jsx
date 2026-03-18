@@ -630,7 +630,11 @@ export default function OutputScreen() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', justifyContent: 'center', width: '100%' }}>
                   <button
-                    style={{ visibility: navPosition > 0 ? 'visible' : 'hidden' }}
+                    style={{
+                      opacity: navPosition > 0 ? 1 : 0.28,
+                      pointerEvents: navPosition > 0 ? 'auto' : 'none',
+                    }}
+                    disabled={navPosition <= 0}
                     className={`${styles.carouselArrow} ${styles.historyNavArrow}`}
                     onClick={handleNavLeft}
                     type="button"
@@ -642,7 +646,11 @@ export default function OutputScreen() {
                     <StyleCarousel styleId={selectedCarousel} />
                   </div>
                   <button
-                    style={{ visibility: navPosition < navHistory.length - 1 ? 'visible' : 'hidden' }}
+                    style={{
+                      opacity: navPosition < navHistory.length - 1 ? 1 : 0.28,
+                      pointerEvents: navPosition < navHistory.length - 1 ? 'auto' : 'none',
+                    }}
+                    disabled={navPosition >= navHistory.length - 1}
                     className={`${styles.carouselArrow} ${styles.historyNavArrow}`}
                     onClick={handleNavRight}
                     type="button"
