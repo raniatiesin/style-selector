@@ -460,6 +460,12 @@ export default function OutputScreen() {
 
     const exitTl = gsap.timeline({
       onComplete: () => {
+        mobileCardRefs.current = [];
+        setCurrentCardIndex(0);
+        if (mobileDeckRef.current) {
+          mobileDeckRef.current.scrollTop = 0;
+        }
+
         setOutputResults(pendingSimResults);
         setPendingSimResults(null);
         setSimLoading(false);
@@ -511,9 +517,36 @@ export default function OutputScreen() {
     setSelectedCarousel(navHistory[next]);
   }, [navHistory, navPosition, setSelectedCarousel]);
 
+  const resolveActiveMobileStyleId = useCallback(() => {
+    if (!isMobileCoarse || outputResults.length === 0) return null;
+
+    const deck = mobileDeckRef.current;
+    if (!deck) return outputResults[currentCardIndex]?.id || outputResults[0]?.id || null;
+
+    const deckRect = deck.getBoundingClientRect();
+    const deckCenter = deckRect.top + (deckRect.height / 2);
+
+    let closestIndex = currentCardIndex;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    mobileCardRefs.current.forEach((node, index) => {
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      const cardCenter = rect.top + (rect.height / 2);
+      const distance = Math.abs(cardCenter - deckCenter);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    return outputResults[closestIndex]?.id || outputResults[currentCardIndex]?.id || outputResults[0]?.id || null;
+  }, [isMobileCoarse, outputResults, currentCardIndex]);
+
   const handleFindSimilar = useCallback(async () => {
     const targetStyleId = isMobileCoarse
-      ? outputResults[currentCardIndex]?.id
+      ? resolveActiveMobileStyleId()
       : selectedCarousel;
 
     if (!targetStyleId || simLoading) return;
@@ -587,7 +620,7 @@ export default function OutputScreen() {
         findSimilarAbortRef.current = null;
       }
     }
-  }, [isMobileCoarse, outputResults, currentCardIndex, selectedCarousel, sessionId, simLoading, pushToHistory, setOutputResults, setIsSearching]);
+  }, [isMobileCoarse, selectedCarousel, sessionId, simLoading, pushToHistory, setOutputResults, setIsSearching, resolveActiveMobileStyleId]);
 
   const handleTagClick = useCallback((categoryIndex) => {
     jumpToQuizStep(categoryIndex * 3);
