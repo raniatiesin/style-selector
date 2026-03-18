@@ -145,38 +145,32 @@
 
   .mobileCardSlot {
     position: relative;
-    height: calc(var(--output-vh, 100dvh) - env(safe-area-inset-bottom, 0px) - 80px);
-    min-height: calc(var(--output-vh, 100dvh) - env(safe-area-inset-bottom, 0px) - 80px);
+    height: calc(var(--output-vh, 100dvh) - 80px);
+    min-height: calc(var(--output-vh, 100dvh) - 80px);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    gap: 10px;
     overflow: hidden;
     scroll-snap-align: center;
+    padding: env(safe-area-inset-top, 12px) 0 8px;
   }
 
   .mobileSlotTagRibbon {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 10;
-    padding: 10px 10px 0;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    background: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.55) 0%,
-      rgba(0, 0, 0, 0) 100%
-    );
-    pointer-events: none;
+    width: min(360px, 85vw);
+    padding-top: 8px;
+    position: static;
   }
 
   .mobileCardFrame {
     position: relative;
-    flex: 0 0 auto;
     width: clamp(300px, 85vw, 360px);
+    flex: 1;
+    min-height: 0;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
   }
@@ -211,8 +205,13 @@
   }
 
   .mobileBottomZone {
-    position: relative;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     padding: 8px 16px env(safe-area-inset-bottom, 12px);
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10;
   }
 
   .mobileBottomZone .buttonRow {

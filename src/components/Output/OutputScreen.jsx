@@ -648,6 +648,41 @@ export default function OutputScreen() {
                           }}
                           className={styles.mobileCardSlot}
                         >
+                          <div className={styles.mobileSlotTagRibbon}>
+                            <div className={styles.mobileTagRow}>
+                              {row1.map((tag, indexInRow) => (
+                                <TagPill
+                                  key={`r1-${result.id}-${indexInRow}`}
+                                  label={tag}
+                                />
+                              ))}
+                            </div>
+                            <div className={styles.mobileTagRow}>
+                              {row2.map((tag, indexInRow) => (
+                                <TagPill
+                                  key={`r2-${result.id}-${indexInRow}`}
+                                  label={tag}
+                                />
+                              ))}
+                            </div>
+                            <div className={styles.mobileTagRow}>
+                              {row3.map((tag, indexInRow) => (
+                                <TagPill
+                                  key={`r3-${result.id}-${indexInRow}`}
+                                  label={tag}
+                                />
+                              ))}
+                            </div>
+                            <div className={styles.mobileTagRow}>
+                              {row4.map((tag, indexInRow) => (
+                                <TagPill
+                                  key={`r4-${result.id}-${indexInRow}`}
+                                  label={tag}
+                                />
+                              ))}
+                            </div>
+                          </div>
+
                           <div className={styles.mobileCardFrame}>
                             <StyleCarousel
                               styleId={result.id}
@@ -656,41 +691,6 @@ export default function OutputScreen() {
                               shouldLoadSegments={Math.abs(index - mobileCardIndex) <= 1}
                               onClick={undefined}
                             />
-
-                            <div className={styles.mobileSlotTagRibbon}>
-                              <div className={styles.mobileTagRow}>
-                                {row1.map((tag, indexInRow) => (
-                                  <TagPill
-                                    key={`r1-${result.id}-${indexInRow}`}
-                                    label={tag}
-                                  />
-                                ))}
-                              </div>
-                              <div className={styles.mobileTagRow}>
-                                {row2.map((tag, indexInRow) => (
-                                  <TagPill
-                                    key={`r2-${result.id}-${indexInRow}`}
-                                    label={tag}
-                                  />
-                                ))}
-                              </div>
-                              <div className={styles.mobileTagRow}>
-                                {row3.map((tag, indexInRow) => (
-                                  <TagPill
-                                    key={`r3-${result.id}-${indexInRow}`}
-                                    label={tag}
-                                  />
-                                ))}
-                              </div>
-                              <div className={styles.mobileTagRow}>
-                                {row4.map((tag, indexInRow) => (
-                                  <TagPill
-                                    key={`r4-${result.id}-${indexInRow}`}
-                                    label={tag}
-                                  />
-                                ))}
-                              </div>
-                            </div>
                           </div>
                         </div>
                       );
