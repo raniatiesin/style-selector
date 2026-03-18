@@ -368,7 +368,7 @@ export default function OutputScreen() {
     // Left panel fade in
     if (leftPanelRef.current) {
       gsap.fromTo(leftPanelRef.current,
-        { opacity: 0, x: -16 },
+        { opacity: 0, x: 0 },
         { opacity: 1, x: 0, duration: 0.5, ease: EASE.confident, delay: 0.1 }
       );
     }
@@ -639,12 +639,22 @@ export default function OutputScreen() {
                           className={styles.mobileCardSlot}
                         >
                           <div className={styles.mobileSlotTagRibbon}>
-                            {tags.map((tag, indexInRow) => (
-                              <TagPill
-                                key={`t-${result.id}-${indexInRow}`}
-                                label={tag}
-                              />
-                            ))}
+                            <div className={styles.mobileTagRow}>
+                              {tags.slice(0, 6).map((tag, indexInRow) => (
+                                <TagPill
+                                  key={`t1-${result.id}-${indexInRow}`}
+                                  label={tag}
+                                />
+                              ))}
+                            </div>
+                            <div className={styles.mobileTagRow}>
+                              {tags.slice(6, 12).map((tag, indexInRow) => (
+                                <TagPill
+                                  key={`t2-${result.id}-${indexInRow}`}
+                                  label={tag}
+                                />
+                              ))}
+                            </div>
                           </div>
 
                           <div className={styles.mobileCardFrame}>
