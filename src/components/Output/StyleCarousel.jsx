@@ -41,6 +41,7 @@ const StyleCarousel = React.memo(function StyleCarousel({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loadedSegmentsState, setLoadedSegmentsState] = useState({ styleId: null, segments: {} });
   const dragStartX = useRef(0);
+  const dragStartTime = useRef(0);
   const isDragging = useRef(false);
   const currentOffset = useRef(0);
 
@@ -104,6 +105,7 @@ const StyleCarousel = React.memo(function StyleCarousel({
   // Pointer events for swipe
   const handlePointerDown = (e) => {
     dragStartX.current = e.pageX;
+    dragStartTime.current = Date.now();
     isDragging.current = true;
     e.currentTarget.setPointerCapture(e.pointerId);
   };
@@ -118,7 +120,8 @@ const StyleCarousel = React.memo(function StyleCarousel({
     if (!isDragging.current) return;
     isDragging.current = false;
     const delta = e.pageX - dragStartX.current;
-    const threshold = Math.min(80, Math.max(36, window.innerWidth * 0.1));
+    const elapsed = Date.now() - dragStartTime.current;
+    const velocity = Math.abs(delta) / elapsed;
 
     if (Math.abs(delta) < 5) {
       // This was a click, not a drag
@@ -126,8 +129,13 @@ const StyleCarousel = React.memo(function StyleCarousel({
       return;
     }
 
-    if (delta < -threshold) goToSlide(currentSlide + 1);
-    else if (delta > threshold) goToSlide(currentSlide - 1);
+    const distanceThreshold = 20;
+    const velocityThreshold = 0.3;
+    const shouldSwipe = Math.abs(delta) > distanceThreshold
+      || velocity > velocityThreshold;
+
+    if (shouldSwipe && delta < 0) goToSlide(currentSlide + 1);
+    else if (shouldSwipe && delta > 0) goToSlide(currentSlide - 1);
     else snapBack();
   };
 

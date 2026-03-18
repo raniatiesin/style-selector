@@ -628,15 +628,6 @@ export default function OutputScreen() {
 
             {isMobileCoarse ? (
               <>
-                <div className={styles.mobileCardTracker}>
-                  {outputResults.map((result, index) => (
-                    <div
-                      key={`tracker-${result.id}`}
-                      className={`${styles.mobileTrackerDot} ${index === currentCardIndex ? styles.mobileTrackerDotActive : ''}`}
-                    />
-                  ))}
-                </div>
-
                 <div
                   ref={mobileDeckRef}
                   className={styles.mobileCardDeck}
@@ -657,45 +648,6 @@ export default function OutputScreen() {
                           }}
                           className={styles.mobileCardSlot}
                         >
-                          <div className={styles.mobileSlotTagRibbon}>
-                            <div className={styles.mobileTagRow}>
-                              {row1.map((tag, indexInRow) => (
-                                <TagPill
-                                  key={`r1-${result.id}-${indexInRow}`}
-                                  label={tag}
-                                  onClick={() => handleTagClick(indexInRow)}
-                                />
-                              ))}
-                            </div>
-                            <div className={styles.mobileTagRow}>
-                              {row2.map((tag, indexInRow) => (
-                                <TagPill
-                                  key={`r2-${result.id}-${indexInRow}`}
-                                  label={tag}
-                                  onClick={() => handleTagClick(indexInRow + 3)}
-                                />
-                              ))}
-                            </div>
-                            <div className={styles.mobileTagRow}>
-                              {row3.map((tag, indexInRow) => (
-                                <TagPill
-                                  key={`r3-${result.id}-${indexInRow}`}
-                                  label={tag}
-                                  onClick={() => handleTagClick(indexInRow + 6)}
-                                />
-                              ))}
-                            </div>
-                            <div className={styles.mobileTagRow}>
-                              {row4.map((tag, indexInRow) => (
-                                <TagPill
-                                  key={`r4-${result.id}-${indexInRow}`}
-                                  label={tag}
-                                  onClick={() => handleTagClick(indexInRow + 9)}
-                                />
-                              ))}
-                            </div>
-                          </div>
-
                           <div className={styles.mobileCardFrame}>
                             <StyleCarousel
                               styleId={result.id}
@@ -704,10 +656,54 @@ export default function OutputScreen() {
                               shouldLoadSegments={Math.abs(index - mobileCardIndex) <= 1}
                               onClick={undefined}
                             />
+
+                            <div className={styles.mobileSlotTagRibbon}>
+                              <div className={styles.mobileTagRow}>
+                                {row1.map((tag, indexInRow) => (
+                                  <TagPill
+                                    key={`r1-${result.id}-${indexInRow}`}
+                                    label={tag}
+                                  />
+                                ))}
+                              </div>
+                              <div className={styles.mobileTagRow}>
+                                {row2.map((tag, indexInRow) => (
+                                  <TagPill
+                                    key={`r2-${result.id}-${indexInRow}`}
+                                    label={tag}
+                                  />
+                                ))}
+                              </div>
+                              <div className={styles.mobileTagRow}>
+                                {row3.map((tag, indexInRow) => (
+                                  <TagPill
+                                    key={`r3-${result.id}-${indexInRow}`}
+                                    label={tag}
+                                  />
+                                ))}
+                              </div>
+                              <div className={styles.mobileTagRow}>
+                                {row4.map((tag, indexInRow) => (
+                                  <TagPill
+                                    key={`r4-${result.id}-${indexInRow}`}
+                                    label={tag}
+                                  />
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       );
                     })()
+                  ))}
+                </div>
+
+                <div className={styles.mobileCardTracker}>
+                  {outputResults.map((result, index) => (
+                    <div
+                      key={`tracker-${result.id}`}
+                      className={`${styles.mobileTrackerDot} ${index === currentCardIndex ? styles.mobileTrackerDotActive : ''}`}
+                    />
                   ))}
                 </div>
 

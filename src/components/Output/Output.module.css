@@ -120,14 +120,8 @@
 
   .mobileTagRow {
     display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .mobileTagRow::-webkit-scrollbar {
-    display: none;
+    flex-wrap: wrap;
+    gap: 4px;
   }
 
   .mobileCardDeck {
@@ -141,7 +135,6 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     scrollbar-width: none;
-    scroll-behavior: smooth;
     touch-action: pan-y;
     -webkit-tap-highlight-color: transparent;
   }
@@ -152,33 +145,39 @@
 
   .mobileCardSlot {
     position: relative;
-    height: calc(var(--output-vh, 100dvh) - (env(safe-area-inset-top, 0px) + 170px));
-    min-height: calc(var(--output-vh, 100dvh) - (env(safe-area-inset-top, 0px) + 170px));
+    height: calc(var(--output-vh, 100dvh) - env(safe-area-inset-bottom, 0px) - 80px);
+    min-height: calc(var(--output-vh, 100dvh) - env(safe-area-inset-bottom, 0px) - 80px);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    gap: 8px;
+    justify-content: center;
     overflow: hidden;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-    padding: 8px 0 10px;
+    scroll-snap-align: center;
   }
 
   .mobileSlotTagRibbon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 10px 10px 0;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    width: min(360px, 85vw);
-    margin-bottom: 0;
-    pointer-events: auto;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    pointer-events: none;
   }
 
   .mobileCardFrame {
     position: relative;
     flex: 0 0 auto;
     width: clamp(300px, 85vw, 360px);
-    overflow: visible;
+    overflow: hidden;
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -198,25 +197,22 @@
   .mobileTrackerDot {
     width: 3px;
     height: 3px;
-    border-radius: 50%;
+    border-radius: 2px;
     background: rgba(255, 255, 255, 0.28);
-    opacity: 0.58;
-    transform: scale(1);
-    transform-origin: center;
-    transition: transform 220ms ease, opacity 220ms ease, background-color 220ms ease, border-radius 220ms ease;
+    transition: height 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                background 220ms ease;
+    flex-shrink: 0;
   }
 
   .mobileTrackerDotActive {
-    border-radius: 2px;
+    height: 20px;
     background: rgba(255, 255, 255, 0.92);
-    opacity: 1;
-    transform: scaleY(6);
+    border-radius: 2px;
   }
 
   .mobileBottomZone {
     position: relative;
-    z-index: 2;
-    padding-bottom: 0;
+    padding: 8px 16px env(safe-area-inset-bottom, 12px);
   }
 
   .mobileBottomZone .buttonRow {
