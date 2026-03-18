@@ -45,9 +45,8 @@
 }
 
 .tallyGrid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   max-width: min(420px, 100%);
   width: 100%;
@@ -395,6 +394,7 @@
   }
 
   .selectedCarouselWrap {
+    flex: 0 0 auto;
     width: 100%;
     max-width: min(280px, 85%);
   }
@@ -413,21 +413,11 @@
 
   .leftPanel .tallyGrid {
     display: grid;
-    grid-template-rows: repeat(2, min-content);
-    grid-auto-flow: column;
-    grid-auto-columns: max-content;
-    justify-content: flex-start;
+    grid-template-columns: repeat(3, 1fr);
+    justify-content: center;
     align-content: start;
-    gap: 6px 8px;
+    gap: 8px;
     max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .leftPanel .tallyGrid::-webkit-scrollbar {
-    display: none;
   }
 
   .leftPanel .buttonRow {

@@ -161,7 +161,12 @@ export default function OutputScreen() {
   const mobileCardTags = useMemo(() => {
     return outputResults.map(r => {
       const tags = getStyleTally(r.id).split(', ').filter(Boolean);
-      return { row1: tags.slice(0, 6), row2: tags.slice(6, 12) };
+      return {
+        row1: tags.slice(0, 3),
+        row2: tags.slice(3, 6),
+        row3: tags.slice(6, 9),
+        row4: tags.slice(9, 12),
+      };
     });
   }, [outputResults]);
 
@@ -215,13 +220,22 @@ export default function OutputScreen() {
   }, [outputResults]);
 
   useEffect(() => {
-    setNavHistory([]);
-    setNavPosition(-1);
-
-    if (outputResults.length === 0) return;
+    if (outputResults.length === 0) {
+      setNavHistory([]);
+      setNavPosition(-1);
+      return;
+    }
 
     const firstId = outputResults[0]?.id;
-    if (firstId) setSelectedCarousel(firstId);
+    if (!firstId) {
+      setNavHistory([]);
+      setNavPosition(-1);
+      return;
+    }
+
+    setNavHistory([firstId]);
+    setNavPosition(0);
+    setSelectedCarousel(firstId);
   }, [outputResults, setSelectedCarousel]);
 
   useEffect(() => {
@@ -545,30 +559,28 @@ export default function OutputScreen() {
                     <TagPill key={i} label={tag} onClick={() => handleTagClick(i)} />
                   ))}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', width: '100%' }}>
-                  {navPosition > 0 && (
-                    <button
-                      className={styles.carouselArrow}
-                      onClick={handleNavLeft}
-                      type="button"
-                      aria-label="Previous selected style"
-                    >
-                      ←
-                    </button>
-                  )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', justifyContent: 'center', width: '100%' }}>
+                  <button
+                    style={{ visibility: navPosition > 0 ? 'visible' : 'hidden' }}
+                    className={styles.carouselArrow}
+                    onClick={handleNavLeft}
+                    type="button"
+                    aria-label="Previous selected style"
+                  >
+                    ←
+                  </button>
                   <div className={styles.selectedCarouselWrap}>
                     <StyleCarousel styleId={selectedCarousel} />
                   </div>
-                  {navPosition < navHistory.length - 1 && (
-                    <button
-                      className={styles.carouselArrow}
-                      onClick={handleNavRight}
-                      type="button"
-                      aria-label="Next selected style"
-                    >
-                      →
-                    </button>
-                  )}
+                  <button
+                    style={{ visibility: navPosition < navHistory.length - 1 ? 'visible' : 'hidden' }}
+                    className={styles.carouselArrow}
+                    onClick={handleNavRight}
+                    type="button"
+                    aria-label="Next selected style"
+                  >
+                    →
+                  </button>
                 </div>
                 <div className={styles.buttonRow}>
                   <button
@@ -631,9 +643,11 @@ export default function OutputScreen() {
                 >
                   {outputResults.map((result, index) => (
                     (() => {
-                      const tags = mobileCardTags[index] || { row1: [], row2: [] };
+                      const tags = mobileCardTags[index] || { row1: [], row2: [], row3: [], row4: [] };
                       const row1 = tags.row1;
                       const row2 = tags.row2;
+                      const row3 = tags.row3;
+                      const row4 = tags.row4;
 
                       return (
                         <div
@@ -658,7 +672,25 @@ export default function OutputScreen() {
                                 <TagPill
                                   key={`r2-${result.id}-${indexInRow}`}
                                   label={tag}
+                                  onClick={() => handleTagClick(indexInRow + 3)}
+                                />
+                              ))}
+                            </div>
+                            <div className={styles.mobileTagRow}>
+                              {row3.map((tag, indexInRow) => (
+                                <TagPill
+                                  key={`r3-${result.id}-${indexInRow}`}
+                                  label={tag}
                                   onClick={() => handleTagClick(indexInRow + 6)}
+                                />
+                              ))}
+                            </div>
+                            <div className={styles.mobileTagRow}>
+                              {row4.map((tag, indexInRow) => (
+                                <TagPill
+                                  key={`r4-${result.id}-${indexInRow}`}
+                                  label={tag}
+                                  onClick={() => handleTagClick(indexInRow + 9)}
                                 />
                               ))}
                             </div>
