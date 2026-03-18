@@ -271,6 +271,40 @@ export default function OutputScreen() {
     mobileNavVersionRef.current += 1;
     const observerVersion = mobileNavVersionRef.current;
 
+    let rafId = null;
+
+    const syncIndexToVisibleCard = () => {
+      const deckRect = deck.getBoundingClientRect();
+      const deckCenter = deckRect.top + (deckRect.height / 2);
+
+      let closestIndex = null;
+      let closestDistance = Number.POSITIVE_INFINITY;
+
+      mobileCardRefs.current.forEach((node, index) => {
+        if (!node) return;
+        const rect = node.getBoundingClientRect();
+        const cardCenter = rect.top + (rect.height / 2);
+        const distance = Math.abs(cardCenter - deckCenter);
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIndex = index;
+        }
+      });
+
+      if (closestIndex === null) return;
+      setCurrentCardIndex((prev) => (prev === closestIndex ? prev : closestIndex));
+    };
+
+    const onDeckScroll = () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (mobileNavVersionRef.current !== observerVersion) return;
+        syncIndexToVisibleCard();
+      });
+    };
+
     const nodeToIndex = new WeakMap();
     mobileCardRefs.current.forEach((node, index) => {
       if (!node) return;
@@ -312,8 +346,16 @@ export default function OutputScreen() {
       observer.observe(node);
     });
 
+    deck.addEventListener('scroll', onDeckScroll, { passive: true });
+    syncIndexToVisibleCard();
+
     return () => {
       observer.disconnect();
+      deck.removeEventListener('scroll', onDeckScroll);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
       if (mobileNavTimeoutRef.current !== null) {
         clearTimeout(mobileNavTimeoutRef.current);
         mobileNavTimeoutRef.current = null;
