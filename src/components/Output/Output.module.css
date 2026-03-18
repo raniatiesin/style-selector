@@ -56,8 +56,6 @@
 .selectedCarouselWrap {
   width: 100%;
   max-width: min(340px, 92vw);
-  margin: auto;
-  margin-top: 16px;
 }
 
 /* Right panel — similarity carousels */
@@ -155,29 +153,31 @@
 
   .mobileCardSlot {
     position: relative;
+    height: calc(var(--output-vh, 100dvh) - (env(safe-area-inset-top, 0px) + 170px));
     min-height: calc(var(--output-vh, 100dvh) - (env(safe-area-inset-top, 0px) + 170px));
     display: flex;
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
     justify-content: flex-start;
+    gap: 8px;
+    overflow: hidden;
     scroll-snap-align: start;
     scroll-snap-stop: always;
-    padding: 10px 0 0;
+    padding: 8px 0 10px;
   }
 
   .mobileSlotTagRibbon {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    width: 100%;
-    margin-bottom: 10px;
+    width: min(360px, 85vw);
+    margin-bottom: 0;
     pointer-events: auto;
   }
 
   .mobileCardFrame {
     position: relative;
-    flex: 1;
-    align-self: center;
+    flex: 0 0 auto;
     width: clamp(300px, 85vw, 360px);
     overflow: visible;
     -webkit-tap-highlight-color: transparent;
@@ -385,17 +385,18 @@
 
 @media (min-width: 768px) {
   .leftPanel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
+    gap: clamp(12px, 2vh, 24px);
     padding: clamp(16px, 3vh, 40px) clamp(16px, 2vw, 32px);
-    gap: 12px;
     overflow: hidden;
   }
 
   .selectedCarouselWrap {
-    max-width: min(330px, 86%);
-    align-self: center;
-    margin: 0;
-    margin-top: 0;
+    width: 100%;
+    max-width: min(280px, 85%);
   }
 
   .rightPanel {
@@ -436,6 +437,19 @@
     overflow: visible;
     margin-top: auto;
     padding-top: 6px;
+  }
+
+  .leftPanel .carouselArrow {
+    position: static;
+    top: auto;
+    transform: none;
+    color: rgba(255, 255, 255, 0.42);
+    padding: 8px 6px;
+    line-height: 1;
+  }
+
+  .leftPanel .carouselArrow:hover {
+    color: rgba(255, 255, 255, 0.92) !important;
   }
 }
 

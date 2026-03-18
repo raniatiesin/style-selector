@@ -66,7 +66,8 @@ export default function OutputScreen() {
   const [viewportHeight, setViewportHeight] = useState(() => window.visualViewport?.height || window.innerHeight);
   const [isMobileCoarse, setIsMobileCoarse] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [historyIndex, setHistoryIndex] = useState(0);
+  const [navHistory, setNavHistory] = useState([]);
+  const [navPosition, setNavPosition] = useState(-1);
 
   // Find-similar loading overlay refs
   const simLoadRef = useRef(null);
@@ -214,39 +215,14 @@ export default function OutputScreen() {
   }, [outputResults]);
 
   useEffect(() => {
-    if (outputResults.length === 0) {
-      setHistoryIndex(0);
-      return;
-    }
+    setNavHistory([]);
+    setNavPosition(-1);
 
-    setHistoryIndex(0);
-    const firstId = outputResults[0]?.id;
-    if (firstId && selectedCarousel !== firstId) {
-      setSelectedCarousel(firstId);
-    }
-  }, [outputResults, selectedCarousel, setSelectedCarousel]);
-
-  useEffect(() => {
-    if (!selectedCarousel || outputResults.length === 0) return;
-    const selectedIndex = outputResults.findIndex((result) => result.id === selectedCarousel);
-    if (selectedIndex < 0 || selectedIndex === historyIndex) return;
-    setHistoryIndex(selectedIndex);
-  }, [selectedCarousel, outputResults, historyIndex]);
-
-  useEffect(() => {
     if (outputResults.length === 0) return;
 
-    const clampedIndex = Math.min(Math.max(historyIndex, 0), outputResults.length - 1);
-    if (clampedIndex !== historyIndex) {
-      setHistoryIndex(clampedIndex);
-      return;
-    }
-
-    const styleId = outputResults[clampedIndex]?.id;
-    if (styleId && selectedCarousel !== styleId) {
-      setSelectedCarousel(styleId);
-    }
-  }, [historyIndex, outputResults, selectedCarousel, setSelectedCarousel]);
+    const firstId = outputResults[0]?.id;
+    if (firstId) setSelectedCarousel(firstId);
+  }, [outputResults, setSelectedCarousel]);
 
   useEffect(() => {
     if (!isMobileCoarse || showLoading || outputResults.length === 0) return;
@@ -466,18 +442,27 @@ export default function OutputScreen() {
     }, `-=${DUR.fast}`);
   }, [simLoading, pendingSimResults, setOutputResults, setIsSearching]);
 
-  // Carousel click → just select it on the left panel
-  const handleCarouselClick = useCallback((styleId) => {
-    setSelectedCarousel(styleId);
-  }, [setSelectedCarousel]);
+  const handleCarouselClick = useCallback((clickedStyleId) => {
+    const newHistory = navHistory.slice(0, navPosition + 1);
+    newHistory.push(clickedStyleId);
+    setNavHistory(newHistory);
+    setNavPosition(newHistory.length - 1);
+    setSelectedCarousel(clickedStyleId);
+  }, [navHistory, navPosition, setSelectedCarousel]);
 
-  const handleHistoryPrev = useCallback(() => {
-    setHistoryIndex((prev) => Math.max(0, prev - 1));
-  }, []);
+  const handleNavLeft = useCallback(() => {
+    const prev = navPosition - 1;
+    if (prev < 0) return;
+    setNavPosition(prev);
+    setSelectedCarousel(navHistory[prev]);
+  }, [navHistory, navPosition, setSelectedCarousel]);
 
-  const handleHistoryNext = useCallback(() => {
-    setHistoryIndex((prev) => Math.min(outputResults.length - 1, prev + 1));
-  }, [outputResults.length]);
+  const handleNavRight = useCallback(() => {
+    const next = navPosition + 1;
+    if (next >= navHistory.length) return;
+    setNavPosition(next);
+    setSelectedCarousel(navHistory[next]);
+  }, [navHistory, navPosition, setSelectedCarousel]);
 
   const handleFindSimilar = useCallback(async () => {
     if (!selectedCarousel || simLoading) return;
@@ -560,11 +545,11 @@ export default function OutputScreen() {
                     <TagPill key={i} label={tag} onClick={() => handleTagClick(i)} />
                   ))}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {!isMobileCoarse && historyIndex > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', width: '100%' }}>
+                  {navPosition > 0 && (
                     <button
-                      className={`${styles.carouselArrow} ${styles.arrowLeft} ${styles.historyNavArrow}`}
-                      onClick={handleHistoryPrev}
+                      className={styles.carouselArrow}
+                      onClick={handleNavLeft}
                       type="button"
                       aria-label="Previous selected style"
                     >
@@ -574,10 +559,10 @@ export default function OutputScreen() {
                   <div className={styles.selectedCarouselWrap}>
                     <StyleCarousel styleId={selectedCarousel} />
                   </div>
-                  {!isMobileCoarse && historyIndex < outputResults.length - 1 && (
+                  {navPosition < navHistory.length - 1 && (
                     <button
-                      className={`${styles.carouselArrow} ${styles.arrowRight} ${styles.historyNavArrow}`}
-                      onClick={handleHistoryNext}
+                      className={styles.carouselArrow}
+                      onClick={handleNavRight}
                       type="button"
                       aria-label="Next selected style"
                     >
