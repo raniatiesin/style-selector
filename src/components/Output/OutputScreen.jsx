@@ -599,7 +599,7 @@ export default function OutputScreen() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', justifyContent: 'center', width: '100%' }}>
                   <button
                     style={{ visibility: navPosition > 0 ? 'visible' : 'hidden' }}
-                    className={styles.carouselArrow}
+                    className={`${styles.carouselArrow} ${styles.historyNavArrow}`}
                     onClick={handleNavLeft}
                     type="button"
                     aria-label="Previous selected style"
@@ -611,7 +611,7 @@ export default function OutputScreen() {
                   </div>
                   <button
                     style={{ visibility: navPosition < navHistory.length - 1 ? 'visible' : 'hidden' }}
-                    className={styles.carouselArrow}
+                    className={`${styles.carouselArrow} ${styles.historyNavArrow}`}
                     onClick={handleNavRight}
                     type="button"
                     aria-label="Next selected style"

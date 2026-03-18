@@ -446,7 +446,7 @@
     padding-top: 6px;
   }
 
-  .leftPanel .carouselArrow {
+  .leftPanel .historyNavArrow {
     position: static;
     top: auto;
     transform: none;
@@ -455,7 +455,7 @@
     line-height: 1;
   }
 
-  .leftPanel .carouselArrow:hover {
+  .leftPanel .historyNavArrow:hover {
     color: rgba(255, 255, 255, 0.92) !important;
   }
 
@@ -564,7 +564,7 @@
   justify-content: center;
   gap: 18px;
   z-index: 320;
-  background: rgba(10, 10, 10, 0.5);
+  background: transparent;
   pointer-events: all;
 }
 
