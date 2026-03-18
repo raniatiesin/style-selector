@@ -151,28 +151,43 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    gap: 10px;
+    gap: 6px;
     overflow: hidden;
     scroll-snap-align: center;
-    padding: env(safe-area-inset-top, 12px) 0 8px;
+    scroll-snap-stop: always;
+    padding: env(safe-area-inset-top, 8px) 0 8px;
   }
 
   .mobileSlotTagRibbon {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    width: min(360px, 85vw);
-    padding-top: 8px;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 12px;
+    -webkit-overflow-scrolling: touch;
     position: static;
+  }
+
+  .mobileSlotTagRibbon::-webkit-scrollbar {
+    display: none;
   }
 
   .mobileCardFrame {
     position: relative;
-    width: clamp(300px, 85vw, 360px);
+    width: clamp(280px, 85vw, 360px);
     flex: 1;
     min-height: 0;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobileCardFrame .carouselContainer {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: unset;
   }
 
   .mobileCardTracker {

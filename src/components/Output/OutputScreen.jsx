@@ -160,13 +160,7 @@ export default function OutputScreen() {
 
   const mobileCardTags = useMemo(() => {
     return outputResults.map(r => {
-      const tags = getStyleTally(r.id).split(', ').filter(Boolean);
-      return {
-        row1: tags.slice(0, 3),
-        row2: tags.slice(3, 6),
-        row3: tags.slice(6, 9),
-        row4: tags.slice(9, 12),
-      };
+      return getStyleTally(r.id).split(', ').filter(Boolean);
     });
   }, [outputResults]);
 
@@ -634,11 +628,7 @@ export default function OutputScreen() {
                 >
                   {outputResults.map((result, index) => (
                     (() => {
-                      const tags = mobileCardTags[index] || { row1: [], row2: [], row3: [], row4: [] };
-                      const row1 = tags.row1;
-                      const row2 = tags.row2;
-                      const row3 = tags.row3;
-                      const row4 = tags.row4;
+                      const tags = mobileCardTags[index] || [];
 
                       return (
                         <div
@@ -649,38 +639,12 @@ export default function OutputScreen() {
                           className={styles.mobileCardSlot}
                         >
                           <div className={styles.mobileSlotTagRibbon}>
-                            <div className={styles.mobileTagRow}>
-                              {row1.map((tag, indexInRow) => (
-                                <TagPill
-                                  key={`r1-${result.id}-${indexInRow}`}
-                                  label={tag}
-                                />
-                              ))}
-                            </div>
-                            <div className={styles.mobileTagRow}>
-                              {row2.map((tag, indexInRow) => (
-                                <TagPill
-                                  key={`r2-${result.id}-${indexInRow}`}
-                                  label={tag}
-                                />
-                              ))}
-                            </div>
-                            <div className={styles.mobileTagRow}>
-                              {row3.map((tag, indexInRow) => (
-                                <TagPill
-                                  key={`r3-${result.id}-${indexInRow}`}
-                                  label={tag}
-                                />
-                              ))}
-                            </div>
-                            <div className={styles.mobileTagRow}>
-                              {row4.map((tag, indexInRow) => (
-                                <TagPill
-                                  key={`r4-${result.id}-${indexInRow}`}
-                                  label={tag}
-                                />
-                              ))}
-                            </div>
+                            {tags.map((tag, indexInRow) => (
+                              <TagPill
+                                key={`t-${result.id}-${indexInRow}`}
+                                label={tag}
+                              />
+                            ))}
                           </div>
 
                           <div className={styles.mobileCardFrame}>

@@ -82,23 +82,35 @@ const StyleCarousel = React.memo(function StyleCarousel({
     const clamped = Math.max(0, Math.min(5, index));
     setCurrentSlide(clamped);
     const width = getCarouselWidth();
-    currentOffset.current = -clamped * width;
-    stripRef.current?.classList.add('animating');
+    const targetOffset = -clamped * width;
     gsap.to(stripRef.current, {
-      x: currentOffset.current,
-      duration: 0.3,
-      ease: 'power2.out',
-      onComplete: () => stripRef.current?.classList.remove('animating'),
+      x: targetOffset,
+      duration: 0.35,
+      ease: 'power3.out',
+      onStart: () => {
+        if (stripRef.current) {
+          stripRef.current.classList.add('animating');
+        }
+      },
+      onComplete: () => {
+        currentOffset.current = targetOffset;
+        if (stripRef.current) {
+          stripRef.current.classList.remove('animating');
+        }
+      },
     });
   }, [getCarouselWidth]);
 
   const snapBack = useCallback(() => {
-    stripRef.current?.classList.add('animating');
     gsap.to(stripRef.current, {
       x: currentOffset.current,
-      duration: 0.2,
+      duration: 0.25,
       ease: 'power2.out',
-      onComplete: () => stripRef.current?.classList.remove('animating'),
+      onComplete: () => {
+        if (stripRef.current) {
+          stripRef.current.classList.remove('animating');
+        }
+      },
     });
   }, []);
 
@@ -133,10 +145,16 @@ const StyleCarousel = React.memo(function StyleCarousel({
     const velocityThreshold = 0.3;
     const shouldSwipe = Math.abs(delta) > distanceThreshold
       || velocity > velocityThreshold;
+    const totalSlides = slides.length;
 
-    if (shouldSwipe && delta < 0) goToSlide(currentSlide + 1);
-    else if (shouldSwipe && delta > 0) goToSlide(currentSlide - 1);
-    else snapBack();
+    if (shouldSwipe) {
+      const nextSlide = delta < 0
+        ? Math.min(currentSlide + 1, totalSlides - 1)
+        : Math.max(currentSlide - 1, 0);
+      goToSlide(nextSlide);
+    } else {
+      snapBack();
+    }
   };
 
   // Build slide sources: rep (segment 1 / local) + 5 segments from Supabase Storage
