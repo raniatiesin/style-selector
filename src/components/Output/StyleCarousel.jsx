@@ -57,13 +57,19 @@ const StyleCarousel = React.memo(function StyleCarousel({
       `${SEGMENTS_BASE}/${styleId}/${i + 2}.webp`
     );
 
-    Promise.all(urls.map(url => loadSegment(url))).then(results => {
-      if (cancelled) return;
-      const next = {};
-      results.forEach((url, i) => {
-        if (url) next[i] = url;
+    urls.forEach((url, index) => {
+      loadSegment(url).then((resolvedUrl) => {
+        if (cancelled) return;
+        if (!resolvedUrl) return;
+
+        setLoadedSegmentsState((prev) => ({
+          styleId,
+          segments: {
+            ...(prev.styleId === styleId ? prev.segments : {}),
+            [index]: resolvedUrl,
+          },
+        }));
       });
-      setLoadedSegmentsState({ styleId, segments: next });
     });
 
     return () => {

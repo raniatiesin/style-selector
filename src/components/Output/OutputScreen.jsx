@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import gsap from 'gsap';
 import { useQuizStore } from '../../store/quizStore';
-import { getManifest } from '../../utils/dataCache';
+import { getManifest, getStyleTallyMap } from '../../utils/dataCache';
 import { preloadImagesPriority } from '../../utils/preloader';
 import { EASE, DUR, STAGGER } from '../../config/animation';
 import StyleCarousel from './StyleCarousel';
@@ -35,9 +35,9 @@ function tagOverlapFallback(tally, count = 6) {
 
 /** Look up tally string for a styleId from manifest */
 function getStyleTally(styleId) {
-  const manifest = getManifest();
-  const entry = manifest?.find(m => m.id === styleId);
-  return entry?.tally || '';
+  const tallyMap = getStyleTallyMap();
+  if (!tallyMap) return '';
+  return tallyMap.get(styleId) || '';
 }
 
 function getStyleLabel(styleId) {
@@ -74,6 +74,8 @@ export default function OutputScreen() {
   const simLineRef = useRef(null);
   const simTextRef = useRef(null);
   const simTlRef = useRef(null);
+  const findSimilarAbortRef = useRef(null);
+  const findSimilarTimeoutRef = useRef(null);
   const [simLoading, setSimLoading] = useState(false);
   const [pendingSimResults, setPendingSimResults] = useState(null);
 
@@ -141,6 +143,16 @@ export default function OutputScreen() {
       if (mobileNavTimeoutRef.current !== null) {
         clearTimeout(mobileNavTimeoutRef.current);
         mobileNavTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      findSimilarAbortRef.current?.abort();
+      if (findSimilarTimeoutRef.current !== null) {
+        clearTimeout(findSimilarTimeoutRef.current);
+        findSimilarTimeoutRef.current = null;
       }
     };
   }, []);
@@ -468,7 +480,27 @@ export default function OutputScreen() {
   }, [navHistory, navPosition, setSelectedCarousel]);
 
   const handleFindSimilar = useCallback(async () => {
-    if (!selectedCarousel || simLoading) return;
+    const targetStyleId = isMobileCoarse
+      ? outputResults[currentCardIndex]?.id
+      : selectedCarousel;
+
+    if (!targetStyleId || simLoading) return;
+
+    if (findSimilarAbortRef.current) {
+      findSimilarAbortRef.current.abort();
+    }
+    if (findSimilarTimeoutRef.current !== null) {
+      clearTimeout(findSimilarTimeoutRef.current);
+      findSimilarTimeoutRef.current = null;
+    }
+
+    const controller = new AbortController();
+    findSimilarAbortRef.current = controller;
+    let didTimeout = false;
+    findSimilarTimeoutRef.current = setTimeout(() => {
+      didTimeout = true;
+      controller.abort();
+    }, 15000);
 
     pushToHistory();
     setIsSearching(true);
@@ -494,7 +526,8 @@ export default function OutputScreen() {
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ styleId: selectedCarousel, sessionId }),
+        signal: controller.signal,
+        body: JSON.stringify({ styleId: targetStyleId, sessionId }),
       });
 
       if (!res.ok) throw new Error('Find similar failed');
@@ -503,11 +536,26 @@ export default function OutputScreen() {
       // Store results — the simLoading effect will animate out loader + stagger in
       setPendingSimResults(data.results);
     } catch (err) {
+      if (err?.name === 'AbortError') {
+        if (didTimeout) {
+          setSimLoading(false);
+          setIsSearching(false);
+        }
+        return;
+      }
       console.error('Find similar failed:', err);
       setSimLoading(false);
       setIsSearching(false);
+    } finally {
+      if (findSimilarTimeoutRef.current !== null) {
+        clearTimeout(findSimilarTimeoutRef.current);
+        findSimilarTimeoutRef.current = null;
+      }
+      if (findSimilarAbortRef.current === controller) {
+        findSimilarAbortRef.current = null;
+      }
     }
-  }, [selectedCarousel, sessionId, simLoading, pushToHistory, setOutputResults, setIsSearching]);
+  }, [isMobileCoarse, outputResults, currentCardIndex, selectedCarousel, sessionId, simLoading, pushToHistory, setOutputResults, setIsSearching]);
 
   const handleTagClick = useCallback((categoryIndex) => {
     jumpToQuizStep(categoryIndex * 3);

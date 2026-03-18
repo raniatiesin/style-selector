@@ -161,7 +161,7 @@
     gap: 6px;
     overflow: hidden;
     scroll-snap-align: center;
-    scroll-snap-stop: normal;
+    scroll-snap-stop: always;
     padding: env(safe-area-inset-top, 8px) 0 8px;
     padding-bottom: 80px;
   }
@@ -224,7 +224,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 14px 20px calc(env(safe-area-inset-bottom, 20px) + 2px);
+    padding: 14px 20px calc(env(safe-area-inset-bottom, 20px) + 12px);
     background: rgba(10, 10, 10, 0.62);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);

@@ -6,12 +6,17 @@ import { DESKTOP_SLOTS, MOBILE_SLOTS } from './config/generateSlots';
 import App from './App';
 import './styles/global.css';
 
-loadAllData().then(async () => {
+function preloadWelcomeImages() {
   // computeAssignment maps images by index, so only the first slotCount images
   // are ever rendered. Preload exactly those — no wasted requests.
   const slotCount = window.innerWidth >= 768 ? DESKTOP_SLOTS.length : MOBILE_SLOTS.length;
   const toPreload = WELCOME_IMAGE_IDS.slice(0, slotCount);
-  await preloadImagesAsync(toPreload, { threshold: 1.0, maxMs: 2500 });
+  return preloadImagesAsync(toPreload, { threshold: 1.0, maxMs: 2500 });
+}
 
-  createRoot(document.getElementById('root')).render(<App />);
-});
+createRoot(document.getElementById('root')).render(<App />);
+
+Promise.all([
+  loadAllData(),
+  preloadWelcomeImages(),
+]).catch(console.error);
