@@ -234,10 +234,28 @@ export default function OutputScreen() {
     const firstId = newResults[0]?.id;
     if (!firstId) return;
 
-    setNavHistory([firstId]);
-    setNavPosition(0);
+    setNavHistory((prevHistory) => {
+      const safePos = Math.min(Math.max(navPosition, -1), prevHistory.length - 1);
+      const truncated = safePos === prevHistory.length - 1
+        ? prevHistory
+        : prevHistory.slice(0, safePos + 1);
+
+      if (truncated.length === 0) {
+        setNavPosition(0);
+        return [firstId];
+      }
+
+      if (truncated[truncated.length - 1] === firstId) {
+        setNavPosition(truncated.length - 1);
+        return truncated;
+      }
+
+      const nextHistory = [...truncated, firstId];
+      setNavPosition(nextHistory.length - 1);
+      return nextHistory;
+    });
     setSelectedCarousel(firstId);
-  }, [outputResults, setSelectedCarousel]);
+  }, [outputResults, navPosition, setSelectedCarousel]);
 
   useEffect(() => {
     if (!isMobileCoarse || showLoading || outputResults.length === 0) return;
