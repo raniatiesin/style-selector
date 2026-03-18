@@ -48,8 +48,8 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  max-width: min(420px, 100%);
   width: 100%;
+  overflow: hidden;
 }
 
 .selectedCarouselWrap {
@@ -158,7 +158,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     gap: 6px;
     overflow: hidden;
     scroll-snap-align: center;
@@ -179,7 +179,7 @@
   .mobileCardFrame {
     position: relative;
     width: clamp(280px, 85vw, 360px);
-    flex: 1;
+    flex: 0 0 auto;
     min-height: 0;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
@@ -225,7 +225,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 12px 16px env(safe-area-inset-bottom, 16px);
+    padding: 14px 20px env(safe-area-inset-bottom, 20px);
     background: rgba(10, 10, 10, 0.62);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
@@ -240,8 +240,7 @@
   .mobileBottomZone .confirmBtn,
   .mobileBottomZone .findSimilarBtn {
     flex: 1;
-    padding-left: 0;
-    padding-right: 0;
+    padding: 16px 0;
   }
 }
 
@@ -411,6 +410,8 @@
     flex: 0 0 auto;
     width: 100%;
     max-width: min(280px, 85%);
+    margin: 0 auto;
+    display: block;
   }
 
   .rightPanel {
@@ -427,11 +428,12 @@
 
   .leftPanel .tallyGrid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     justify-content: center;
     align-content: start;
-    gap: 8px;
-    max-width: 100%;
+    gap: 6px;
+    width: 100%;
+    overflow: hidden;
   }
 
   .leftPanel .buttonRow {
@@ -463,19 +465,33 @@
   font-size: 0.72rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 12px 28px;
   cursor: pointer;
   transition: color 0.2s ease, border-color 0.2s ease;
   border-radius: 0;
 }
 
-.confirmBtn:hover,
+.confirmBtn {
+  color: rgba(10, 10, 10, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+}
+
+.findSimilarBtn {
+  color: rgba(255, 255, 255, 0.4);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
 .findSimilarBtn:hover {
   color: rgba(255, 255, 255, 0.88);
   border-color: rgba(255, 255, 255, 0.5);
+}
+
+.confirmBtn:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(255, 255, 255, 1);
+  color: #000;
 }
 
 /* Loading screen */
