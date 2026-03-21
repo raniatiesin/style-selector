@@ -680,8 +680,12 @@ export default function OutputScreen() {
 
     if (delta === 0) return;
 
-    const nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, row.scrollLeft + delta));
-    if (nextScrollLeft === row.scrollLeft) return;
+    let nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, row.scrollLeft + delta));
+    if (nextScrollLeft === row.scrollLeft) {
+      // Some wheel devices report opposite signs; try inverse direction as a fallback.
+      nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, row.scrollLeft - delta));
+      if (nextScrollLeft === row.scrollLeft) return;
+    }
 
     event.preventDefault();
     row.scrollLeft = nextScrollLeft;
@@ -817,7 +821,7 @@ export default function OutputScreen() {
                           className={styles.mobileCardSlot}
                         >
                           <div className={styles.mobileSlotTagRibbon}>
-                            <div className={styles.mobileTagRow} onWheel={handleTagRowWheel}>
+                            <div className={styles.mobileTagRow} onWheelCapture={handleTagRowWheel}>
                               {tags.slice(0, 4).map((tag, indexInRow) => (
                                 <TagPill
                                   key={`t1-${result.id}-${indexInRow}`}
@@ -825,7 +829,7 @@ export default function OutputScreen() {
                                 />
                               ))}
                             </div>
-                            <div className={styles.mobileTagRow} onWheel={handleTagRowWheel}>
+                            <div className={styles.mobileTagRow} onWheelCapture={handleTagRowWheel}>
                               {tags.slice(4, 8).map((tag, indexInRow) => (
                                 <TagPill
                                   key={`t2-${result.id}-${indexInRow}`}
@@ -833,7 +837,7 @@ export default function OutputScreen() {
                                 />
                               ))}
                             </div>
-                            <div className={styles.mobileTagRow} onWheel={handleTagRowWheel}>
+                            <div className={styles.mobileTagRow} onWheelCapture={handleTagRowWheel}>
                               {tags.slice(8, 12).map((tag, indexInRow) => (
                                 <TagPill
                                   key={`t3-${result.id}-${indexInRow}`}

@@ -43,8 +43,9 @@ const StyleCarousel = React.memo(function StyleCarousel({
   const dragStartX = useRef(0);
   const dragStartY = useRef(0);
   const dragStartTime = useRef(0);
-  const activePointerId = useRef(null);
+  const isPointerDown = useRef(false);
   const isDragging = useRef(false);
+  const suppressClick = useRef(false);
   const currentOffset = useRef(0);
 
   // Load segment images lazily from Supabase Storage
@@ -124,64 +125,56 @@ const StyleCarousel = React.memo(function StyleCarousel({
 
   // Pointer events for swipe
   const handlePointerDown = (e) => {
+    if (e.button != null && e.button !== 0) return;
+
     dragStartX.current = e.clientX;
     dragStartY.current = e.clientY;
     dragStartTime.current = Date.now();
-    activePointerId.current = e.pointerId;
-    isDragging.current = true;
-
-    if (e.currentTarget?.setPointerCapture) {
-      try {
-        e.currentTarget.setPointerCapture(e.pointerId);
-      } catch {
-        // No-op: capture can fail on some browser/device combos.
-      }
-    }
+    isPointerDown.current = true;
+    isDragging.current = false;
+    suppressClick.current = false;
   };
 
   const handlePointerMove = (e) => {
-    if (!isDragging.current) return;
-    if (activePointerId.current != null && e.pointerId !== activePointerId.current) return;
+    if (!isPointerDown.current) return;
 
     const deltaX = e.clientX - dragStartX.current;
-    const deltaY = e.clientY - (dragStartY.current || e.clientY);
+    const deltaY = e.clientY - dragStartY.current;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
 
-    // If vertical movement dominates, cancel drag
-    if (Math.abs(deltaY) > Math.abs(deltaX) + 5) {
-      isDragging.current = false;
-      snapBack();
+    // Keep vertical scrolling fluid and avoid stealing taps.
+    if (absY > absX + 6) {
+      if (isDragging.current) {
+        isDragging.current = false;
+        snapBack();
+      }
       return;
     }
+
+    if (absX < 6) return;
+
+    isDragging.current = true;
+    suppressClick.current = true;
 
     gsap.set(stripRef.current, { x: currentOffset.current + deltaX });
   };
 
   const handlePointerUp = (e) => {
-    if (!isDragging.current) return;
-    if (activePointerId.current != null && e.pointerId !== activePointerId.current) return;
+    if (!isPointerDown.current) return;
 
-    isDragging.current = false;
-    activePointerId.current = null;
-
-    if (e.currentTarget?.releasePointerCapture) {
-      try {
-        if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
-          e.currentTarget.releasePointerCapture(e.pointerId);
-        }
-      } catch {
-        // No-op: release can fail safely.
-      }
-    }
+    isPointerDown.current = false;
 
     const delta = e.clientX - dragStartX.current;
-    const elapsed = Date.now() - dragStartTime.current;
+    const elapsed = Math.max(1, Date.now() - dragStartTime.current);
     const velocity = Math.abs(delta) / elapsed;
 
-    if (Math.abs(delta) < 5) {
-      // This was a click, not a drag
-      onClick?.(styleId);
+    if (!isDragging.current) {
+      suppressClick.current = false;
       return;
     }
+
+    isDragging.current = false;
 
     const distanceThreshold = 20;
     const velocityThreshold = 0.3;
@@ -199,13 +192,22 @@ const StyleCarousel = React.memo(function StyleCarousel({
     }
   };
 
-  const cancelDrag = (e) => {
-    if (!isDragging.current) return;
-    if (activePointerId.current != null && e.pointerId !== activePointerId.current) return;
+  const handlePointerCancel = () => {
+    if (!isPointerDown.current && !isDragging.current) return;
 
+    isPointerDown.current = false;
     isDragging.current = false;
-    activePointerId.current = null;
+    suppressClick.current = true;
     snapBack();
+  };
+
+  const handleClick = () => {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      return;
+    }
+
+    onClick?.(styleId);
   };
 
   // Build slide sources: rep (segment 1 / local) + 5 segments from Supabase Storage
@@ -221,8 +223,8 @@ const StyleCarousel = React.memo(function StyleCarousel({
       onPointerDown={isActive ? handlePointerDown : undefined}
       onPointerMove={isActive ? handlePointerMove : undefined}
       onPointerUp={isActive ? handlePointerUp : undefined}
-      onPointerCancel={isActive ? cancelDrag : undefined}
-      onPointerLeave={isActive ? cancelDrag : undefined}
+      onPointerCancel={isActive ? handlePointerCancel : undefined}
+      onClick={isActive ? handleClick : undefined}
     >
       {similarity != null && (
         <span className={styles.similarityBadge}>
