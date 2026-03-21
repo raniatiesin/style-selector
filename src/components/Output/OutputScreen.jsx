@@ -670,6 +670,23 @@ export default function OutputScreen() {
     jumpToQuizStep(categoryIndex * 3);
   }, [jumpToQuizStep]);
 
+  const handleTagRowWheel = useCallback((event) => {
+    const row = event.currentTarget;
+    const maxScrollLeft = row.scrollWidth - row.clientWidth;
+    if (maxScrollLeft <= 0) return;
+
+    const hasHorizontalIntent = Math.abs(event.deltaX) > Math.abs(event.deltaY);
+    const delta = hasHorizontalIntent ? event.deltaX : event.deltaY;
+
+    if (delta === 0) return;
+
+    const nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, row.scrollLeft + delta));
+    if (nextScrollLeft === row.scrollLeft) return;
+
+    event.preventDefault();
+    row.scrollLeft = nextScrollLeft;
+  }, []);
+
   return (
     <>
       {/* Loading screen — visible until results arrive and exit animation completes */}
@@ -800,7 +817,7 @@ export default function OutputScreen() {
                           className={styles.mobileCardSlot}
                         >
                           <div className={styles.mobileSlotTagRibbon}>
-                            <div className={styles.mobileTagRow}>
+                            <div className={styles.mobileTagRow} onWheel={handleTagRowWheel}>
                               {tags.slice(0, 4).map((tag, indexInRow) => (
                                 <TagPill
                                   key={`t1-${result.id}-${indexInRow}`}
@@ -808,7 +825,7 @@ export default function OutputScreen() {
                                 />
                               ))}
                             </div>
-                            <div className={styles.mobileTagRow}>
+                            <div className={styles.mobileTagRow} onWheel={handleTagRowWheel}>
                               {tags.slice(4, 8).map((tag, indexInRow) => (
                                 <TagPill
                                   key={`t2-${result.id}-${indexInRow}`}
@@ -816,7 +833,7 @@ export default function OutputScreen() {
                                 />
                               ))}
                             </div>
-                            <div className={styles.mobileTagRow}>
+                            <div className={styles.mobileTagRow} onWheel={handleTagRowWheel}>
                               {tags.slice(8, 12).map((tag, indexInRow) => (
                                 <TagPill
                                   key={`t3-${result.id}-${indexInRow}`}

@@ -43,6 +43,7 @@ const StyleCarousel = React.memo(function StyleCarousel({
   const dragStartX = useRef(0);
   const dragStartY = useRef(0);
   const dragStartTime = useRef(0);
+  const activePointerId = useRef(null);
   const isDragging = useRef(false);
   const currentOffset = useRef(0);
 
@@ -123,16 +124,27 @@ const StyleCarousel = React.memo(function StyleCarousel({
 
   // Pointer events for swipe
   const handlePointerDown = (e) => {
-    dragStartX.current = e.pageX;
-    dragStartY.current = e.pageY;
+    dragStartX.current = e.clientX;
+    dragStartY.current = e.clientY;
     dragStartTime.current = Date.now();
+    activePointerId.current = e.pointerId;
     isDragging.current = true;
+
+    if (e.currentTarget?.setPointerCapture) {
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        // No-op: capture can fail on some browser/device combos.
+      }
+    }
   };
 
   const handlePointerMove = (e) => {
     if (!isDragging.current) return;
-    const deltaX = e.pageX - dragStartX.current;
-    const deltaY = e.pageY - (dragStartY.current || e.pageY);
+    if (activePointerId.current != null && e.pointerId !== activePointerId.current) return;
+
+    const deltaX = e.clientX - dragStartX.current;
+    const deltaY = e.clientY - (dragStartY.current || e.clientY);
 
     // If vertical movement dominates, cancel drag
     if (Math.abs(deltaY) > Math.abs(deltaX) + 5) {
@@ -146,8 +158,22 @@ const StyleCarousel = React.memo(function StyleCarousel({
 
   const handlePointerUp = (e) => {
     if (!isDragging.current) return;
+    if (activePointerId.current != null && e.pointerId !== activePointerId.current) return;
+
     isDragging.current = false;
-    const delta = e.pageX - dragStartX.current;
+    activePointerId.current = null;
+
+    if (e.currentTarget?.releasePointerCapture) {
+      try {
+        if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+      } catch {
+        // No-op: release can fail safely.
+      }
+    }
+
+    const delta = e.clientX - dragStartX.current;
     const elapsed = Date.now() - dragStartTime.current;
     const velocity = Math.abs(delta) / elapsed;
 
@@ -173,6 +199,15 @@ const StyleCarousel = React.memo(function StyleCarousel({
     }
   };
 
+  const cancelDrag = (e) => {
+    if (!isDragging.current) return;
+    if (activePointerId.current != null && e.pointerId !== activePointerId.current) return;
+
+    isDragging.current = false;
+    activePointerId.current = null;
+    snapBack();
+  };
+
   // Build slide sources: rep (segment 1 / local) + 5 segments from Supabase Storage
   const slides = [
     `/images/rep/${styleId}.webp`,
@@ -186,6 +221,8 @@ const StyleCarousel = React.memo(function StyleCarousel({
       onPointerDown={isActive ? handlePointerDown : undefined}
       onPointerMove={isActive ? handlePointerMove : undefined}
       onPointerUp={isActive ? handlePointerUp : undefined}
+      onPointerCancel={isActive ? cancelDrag : undefined}
+      onPointerLeave={isActive ? cancelDrag : undefined}
     >
       {similarity != null && (
         <span className={styles.similarityBadge}>
