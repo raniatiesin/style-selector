@@ -5,7 +5,7 @@
   height: var(--output-vh, 100dvh);
   display: flex;
   z-index: 200;
-  overflow: hidden;
+  overflow: visible;
   min-height: 0;
 }
 
@@ -18,7 +18,7 @@
   justify-content: space-evenly;
   padding: 40px 32px;
   gap: 20px;
-  overflow-y: hidden;
+  overflow: visible;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scrollbar-width: thin;
@@ -358,13 +358,18 @@
   padding: 20px;
   z-index: 2;
   transition: color 0.2s ease;
+  pointer-events: none;
+}
+
+.carouselArrowIcon {
+  pointer-events: auto;
 }
 
 .carouselContainer:hover .carouselArrow {
   color: rgba(255, 255, 255, 0.35);
 }
 
-.carouselArrow:hover {
+.carouselArrowIcon:hover {
   color: rgba(255, 255, 255, 0.82) !important;
 }
 
@@ -411,7 +416,7 @@
     justify-content: center;
     gap: clamp(12px, 2vh, 24px);
     padding: clamp(16px, 3vh, 40px) clamp(16px, 2vw, 32px);
-    overflow: hidden;
+    overflow: visible;
   }
 
   .selectedCarouselWrap {

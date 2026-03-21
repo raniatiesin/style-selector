@@ -210,7 +210,7 @@ const StyleCarousel = React.memo(function StyleCarousel({
           onClick={(e) => { e.stopPropagation(); goToSlide(currentSlide - 1); }}
           type="button"
         >
-          ←
+          <span className={styles.carouselArrowIcon}>←</span>
         </button>
       )}
       {currentSlide < 5 && (
@@ -220,7 +220,7 @@ const StyleCarousel = React.memo(function StyleCarousel({
           onClick={(e) => { e.stopPropagation(); goToSlide(currentSlide + 1); }}
           type="button"
         >
-          →
+          <span className={styles.carouselArrowIcon}>→</span>
         </button>
       )}
 
