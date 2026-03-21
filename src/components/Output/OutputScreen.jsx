@@ -176,7 +176,10 @@ export default function OutputScreen() {
     });
   }, [outputResults]);
 
-  const mobileCardIndex = currentCardIndex;
+  const mobileCardIndex = useMemo(() => {
+    if (outputResults.length === 0) return 0;
+    return Math.min(Math.max(currentCardIndex, 0), outputResults.length - 1);
+  }, [currentCardIndex, outputResults]);
 
   // Compute results on mount — POST tally to /api/search
   useEffect(() => {
@@ -255,7 +258,7 @@ export default function OutputScreen() {
       return nextHistory;
     });
     setSelectedCarousel(firstId);
-  }, [outputResults, setSelectedCarousel]);
+  }, [outputResults, navPosition, setSelectedCarousel]);
 
   useEffect(() => {
     if (!isMobileCoarse || showLoading || outputResults.length === 0) return;
@@ -367,12 +370,11 @@ export default function OutputScreen() {
   useEffect(() => {
     if (!isMobileCoarse || showLoading || outputResults.length === 0) return;
 
-    const safeIndex = Math.min(currentCardIndex, outputResults.length - 1);
-    const activeResult = outputResults[safeIndex];
+    const activeResult = outputResults[mobileCardIndex];
     if (!activeResult) return;
     if (selectedCarousel === activeResult.id) return;
     setSelectedCarousel(activeResult.id);
-  }, [isMobileCoarse, showLoading, outputResults, currentCardIndex, selectedCarousel, setSelectedCarousel]);
+  }, [isMobileCoarse, showLoading, outputResults, mobileCardIndex, selectedCarousel, setSelectedCarousel]);
 
   // Loading screen entrance animation
   useEffect(() => {
@@ -563,12 +565,12 @@ export default function OutputScreen() {
     if (!isMobileCoarse || outputResults.length === 0) return null;
 
     const deck = mobileDeckRef.current;
-    if (!deck) return outputResults[currentCardIndex]?.id || outputResults[0]?.id || null;
+    if (!deck) return outputResults[mobileCardIndex]?.id || outputResults[0]?.id || null;
 
     const deckRect = deck.getBoundingClientRect();
     const deckCenter = deckRect.top + (deckRect.height / 2);
 
-    let closestIndex = currentCardIndex;
+    let closestIndex = mobileCardIndex;
     let closestDistance = Number.POSITIVE_INFINITY;
 
     mobileCardRefs.current.forEach((node, index) => {
@@ -583,8 +585,8 @@ export default function OutputScreen() {
       }
     });
 
-    return outputResults[closestIndex]?.id || outputResults[currentCardIndex]?.id || outputResults[0]?.id || null;
-  }, [isMobileCoarse, outputResults, currentCardIndex]);
+    return outputResults[closestIndex]?.id || outputResults[mobileCardIndex]?.id || outputResults[0]?.id || null;
+  }, [isMobileCoarse, outputResults, mobileCardIndex]);
 
   const handleFindSimilar = useCallback(async () => {
     const targetStyleId = isMobileCoarse
@@ -843,13 +845,12 @@ export default function OutputScreen() {
                   {outputResults.map((result, index) => (
                     <div
                       key={`tracker-${result.id}`}
-                      className={`${styles.mobileTrackerDot} ${index === currentCardIndex ? styles.mobileTrackerDotActive : ''}`}
+                      className={`${styles.mobileTrackerDot} ${index === mobileCardIndex ? styles.mobileTrackerDotActive : ''}`}
                     />
                   ))}
                 </div>
 
                 <div className={styles.mobileBottomZone}>
-                  <p className={styles.leftHeading}>Hit confirm. We get to work.</p>
                   <div className={styles.buttonRow}>
                     <button
                       className={styles.confirmBtn}

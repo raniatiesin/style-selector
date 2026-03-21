@@ -207,6 +207,9 @@
     width: 92vw;
     height: min(90dvh, calc(100dvh - 24px));
     padding: 22px 18px;
+    /* Mobile-only: reduce expensive backdrop blur during long list scroll */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   .faqTitle {
@@ -216,6 +219,7 @@
 
   .faqScrollArea {
     padding-right: 2px;
+    contain: layout paint;
   }
 
   .faqColumns {
@@ -242,6 +246,8 @@
 
   .faqItem {
     padding: 10px 10px;
+    content-visibility: auto;
+    contain-intrinsic-size: 120px;
   }
 
   .scrollHint {

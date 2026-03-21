@@ -45,11 +45,19 @@
 }
 
 .tallyGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: nowrap;
   gap: 8px;
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: grab;
+}
+
+.tallyGrid::-webkit-scrollbar {
+  display: none;
 }
 
 .selectedCarouselWrap {
@@ -121,8 +129,8 @@
   .mobileTagRow {
     display: flex;
     flex-direction: row;
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    overflow: visible;
     scrollbar-width: none;
     gap: 6px;
     padding-top: 4px;
@@ -347,15 +355,19 @@
 /* Desktop-only carousel arrows */
 .carouselArrow {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
+  bottom: 0;
+  width: 50%;
   font-family: var(--font);
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0);
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px;
+  display: flex;
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
   z-index: 2;
   transition: color 0.2s ease;
 }
@@ -369,11 +381,17 @@
 }
 
 .arrowLeft {
-  left: 4px;
+  left: 0;
+  justify-content: flex-start;
+  padding-left: 4px;
+  padding-right: 0;
 }
 
 .arrowRight {
-  right: 4px;
+  right: 0;
+  justify-content: flex-end;
+  padding-right: 4px;
+  padding-left: 0;
 }
 
 .historyNavArrow {
