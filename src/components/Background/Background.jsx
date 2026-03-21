@@ -16,7 +16,85 @@ function areImageIdsEqual(prevIds, nextIds) {
 function areBackgroundPropsEqual(prevProps, nextProps) {
   if (prevProps.blurred !== nextProps.blurred) return false;
   if (prevProps.isOutputVisible !== nextProps.isOutputVisible) return false;
+  if (prevProps.showCard1 !== nextProps.showCard1) return false;
+  if (prevProps.showCard2 !== nextProps.showCard2) return false;
+  if (prevProps.showCard3 !== nextProps.showCard3) return false;
   return areImageIdsEqual(prevProps.imageIds, nextProps.imageIds);
+}
+
+function pickNearestSlot(slots, targetX, targetY, usedIds) {
+  let best = null;
+  let bestDist = Infinity;
+  for (const slot of slots) {
+    if (usedIds.has(slot.id)) continue;
+    const dx = slot.x - targetX;
+    const dy = slot.y - targetY;
+    const dist = dx * dx + dy * dy;
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = slot;
+    }
+  }
+  if (best) usedIds.add(best.id);
+  return best;
+}
+
+function buildTextCards(slots, isDesktop) {
+  const layer2Slots = slots.filter(s => s.layer === 2);
+  if (layer2Slots.length === 0) return [];
+
+  const safeLayer2Slots = layer2Slots.filter(s => s.x >= 30 && s.x <= 70 && s.y >= 20 && s.y <= 82);
+  const anchorPool = safeLayer2Slots.length >= 3 ? safeLayer2Slots : layer2Slots;
+
+  const used = new Set();
+  const firstAnchor = isDesktop
+    ? pickNearestSlot(anchorPool, 50, 44, used)
+    : pickNearestSlot(anchorPool, 50, 40, used);
+  const secondAnchor = isDesktop
+    ? pickNearestSlot(anchorPool, 50, 66, used)
+    : pickNearestSlot(anchorPool, 50, 70, used);
+  const thirdAnchor = isDesktop
+    ? pickNearestSlot(anchorPool, 68, 30, used)
+    : pickNearestSlot(anchorPool, 68, 28, used);
+
+  return [
+    firstAnchor && {
+      ...firstAnchor,
+      id: 'text-card-1',
+      sourceId: firstAnchor.id,
+      imageId: null,
+      width: isDesktop ? 24 : 54,
+      aspectRatio: isDesktop ? '1.42/1' : '1.28/1',
+      opacity: 1,
+      borderRadius: 16,
+      cardVariant: 'quiz-mini',
+      text: 'Every answer shapes how your video looks.',
+    },
+    secondAnchor && {
+      ...secondAnchor,
+      id: 'text-card-2',
+      sourceId: secondAnchor.id,
+      imageId: null,
+      width: isDesktop ? 24 : 54,
+      aspectRatio: isDesktop ? '1.42/1' : '1.28/1',
+      opacity: 1,
+      borderRadius: 16,
+      cardVariant: 'quiz-mini',
+      text: "The more specific you are, the less it looks like everyone else's.",
+    },
+    thirdAnchor && {
+      ...thirdAnchor,
+      id: 'text-card-3',
+      sourceId: thirdAnchor.id,
+      imageId: null,
+      width: isDesktop ? 18 : 42,
+      aspectRatio: isDesktop ? '2.1/1' : '1.9/1',
+      opacity: 1,
+      borderRadius: 16,
+      cardVariant: 'quiz-mini',
+      text: 'Good Luck!',
+    },
+  ].filter(Boolean);
 }
 
 /** Choose slot set based on viewport width */
@@ -107,7 +185,7 @@ function computeAssignment(slots, imageIds) {
  * Background — 60 permanent slots with drift, parallax, and staggered image swap.
  * Wrapped in React.memo, entirely prop-driven.
  */
-const Background = memo(function Background({ imageIds, blurred, isOutputVisible }) {
+const Background = memo(function Background({ imageIds, blurred, isOutputVisible, showCard1 = false, showCard2 = false, showCard3 = false }) {
   const canvasRef = useRef(null);
   const layer1Ref = useRef(null);
   const layer2Ref = useRef(null);
@@ -125,6 +203,9 @@ const Background = memo(function Background({ imageIds, blurred, isOutputVisible
   const layer1Assigned = useMemo(() => assignedSlots.filter(s => s.layer === 1), [assignedSlots]);
   const layer2Assigned = useMemo(() => assignedSlots.filter(s => s.layer === 2), [assignedSlots]);
   const layer3Assigned = useMemo(() => assignedSlots.filter(s => s.layer === 3), [assignedSlots]);
+  const textCards = useMemo(() => buildTextCards(slots, isDesktop), [slots, isDesktop]);
+  const activeTextCard = showCard1 ? textCards[0] : (showCard2 ? textCards[1] : (showCard3 ? textCards[2] : null));
+  const replacedSlotId = activeTextCard?.sourceId ?? null;
 
   // Parallax input:
   // - Desktop: mousemove
@@ -263,9 +344,12 @@ const Background = memo(function Background({ imageIds, blurred, isOutputVisible
         ))}
       </div>
       <div ref={layer2Ref} className={styles.layer}>
-        {layer2Assigned.map(slot => (
-          <Slot key={slot.id} slot={slot} isOutputVisible={isOutputVisible} />
-        ))}
+        {layer2Assigned.map(slot => {
+          if (replacedSlotId && slot.id === replacedSlotId && activeTextCard) {
+            return <Slot key={activeTextCard.id} slot={activeTextCard} isOutputVisible={isOutputVisible} />;
+          }
+          return <Slot key={slot.id} slot={slot} isOutputVisible={isOutputVisible} />;
+        })}
       </div>
       <div ref={layer3Ref} className={styles.layer}>
         {layer3Assigned.map(slot => (

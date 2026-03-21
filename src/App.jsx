@@ -9,9 +9,14 @@ import Confirmation from './components/Confirmation/Confirmation';
 
 export default function App() {
   const screen = useQuizStore(s => s.screen);
+  const welcomePanel = useQuizStore(s => s.welcomePanel);
+  const currentStep = useQuizStore(s => s.currentStep);
   const activeImageIds = useQuizStore(s => s.activeImageIds);
-  const blurred = screen === 'output' || screen === 'confirmation';
+  const blurred = screen === 'output' || screen === 'confirmation' || (screen === 'welcome' && welcomePanel === 'faq');
   const isOutputVisible = screen === 'output';
+  const showCard1 = screen === 'quiz' && currentStep === 0;
+  const showCard2 = screen === 'quiz' && currentStep === 1;
+  const showCard3 = screen === 'quiz' && currentStep === 2;
 
   useEffect(() => {
     const el = document.getElementById('app-loading');
@@ -21,7 +26,14 @@ export default function App() {
 
   return (
     <>
-      <Background imageIds={activeImageIds} blurred={blurred} isOutputVisible={isOutputVisible} />
+      <Background
+        imageIds={activeImageIds}
+        blurred={blurred}
+        isOutputVisible={isOutputVisible}
+        showCard1={showCard1}
+        showCard2={showCard2}
+        showCard3={showCard3}
+      />
       {screen === 'welcome' && <Welcome />}
       {screen === 'quiz' && <Quiz />}
       {screen === 'output' && <OutputScreen />}

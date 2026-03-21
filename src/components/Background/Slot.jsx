@@ -11,13 +11,15 @@ const Slot = memo(function Slot({ slot, isOutputVisible = false }) {
   const imgRef = useRef(null);
   const timelineRef = useRef(null);
   const creepRef = useRef(null);
+  const isTextSlot = typeof slot.text === 'string' && slot.text.length > 0;
   const isMobileViewport = typeof window !== 'undefined'
     && window.matchMedia('(max-width: 767px)').matches;
   const boundedX = isMobileViewport ? Math.max(4, Math.min(96, slot.x)) : slot.x;
   const boundedY = isMobileViewport ? Math.max(4, Math.min(96, slot.y)) : slot.y;
   const slotWidth = isMobileViewport
-    ? `clamp(42px, ${slot.width}vw, 128px)`
-    : `${slot.width}vw`;
+    ? (slot.customWidth ?? `clamp(42px, ${slot.width}vw, 128px)`)
+    : (slot.customWidth ?? `${slot.width}vw`);
+  const slotAspectRatio = isTextSlot ? undefined : slot.aspectRatio;
 
   // Drift animation + ambient vertical creep — mounted once, killed on unmount
   useEffect(() => {
@@ -58,7 +60,7 @@ const Slot = memo(function Slot({ slot, isOutputVisible = false }) {
     });
     creepRef.current = creep;
 
-    const shouldAnimate = Boolean(slot.imageId) && !isOutputVisible;
+    const shouldAnimate = (Boolean(slot.imageId) || isTextSlot) && !isOutputVisible;
     tl.paused(!shouldAnimate);
     creep.paused(!shouldAnimate);
 
@@ -70,13 +72,15 @@ const Slot = memo(function Slot({ slot, isOutputVisible = false }) {
 
   // Pause background motion for slots without active images.
   useEffect(() => {
-    const shouldAnimate = Boolean(slot.imageId) && !isOutputVisible;
+    const shouldAnimate = (Boolean(slot.imageId) || isTextSlot) && !isOutputVisible;
     if (timelineRef.current) timelineRef.current.paused(!shouldAnimate);
     if (creepRef.current) creepRef.current.paused(!shouldAnimate);
-  }, [slot.imageId, isOutputVisible]);
+  }, [slot.imageId, isOutputVisible, isTextSlot]);
 
   // Image crossfade — only when imageId changes
   useEffect(() => {
+    if (isTextSlot) return;
+
     const imgEl = imgRef.current;
     if (!imgEl) return;
 
@@ -97,7 +101,7 @@ const Slot = memo(function Slot({ slot, isOutputVisible = false }) {
         .to(imgEl, { opacity: slot.opacity, duration: 0.24, ease: 'power2.out' });
     };
     loader.src = newSrc;
-  }, [slot.imageId, slot.opacity]);
+  }, [slot.imageId, slot.opacity, isTextSlot]);
 
   return (
     <div
@@ -107,19 +111,31 @@ const Slot = memo(function Slot({ slot, isOutputVisible = false }) {
         left: `${boundedX}%`,
         top: `${boundedY}%`,
         width: slotWidth,
-        aspectRatio: slot.aspectRatio,
+        aspectRatio: slotAspectRatio,
         opacity: slot.opacity,
         borderRadius: `${slot.borderRadius}px`,
+        zIndex: isTextSlot ? 2 : 0,
+        background: isTextSlot ? 'rgba(10, 10, 10, 0.62)' : 'transparent',
+        backdropFilter: isTextSlot ? 'blur(24px)' : 'none',
+        WebkitBackdropFilter: isTextSlot ? 'blur(24px)' : 'none',
+        border: isTextSlot ? '1px solid rgba(255, 255, 255, 0.10)' : 'none',
+        boxShadow: isTextSlot ? '0 8px 32px rgba(0, 0, 0, 0.45)' : 'none',
       }}
     >
-      <img
-        ref={imgRef}
-        alt=""
-        draggable={false}
-        loading="eager"
-        decoding="async"
-        style={{ opacity: 0 }}
-      />
+      {isTextSlot ? (
+        <div className={styles.textCardContent}>
+          <p className={styles.textCardText}>{slot.text}</p>
+        </div>
+      ) : (
+        <img
+          ref={imgRef}
+          alt=""
+          draggable={false}
+          loading="eager"
+          decoding="async"
+          style={{ opacity: 0 }}
+        />
+      )}
     </div>
   );
 }, (prev, next) => prev.slot.imageId === next.slot.imageId && prev.isOutputVisible === next.isOutputVisible);

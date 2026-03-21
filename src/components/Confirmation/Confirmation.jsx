@@ -100,6 +100,7 @@ export default function Confirmation() {
             onChange={e => { setEmail(e.target.value); setErrors(p => ({ ...p, email: false })); }}
             autoComplete="email"
           />
+          <p className={styles.body}>No spam. Just your video.</p>
           <div className={styles.actionsRow}>
             <button
               className={styles.backBtn}

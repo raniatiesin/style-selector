@@ -734,6 +734,7 @@ export default function OutputScreen() {
                     →
                   </button>
                 </div>
+                <p className={styles.leftHeading}>Hit confirm. We get to work.</p>
                 <div className={styles.buttonRow}>
                   <button
                     className={styles.confirmBtn}
@@ -848,6 +849,7 @@ export default function OutputScreen() {
                 </div>
 
                 <div className={styles.mobileBottomZone}>
+                  <p className={styles.leftHeading}>Hit confirm. We get to work.</p>
                   <div className={styles.buttonRow}>
                     <button
                       className={styles.confirmBtn}

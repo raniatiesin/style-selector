@@ -3,6 +3,8 @@ import { create } from 'zustand';
 export const useQuizStore = create((set, get) => ({
   // --- Navigation ---
   screen: 'welcome', // 'welcome' | 'quiz' | 'output' | 'confirmation'
+  welcomePanel: 'hero', // 'hero' | 'faq'
+  welcomePanelAnimating: false,
 
   // --- Quiz ---
   currentStep: 0, // 0–35
@@ -26,7 +28,18 @@ export const useQuizStore = create((set, get) => ({
   submitted: false,
 
   // --- Actions ---
-  setScreen: (screen) => set({ screen }),
+  setScreen: (screen) => set(() => {
+    if (screen === 'welcome') {
+      return { screen, welcomePanel: 'hero', welcomePanelAnimating: false };
+    }
+
+    return { screen, welcomePanel: 'hero', welcomePanelAnimating: false };
+  }),
+
+  setWelcomePanelAnimating: (val) => set({ welcomePanelAnimating: val }),
+  openWelcomeFaq: () => set({ welcomePanel: 'faq' }),
+  closeWelcomeFaq: () => set({ welcomePanel: 'hero' }),
+  resetWelcomePanel: () => set({ welcomePanel: 'hero', welcomePanelAnimating: false }),
 
   selectAnswer: (stepIndex, value) => {
     const answers = { ...get().answers, [stepIndex]: value };
