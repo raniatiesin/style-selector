@@ -5,7 +5,7 @@
   height: var(--output-vh, 100dvh);
   display: flex;
   z-index: 200;
-  overflow: visible;
+  overflow: hidden;
   min-height: 0;
 }
 
@@ -18,7 +18,7 @@
   justify-content: space-evenly;
   padding: 40px 32px;
   gap: 20px;
-  overflow: visible;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scrollbar-width: thin;
@@ -44,12 +44,30 @@
   line-height: 1.4;
 }
 
+.scrollHint {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+  pointer-events: none;
+  user-select: none;
+}
+
 .tallyGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .selectedCarouselWrap {
@@ -168,7 +186,7 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    overflow: visible;
+    overflow: hidden;
     scroll-snap-align: center;
     scroll-snap-stop: always;
     padding: env(safe-area-inset-top, 8px) 0 8px;
@@ -355,21 +373,16 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 20px;
+  padding: 16px;
   z-index: 2;
   transition: color 0.2s ease;
-  pointer-events: none;
-}
-
-.carouselArrowIcon {
-  pointer-events: auto;
 }
 
 .carouselContainer:hover .carouselArrow {
   color: rgba(255, 255, 255, 0.35);
 }
 
-.carouselArrowIcon:hover {
+.carouselArrow:hover {
   color: rgba(255, 255, 255, 0.82) !important;
 }
 
@@ -416,7 +429,7 @@
     justify-content: center;
     gap: clamp(12px, 2vh, 24px);
     padding: clamp(16px, 3vh, 40px) clamp(16px, 2vw, 32px);
-    overflow: visible;
+    overflow: hidden;
   }
 
   .selectedCarouselWrap {
@@ -448,7 +461,11 @@
     align-content: start;
     gap: 6px;
     width: 100%;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: visible;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
   .leftPanel .buttonRow {

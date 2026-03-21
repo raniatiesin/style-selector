@@ -736,7 +736,7 @@ export default function OutputScreen() {
                     →
                   </button>
                 </div>
-                <p className={styles.leftHeading}>Hit confirm. We get to work.</p>
+                <p className={styles.scrollHint}>Hit confirm. We get to work.</p>
                 <div className={styles.buttonRow}>
                   <button
                     className={styles.confirmBtn}
