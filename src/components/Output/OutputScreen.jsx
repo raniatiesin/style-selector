@@ -721,7 +721,7 @@ export default function OutputScreen() {
             {selectedCarousel ? (
               <>
                 <p className={styles.leftHeading}>{selectedStyleLabel}</p>
-                <div className={styles.tallyGrid}>
+                <div className={styles.tallyGrid} onWheelCapture={handleTagRowWheel}>
                   {selectedTags.map((tag, i) => (
                     <TagPill key={i} label={tag} onClick={() => handleTagClick(i)} />
                   ))}
@@ -778,7 +778,7 @@ export default function OutputScreen() {
             ) : (
               <>
                 <p className={styles.leftHeading}>your tally</p>
-                <div className={styles.tallyGrid}>
+                <div className={styles.tallyGrid} onWheelCapture={handleTagRowWheel}>
                   {userTags.map((tag, i) => (
                     <TagPill key={i} label={tag} onClick={() => handleTagClick(i)} />
                   ))}
@@ -851,9 +851,8 @@ export default function OutputScreen() {
                             <StyleCarousel
                               styleId={result.id}
                               similarity={result.similarity}
-                              isActive={index === mobileCardIndex}
                               shouldLoadSegments={true}
-                              onClick={undefined}
+                              onClick={handleCarouselClick}
                             />
                           </div>
                         </div>

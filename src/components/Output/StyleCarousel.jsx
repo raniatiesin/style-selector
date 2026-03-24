@@ -33,7 +33,6 @@ const StyleCarousel = React.memo(function StyleCarousel({
   styleId,
   similarity,
   onClick,
-  isActive = true,
   shouldLoadSegments = true,
 }) {
   const containerRef = useRef(null);
@@ -89,7 +88,7 @@ const StyleCarousel = React.memo(function StyleCarousel({
           flushTimerRef.current = null;
           if (cancelled) return;
           flushSegments();
-        }, 50);
+        }, 16);
       });
     });
 
@@ -211,9 +210,9 @@ const StyleCarousel = React.memo(function StyleCarousel({
     <div
       ref={containerRef}
       className={styles.carouselContainer}
-      onPointerDown={isActive ? handlePointerDown : undefined}
-      onPointerMove={isActive ? handlePointerMove : undefined}
-      onPointerUp={isActive ? handlePointerUp : undefined}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
     >
       {similarity != null && (
         <span className={styles.similarityBadge}>

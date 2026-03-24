@@ -4,7 +4,7 @@
   z-index: 0;
   overflow: hidden;
   will-change: transform;
-  transition: filter 0.6s ease, opacity 0.6s ease;
+  transition: opacity 0.6s ease;
 }
 
 .canvas.blurred {
