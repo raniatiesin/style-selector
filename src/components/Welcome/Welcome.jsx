@@ -208,6 +208,7 @@ export default function Welcome({ canvasRef }) {
   const animateToFaq = useCallback(() => {
     if (welcomePanelAnimating || welcomePanel === 'faq') return;
     if (!heroCardRef.current || !faqCardRef.current) return;
+    if (!canvasRef?.current) return;
 
     setWelcomePanelAnimating(true);
 
@@ -227,6 +228,12 @@ export default function Welcome({ canvasRef }) {
     tl.to(heroCardRef.current, {
       opacity: 0,
       y: -16,
+      duration: DUR.deliberate,
+      ease: EASE.out,
+    }, 0);
+    tl.to(canvasRef.current, {
+      filter: 'blur(12px)',
+      opacity: 0.35,
       duration: DUR.deliberate,
       ease: EASE.out,
     }, 0);

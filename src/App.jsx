@@ -13,7 +13,7 @@ export default function App() {
   const welcomePanel = useQuizStore(s => s.welcomePanel);
   const currentStep = useQuizStore(s => s.currentStep);
   const activeImageIds = useQuizStore(s => s.activeImageIds);
-  const blurred = screen === 'output' || screen === 'confirmation' || (screen === 'welcome' && welcomePanel === 'faq');
+  const blurred = screen === 'output' || screen === 'confirmation';
   const isOutputVisible = screen === 'output';
   const showCard1 = screen === 'quiz' && currentStep === 0;
   const showCard2 = screen === 'quiz' && currentStep === 1;
