@@ -40,12 +40,12 @@ const StyleCarousel = React.memo(function StyleCarousel({
   const stripRef = useRef(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loadedSegmentsState, setLoadedSegmentsState] = useState({ styleId: null, segments: {} });
+  const pendingSegmentsRef = useRef({});
+  const flushTimerRef = useRef(null);
   const dragStartX = useRef(0);
   const dragStartY = useRef(0);
   const dragStartTime = useRef(0);
-  const isPointerDown = useRef(false);
   const isDragging = useRef(false);
-  const suppressClick = useRef(false);
   const currentOffset = useRef(0);
 
   // Load segment images lazily from Supabase Storage
@@ -54,6 +54,21 @@ const StyleCarousel = React.memo(function StyleCarousel({
     if (!shouldLoadSegments) return;
 
     let cancelled = false;
+
+    const flushSegments = () => {
+      const pending = pendingSegmentsRef.current;
+      if (!pending || Object.keys(pending).length === 0) return;
+
+      setLoadedSegmentsState((prev) => ({
+        styleId,
+        segments: {
+          ...(prev.styleId === styleId ? prev.segments : {}),
+          ...pending,
+        },
+      }));
+
+      pendingSegmentsRef.current = {};
+    };
 
     const urls = Array.from({ length: 5 }, (_, i) =>
       `${SEGMENTS_BASE}/${styleId}/${i + 2}.webp`
@@ -64,18 +79,29 @@ const StyleCarousel = React.memo(function StyleCarousel({
         if (cancelled) return;
         if (!resolvedUrl) return;
 
-        setLoadedSegmentsState((prev) => ({
-          styleId,
-          segments: {
-            ...(prev.styleId === styleId ? prev.segments : {}),
-            [index]: resolvedUrl,
-          },
-        }));
+        pendingSegmentsRef.current[index] = resolvedUrl;
+
+        if (flushTimerRef.current !== null) {
+          clearTimeout(flushTimerRef.current);
+        }
+
+        flushTimerRef.current = setTimeout(() => {
+          flushTimerRef.current = null;
+          if (cancelled) return;
+          flushSegments();
+        }, 50);
       });
     });
 
     return () => {
       cancelled = true;
+
+      if (flushTimerRef.current !== null) {
+        clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+
+      pendingSegmentsRef.current = {};
     };
   }, [styleId, shouldLoadSegments]);
 
@@ -125,56 +151,39 @@ const StyleCarousel = React.memo(function StyleCarousel({
 
   // Pointer events for swipe
   const handlePointerDown = (e) => {
-    if (e.button != null && e.button !== 0) return;
-
-    dragStartX.current = e.clientX;
-    dragStartY.current = e.clientY;
+    dragStartX.current = e.pageX;
+    dragStartY.current = e.pageY;
     dragStartTime.current = Date.now();
-    isPointerDown.current = true;
-    isDragging.current = false;
-    suppressClick.current = false;
+    isDragging.current = true;
   };
 
   const handlePointerMove = (e) => {
-    if (!isPointerDown.current) return;
+    if (!isDragging.current) return;
+    const deltaX = e.pageX - dragStartX.current;
+    const deltaY = e.pageY - (dragStartY.current || e.pageY);
 
-    const deltaX = e.clientX - dragStartX.current;
-    const deltaY = e.clientY - dragStartY.current;
-    const absX = Math.abs(deltaX);
-    const absY = Math.abs(deltaY);
-
-    // Keep vertical scrolling fluid and avoid stealing taps.
-    if (absY > absX + 6) {
-      if (isDragging.current) {
-        isDragging.current = false;
-        snapBack();
-      }
+    // If vertical movement dominates, cancel drag
+    if (Math.abs(deltaY) > Math.abs(deltaX) + 5) {
+      isDragging.current = false;
+      snapBack();
       return;
     }
-
-    if (absX < 6) return;
-
-    isDragging.current = true;
-    suppressClick.current = true;
 
     gsap.set(stripRef.current, { x: currentOffset.current + deltaX });
   };
 
   const handlePointerUp = (e) => {
-    if (!isPointerDown.current) return;
-
-    isPointerDown.current = false;
-
-    const delta = e.clientX - dragStartX.current;
-    const elapsed = Math.max(1, Date.now() - dragStartTime.current);
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    const delta = e.pageX - dragStartX.current;
+    const elapsed = Date.now() - dragStartTime.current;
     const velocity = Math.abs(delta) / elapsed;
 
-    if (!isDragging.current) {
-      suppressClick.current = false;
+    if (Math.abs(delta) < 5) {
+      // This was a click, not a drag
+      onClick?.(styleId);
       return;
     }
-
-    isDragging.current = false;
 
     const distanceThreshold = 20;
     const velocityThreshold = 0.3;
@@ -192,24 +201,6 @@ const StyleCarousel = React.memo(function StyleCarousel({
     }
   };
 
-  const handlePointerCancel = () => {
-    if (!isPointerDown.current && !isDragging.current) return;
-
-    isPointerDown.current = false;
-    isDragging.current = false;
-    suppressClick.current = true;
-    snapBack();
-  };
-
-  const handleClick = () => {
-    if (suppressClick.current) {
-      suppressClick.current = false;
-      return;
-    }
-
-    onClick?.(styleId);
-  };
-
   // Build slide sources: rep (segment 1 / local) + 5 segments from Supabase Storage
   const slides = [
     `/images/rep/${styleId}.webp`,
@@ -223,8 +214,6 @@ const StyleCarousel = React.memo(function StyleCarousel({
       onPointerDown={isActive ? handlePointerDown : undefined}
       onPointerMove={isActive ? handlePointerMove : undefined}
       onPointerUp={isActive ? handlePointerUp : undefined}
-      onPointerCancel={isActive ? handlePointerCancel : undefined}
-      onClick={isActive ? handleClick : undefined}
     >
       {similarity != null && (
         <span className={styles.similarityBadge}>

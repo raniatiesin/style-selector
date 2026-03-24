@@ -373,7 +373,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 16px;
+  padding: 8px;
   z-index: 2;
   transition: color 0.2s ease;
 }

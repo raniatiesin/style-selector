@@ -852,7 +852,7 @@ export default function OutputScreen() {
                               styleId={result.id}
                               similarity={result.similarity}
                               isActive={index === mobileCardIndex}
-                              shouldLoadSegments={Math.abs(index - mobileCardIndex) <= 1}
+                              shouldLoadSegments={true}
                               onClick={undefined}
                             />
                           </div>

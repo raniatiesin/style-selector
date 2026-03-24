@@ -173,7 +173,7 @@ const FAQ_GROUPS = [
 const WHEEL_THRESHOLD = 90;
 const SWIPE_THRESHOLD = 54;
 
-export default function Welcome() {
+export default function Welcome({ canvasRef }) {
   const headlineRef = useRef(null);
   const subRef = useRef(null);
   const btnRef = useRef(null);
@@ -247,6 +247,7 @@ export default function Welcome() {
 
     const tl = gsap.timeline({
       onComplete: () => {
+        gsap.set(canvasRef.current, { clearProps: 'filter,opacity' });
         closeWelcomeFaq();
         if (faqScrollRef.current) faqScrollRef.current.scrollTop = 0;
         gsap.set(faqCardRef.current, { pointerEvents: 'none' });
@@ -263,13 +264,19 @@ export default function Welcome() {
       duration: DUR.deliberate,
       ease: EASE.in,
     }, 0);
+    tl.to(canvasRef.current, {
+      filter: 'blur(0px)',
+      opacity: 1,
+      duration: DUR.deliberate,
+      ease: EASE.out,
+    }, 0);
     tl.to(heroCardRef.current, {
       opacity: 1,
       y: 0,
       duration: DUR.deliberate,
       ease: EASE.out,
     }, 0);
-  }, [closeWelcomeFaq, setWelcomePanelAnimating, welcomePanel, welcomePanelAnimating]);
+  }, [canvasRef, closeWelcomeFaq, setWelcomePanelAnimating, welcomePanel, welcomePanelAnimating]);
 
   // Set welcome images on mount + entrance animation
   useEffect(() => {

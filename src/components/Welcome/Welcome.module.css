@@ -199,17 +199,16 @@
     max-height: calc(100dvh - 24px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
   .faqCard {
     width: 92vw;
     height: min(90dvh, calc(100dvh - 24px));
     padding: 22px 18px;
-    /* Mobile-only: reduce expensive backdrop blur during long list scroll */
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
   }
 
   .faqTitle {

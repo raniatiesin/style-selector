@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo, memo } from 'react';
+import React, { useRef, useEffect, useMemo, memo, forwardRef } from 'react';
 import { DESKTOP_SLOTS, MOBILE_SLOTS } from '../../config/generateSlots';
 import Slot from './Slot';
 import styles from './Background.module.css';
@@ -185,8 +185,7 @@ function computeAssignment(slots, imageIds) {
  * Background — 60 permanent slots with drift, parallax, and staggered image swap.
  * Wrapped in React.memo, entirely prop-driven.
  */
-const Background = memo(function Background({ imageIds, blurred, isOutputVisible, showCard1 = false, showCard2 = false, showCard3 = false }) {
-  const canvasRef = useRef(null);
+const Background = memo(forwardRef(function Background({ imageIds, blurred, isOutputVisible, showCard1 = false, showCard2 = false, showCard3 = false }, canvasRef) {
   const layer1Ref = useRef(null);
   const layer2Ref = useRef(null);
   const layer3Ref = useRef(null);
@@ -361,6 +360,6 @@ const Background = memo(function Background({ imageIds, blurred, isOutputVisible
       )}
     </div>
   );
-}, areBackgroundPropsEqual);
+}), areBackgroundPropsEqual);
 
 export default Background;

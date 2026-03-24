@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { useQuizStore } from './store/quizStore';
 import Background from './components/Background/Background';
@@ -8,6 +8,7 @@ import OutputScreen from './components/Output/OutputScreen';
 import Confirmation from './components/Confirmation/Confirmation';
 
 export default function App() {
+  const canvasRef = useRef(null);
   const screen = useQuizStore(s => s.screen);
   const welcomePanel = useQuizStore(s => s.welcomePanel);
   const currentStep = useQuizStore(s => s.currentStep);
@@ -27,6 +28,7 @@ export default function App() {
   return (
     <>
       <Background
+        ref={canvasRef}
         imageIds={activeImageIds}
         blurred={blurred}
         isOutputVisible={isOutputVisible}
@@ -34,7 +36,7 @@ export default function App() {
         showCard2={showCard2}
         showCard3={showCard3}
       />
-      {screen === 'welcome' && <Welcome />}
+      {screen === 'welcome' && <Welcome canvasRef={canvasRef} />}
       {screen === 'quiz' && <Quiz />}
       {screen === 'output' && <OutputScreen />}
       {screen === 'confirmation' && <Confirmation />}
