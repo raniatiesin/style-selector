@@ -79,15 +79,6 @@
 .desktopTallyRowShell {
   position: relative;
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.028);
-  transition: border-color 220ms ease, background-color 220ms ease;
-}
-
-.desktopTallyRowShell:hover {
-  border-color: rgba(255, 255, 255, 0.20);
-  background: rgba(255, 255, 255, 0.05);
 }
 
 .desktopTallyRowShell::after {
@@ -95,10 +86,10 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: 34px;
+  width: 24px;
   height: 100%;
   pointer-events: none;
-  background: linear-gradient(90deg, rgba(10, 10, 10, 0), rgba(10, 10, 10, 0.70) 72%);
+  background: linear-gradient(90deg, rgba(10, 10, 10, 0), rgba(10, 10, 10, 0.44) 78%);
 }
 
 .desktopTallyRow {
@@ -106,8 +97,8 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-height: 42px;
-  padding: 3px 10px 3px 6px;
+  min-height: 36px;
+  padding: 1px 6px 1px 0;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
@@ -115,8 +106,6 @@
   overscroll-behavior-x: contain;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  scroll-snap-type: x proximity;
   contain: layout paint;
 }
 
@@ -126,12 +115,11 @@
 
 .desktopTallyRow > * {
   flex: 0 0 auto;
-  scroll-snap-align: start;
 }
 
 .desktopTallyRow::after {
   content: '';
-  flex: 0 0 32px;
+  flex: 0 0 24px;
 }
 
 .selectedCarouselWrap {
@@ -526,8 +514,8 @@
   .leftPanel .desktopTallyRows {
     display: flex;
     flex-direction: column;
-    gap: 9px;
-    width: clamp(360px, 94%, 520px);
+    gap: 6px;
+    width: clamp(350px, 93%, 500px);
     max-width: 100%;
     align-self: stretch;
     margin: 0 auto;
@@ -590,6 +578,8 @@
   color: rgba(10, 10, 10, 0.9);
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.92);
+  will-change: transform, opacity;
+  transform-origin: center;
 }
 
 .findSimilarBtn {

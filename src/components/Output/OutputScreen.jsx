@@ -113,6 +113,38 @@ export default function OutputScreen() {
   const prepareConfirmation = useQuizStore(s => s.prepareConfirmation);
   const jumpToQuizStep = useQuizStore(s => s.jumpToQuizStep);
 
+  const handlePrepareConfirmationClick = useCallback((event) => {
+    const target = event.currentTarget;
+    if (!(target instanceof HTMLElement)) {
+      prepareConfirmation();
+      return;
+    }
+
+    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      prepareConfirmation();
+      return;
+    }
+
+    gsap.killTweensOf(target);
+    gsap.timeline({
+      defaults: { overwrite: 'auto' },
+      onComplete: prepareConfirmation,
+    })
+      .to(target, {
+        scale: 0.985,
+        opacity: 0.96,
+        duration: DUR.instant,
+        ease: EASE.in,
+      })
+      .to(target, {
+        scale: 1,
+        opacity: 1,
+        duration: DUR.fast,
+        ease: EASE.confident,
+      });
+  }, [prepareConfirmation]);
+
   useEffect(() => {
     const applyViewportHeight = () => {
       setViewportHeight(window.visualViewport?.height || window.innerHeight);
@@ -714,10 +746,17 @@ export default function OutputScreen() {
     if (maxScrollLeft <= 0) return;
 
     const hasHorizontalIntent = Math.abs(event.deltaX) > Math.abs(event.deltaY);
-    const delta = hasHorizontalIntent ? event.deltaX : event.deltaY;
-    if (delta === 0) return;
+    const rawDelta = hasHorizontalIntent ? event.deltaX : event.deltaY;
+    if (rawDelta === 0) return;
 
-    const nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, row.scrollLeft + delta));
+    let delta = rawDelta;
+    if (event.deltaMode === 1) {
+      delta *= 16;
+    } else if (event.deltaMode === 2) {
+      delta *= row.clientWidth * 0.9;
+    }
+
+    const nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, row.scrollLeft + (delta * 1.15)));
     if (nextScrollLeft === row.scrollLeft) {
       event.preventDefault();
       return;
@@ -814,7 +853,7 @@ export default function OutputScreen() {
                 <div className={styles.buttonRow}>
                   <button
                     className={styles.confirmBtn}
-                    onClick={prepareConfirmation}
+                    onClick={handlePrepareConfirmationClick}
                     type="button"
                   >
                     Confirm
@@ -924,7 +963,7 @@ export default function OutputScreen() {
                   <div className={styles.buttonRow}>
                     <button
                       className={styles.confirmBtn}
-                      onClick={prepareConfirmation}
+                      onClick={handlePrepareConfirmationClick}
                       type="button"
                     >
                       Confirm
