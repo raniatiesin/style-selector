@@ -13,8 +13,6 @@ export async function loadAllData() {
     styleEntryMapCache.set(entry.id, entry);
     styleTallyMapCache.set(entry.id, entry.tally || '');
   });
-
-  console.log(`Loaded ${manifestCache.length} styles`);
 }
 
 export const getManifest = () => manifestCache;

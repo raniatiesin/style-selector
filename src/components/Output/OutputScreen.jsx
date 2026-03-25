@@ -122,18 +122,14 @@ export default function OutputScreen() {
   }, []);
 
   useEffect(() => {
-    const query = window.matchMedia('(max-width: 767px) and (pointer: coarse)');
-
     const updateMobileMode = () => {
-      setIsMobileCoarse(query.matches);
+      setIsMobileCoarse(window.innerWidth < 768);
     };
 
     updateMobileMode();
-    query.addEventListener('change', updateMobileMode);
     window.addEventListener('resize', updateMobileMode);
 
     return () => {
-      query.removeEventListener('change', updateMobileMode);
       window.removeEventListener('resize', updateMobileMode);
     };
   }, []);

@@ -26,6 +26,7 @@ export const useQuizStore = create((set, get) => ({
   selectedStyle: null,
   submitting: false,
   submitted: false,
+  submitError: null,
 
   // --- Actions ---
   setScreen: (screen) => set(() => {
@@ -125,7 +126,7 @@ export const useQuizStore = create((set, get) => ({
   },
 
   submitConfirmation: async (name, email) => {
-    set({ submitting: true });
+    set({ submitting: true, submitError: null });
     try {
       const { sessionId, selectedStyle } = get();
       const res = await fetch('/api/submit', {
@@ -136,10 +137,10 @@ export const useQuizStore = create((set, get) => ({
       if (res.ok) {
         set({ submitted: true, submitting: false });
       } else {
-        set({ submitting: false });
+        set({ submitting: false, submitError: 'submit_failed' });
       }
     } catch {
-      set({ submitting: false });
+      set({ submitting: false, submitError: 'submit_failed' });
     }
   },
 }));
