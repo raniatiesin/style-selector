@@ -49,6 +49,27 @@ function getStyleLabel(styleId) {
   return String(styleId).replace(/_/g, ' ');
 }
 
+function splitTagsIntoRows(tags, rowCount = 3) {
+  const indexedTags = tags
+    .map((tag, index) => ({ tag, index }))
+    .filter((item) => Boolean(item.tag));
+
+  const rows = Array.from({ length: rowCount }, () => []);
+  if (indexedTags.length === 0) return rows;
+
+  const baseCount = Math.floor(indexedTags.length / rowCount);
+  const remainder = indexedTags.length % rowCount;
+
+  let cursor = 0;
+  for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+    const count = baseCount + (rowIndex < remainder ? 1 : 0);
+    rows[rowIndex] = indexedTags.slice(cursor, cursor + count);
+    cursor += count;
+  }
+
+  return rows;
+}
+
 export default function OutputScreen() {
   const carouselGridRef = useRef(null);
   const mobileDeckRef = useRef(null);
@@ -234,10 +255,7 @@ export default function OutputScreen() {
     if (!firstId) return;
 
     setNavHistory((prevHistory) => {
-      const safePos = Math.min(Math.max(navPosition, -1), prevHistory.length - 1);
-      const truncated = safePos === prevHistory.length - 1
-        ? prevHistory
-        : prevHistory.slice(0, safePos + 1);
+      const truncated = prevHistory;
 
       if (truncated.length === 0) {
         setNavPosition(0);
@@ -254,7 +272,7 @@ export default function OutputScreen() {
       return nextHistory;
     });
     setSelectedCarousel(firstId);
-  }, [outputResults, navPosition, setSelectedCarousel]);
+  }, [outputResults, setSelectedCarousel]);
 
   useEffect(() => {
     if (!isMobileCoarse || showLoading || outputResults.length === 0) return;
@@ -667,6 +685,9 @@ export default function OutputScreen() {
   }, [jumpToQuizStep]);
 
   const handleTagRowWheel = useCallback((event) => {
+    // Mobile-only row handler.
+    if (!isMobileCoarse) return;
+
     const row = event.currentTarget;
     const maxScrollLeft = row.scrollWidth - row.clientWidth;
     if (maxScrollLeft <= 0) return;
@@ -685,7 +706,48 @@ export default function OutputScreen() {
 
     event.preventDefault();
     row.scrollLeft = nextScrollLeft;
+  }, [isMobileCoarse]);
+
+  const handleDesktopTagRowWheel = useCallback((event) => {
+    const row = event.currentTarget;
+    const maxScrollLeft = row.scrollWidth - row.clientWidth;
+    if (maxScrollLeft <= 0) return;
+
+    const hasHorizontalIntent = Math.abs(event.deltaX) > Math.abs(event.deltaY);
+    const delta = hasHorizontalIntent ? event.deltaX : event.deltaY;
+    if (delta === 0) return;
+
+    const nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, row.scrollLeft + delta));
+    if (nextScrollLeft === row.scrollLeft) {
+      event.preventDefault();
+      return;
+    }
+
+    event.preventDefault();
+    row.scrollLeft = nextScrollLeft;
   }, []);
+
+  const renderDesktopTallyRows = useCallback((tags) => {
+    const rows = splitTagsIntoRows(tags, 3);
+
+    return (
+      <div className={styles.desktopTallyRows}>
+        {rows.map((row, rowIndex) => (
+          <div key={`desktop-row-${rowIndex}`} className={styles.desktopTallyRowShell}>
+            <div className={styles.desktopTallyRow} onWheel={handleDesktopTagRowWheel}>
+              {row.map((item) => (
+                <TagPill
+                  key={`desktop-tag-${rowIndex}-${item.index}-${item.tag}`}
+                  label={item.tag}
+                  onClick={() => handleTagClick(item.index)}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }, [handleDesktopTagRowWheel, handleTagClick]);
 
   return (
     <>
@@ -717,11 +779,7 @@ export default function OutputScreen() {
             {selectedCarousel ? (
               <>
                 <p className={styles.leftHeading}>{selectedStyleLabel}</p>
-                <div className={styles.tallyGrid} onWheelCapture={handleTagRowWheel}>
-                  {selectedTags.map((tag, i) => (
-                    <TagPill key={i} label={tag} onClick={() => handleTagClick(i)} />
-                  ))}
-                </div>
+                {renderDesktopTallyRows(selectedTags)}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', justifyContent: 'center', width: '100%' }}>
                   <button
                     style={{
@@ -753,7 +811,6 @@ export default function OutputScreen() {
                     →
                   </button>
                 </div>
-                <p className={styles.scrollHint}>Hit confirm. We get to work.</p>
                 <div className={styles.buttonRow}>
                   <button
                     className={styles.confirmBtn}
@@ -770,15 +827,12 @@ export default function OutputScreen() {
                     Find Similar
                   </button>
                 </div>
+                <p className={styles.scrollHint}>Hit confirm. We get to work.</p>
               </>
             ) : (
               <>
                 <p className={styles.leftHeading}>your tally</p>
-                <div className={styles.tallyGrid} onWheelCapture={handleTagRowWheel}>
-                  {userTags.map((tag, i) => (
-                    <TagPill key={i} label={tag} onClick={() => handleTagClick(i)} />
-                  ))}
-                </div>
+                {renderDesktopTallyRows(userTags)}
               </>
             )}
           </div>

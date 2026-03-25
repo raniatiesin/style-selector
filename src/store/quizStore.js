@@ -43,7 +43,12 @@ export const useQuizStore = create((set, get) => ({
   resetWelcomePanel: () => set({ welcomePanel: 'hero', welcomePanelAnimating: false }),
 
   selectAnswer: (stepIndex, value) => {
-    const answers = { ...get().answers, [stepIndex]: value };
+    const answers = { ...get().answers };
+    if (value == null) {
+      delete answers[stepIndex];
+    } else {
+      answers[stepIndex] = value;
+    }
     set({ answers });
   },
 

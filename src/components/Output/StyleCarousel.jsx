@@ -45,6 +45,7 @@ const StyleCarousel = React.memo(function StyleCarousel({
   const dragStartY = useRef(0);
   const dragStartTime = useRef(0);
   const isDragging = useRef(false);
+  const didDrag = useRef(false);
   const currentOffset = useRef(0);
 
   // Load segment images lazily from Supabase Storage
@@ -150,10 +151,15 @@ const StyleCarousel = React.memo(function StyleCarousel({
 
   // Pointer events for swipe
   const handlePointerDown = (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     dragStartX.current = e.pageX;
     dragStartY.current = e.pageY;
     dragStartTime.current = Date.now();
     isDragging.current = true;
+    didDrag.current = false;
+    if (e.pointerType === 'mouse') {
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    }
   };
 
   const handlePointerMove = (e) => {
@@ -174,15 +180,12 @@ const StyleCarousel = React.memo(function StyleCarousel({
   const handlePointerUp = (e) => {
     if (!isDragging.current) return;
     isDragging.current = false;
+    if (e.pointerType === 'mouse') {
+      e.currentTarget.releasePointerCapture?.(e.pointerId);
+    }
     const delta = e.pageX - dragStartX.current;
     const elapsed = Date.now() - dragStartTime.current;
     const velocity = Math.abs(delta) / elapsed;
-
-    if (Math.abs(delta) < 5) {
-      // This was a click, not a drag
-      onClick?.(styleId);
-      return;
-    }
 
     const distanceThreshold = 20;
     const velocityThreshold = 0.3;
@@ -191,6 +194,7 @@ const StyleCarousel = React.memo(function StyleCarousel({
     const totalSlides = slides.length;
 
     if (shouldSwipe) {
+      didDrag.current = true;
       const nextSlide = delta < 0
         ? Math.min(currentSlide + 1, totalSlides - 1)
         : Math.max(currentSlide - 1, 0);
@@ -198,6 +202,22 @@ const StyleCarousel = React.memo(function StyleCarousel({
     } else {
       snapBack();
     }
+  };
+
+  const handlePointerCancel = (e) => {
+    if (e.pointerType === 'mouse') {
+      e.currentTarget.releasePointerCapture?.(e.pointerId);
+    }
+    isDragging.current = false;
+    snapBack();
+  };
+
+  const handleClick = () => {
+    if (didDrag.current) {
+      didDrag.current = false;
+      return;
+    }
+    onClick?.(styleId);
   };
 
   // Build slide sources: rep (segment 1 / local) + 5 segments from Supabase Storage
@@ -213,6 +233,8 @@ const StyleCarousel = React.memo(function StyleCarousel({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+      onClick={handleClick}
     >
       {similarity != null && (
         <span className={styles.similarityBadge}>

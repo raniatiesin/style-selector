@@ -47,11 +47,10 @@
 }
 
 .scrollHint {
-  position: fixed;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 25;
+  position: static;
+  margin: 6px 0 0;
+  width: 100%;
+  text-align: center;
   font-family: var(--font);
   font-size: 0.7rem;
   letter-spacing: 0.18em;
@@ -71,6 +70,68 @@
   overflow-y: visible;
   scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+.desktopTallyRows {
+  display: none;
+}
+
+.desktopTallyRowShell {
+  position: relative;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.028);
+  transition: border-color 220ms ease, background-color 220ms ease;
+}
+
+.desktopTallyRowShell:hover {
+  border-color: rgba(255, 255, 255, 0.20);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.desktopTallyRowShell::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 34px;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(10, 10, 10, 0), rgba(10, 10, 10, 0.70) 72%);
+}
+
+.desktopTallyRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  padding: 3px 10px 3px 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  contain: layout paint;
+}
+
+.desktopTallyRow::-webkit-scrollbar {
+  display: none;
+}
+
+.desktopTallyRow > * {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+.desktopTallyRow::after {
+  content: '';
+  flex: 0 0 32px;
 }
 
 .selectedCarouselWrap {
@@ -432,7 +493,8 @@
     justify-content: center;
     gap: clamp(12px, 2vh, 24px);
     padding: clamp(16px, 3vh, 40px) clamp(16px, 2vw, 32px);
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .selectedCarouselWrap {
@@ -458,17 +520,17 @@
   }
 
   .leftPanel .tallyGrid {
+    display: none;
+  }
+
+  .leftPanel .desktopTallyRows {
     display: flex;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    align-content: start;
-    gap: 6px;
-    width: 100%;
-    padding: 0 4px;
-    overflow-x: auto;
-    overflow-y: visible;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    flex-direction: column;
+    gap: 9px;
+    width: clamp(360px, 94%, 520px);
+    max-width: 100%;
+    align-self: stretch;
+    margin: 0 auto;
   }
 
   .leftPanel .buttonRow {
@@ -477,7 +539,13 @@
     flex-wrap: nowrap;
     overflow: visible;
     margin-top: 0;
-    padding-top: 6px;
+    padding-top: 4px;
+  }
+
+  .leftPanel .scrollHint {
+    margin-top: 10px;
+    margin-bottom: 0;
+    align-self: center;
   }
 
   .leftPanel .historyNavArrow {

@@ -1,4 +1,4 @@
-import { SUBSUB_DESCENDANTS, SUBSUBS, SUBSUBS_OVERRIDES } from '../config/questionTree';
+import { SUBSUB_DESCENDANTS, SUBSUBS, SUBSUBS_OVERRIDES } from '../config/questionTree.js';
 
 /** Mulberry32 — seeded PRNG (same as generateSlots.js). */
 function mulberry32(seed) {
@@ -29,28 +29,31 @@ function hashSeed(str) {
  * @returns {Array} filtered manifest entries
  */
 export function filterImages(manifest, categoryIndex, { main, sub, subsub }) {
+  const normalizedMain = main ?? null;
+  const normalizedSub = sub ?? null;
+  const normalizedSubsub = subsub ?? null;
   let validSet;
 
-  if (subsub) {
-    validSet = new Set([subsub]);
-  } else if (sub) {
+  if (normalizedSubsub) {
+    validSet = new Set([normalizedSubsub]);
+  } else if (normalizedSub) {
     // Use SUBSUBS directly (not SUBSUB_DESCENDANTS) to avoid key collisions.
     // "Frozen Action" is both a MAIN and SUB with different descendants;
     // "Essential Elements" appears in two categories with different children.
-    const entry = SUBSUBS_OVERRIDES[categoryIndex]?.[sub] || SUBSUBS[sub];
+    const entry = SUBSUBS_OVERRIDES[categoryIndex]?.[normalizedSub] || SUBSUBS[normalizedSub];
     if (entry) {
       validSet = new Set(entry.options);
     } else {
-      return manifest;
+      return [];
     }
-  } else if (main && SUBSUB_DESCENDANTS[main]) {
-    validSet = new Set(SUBSUB_DESCENDANTS[main]);
+  } else if (normalizedMain && SUBSUB_DESCENDANTS[normalizedMain]) {
+    validSet = new Set(SUBSUB_DESCENDANTS[normalizedMain]);
   } else {
-    return manifest;
+    return [];
   }
 
   return manifest.filter(style => {
-    const tag = style.tally.split(', ')[categoryIndex];
+    const tag = (style.tally || '').split(', ')[categoryIndex];
     return validSet.has(tag);
   });
 }

@@ -23,6 +23,50 @@ function getCategoryState(answers, categoryIndex) {
   };
 }
 
+function normalizeCategoryState(catState) {
+  return {
+    main: catState.main ?? null,
+    sub: catState.sub ?? null,
+    subsub: catState.subsub ?? null,
+  };
+}
+
+function buildSeed(categoryIndex, catState) {
+  const normalized = normalizeCategoryState(catState);
+  return `${categoryIndex}:${normalized.main}:${normalized.sub}:${normalized.subsub}`;
+}
+
+function deriveDeterministicCategoryState(answers, stepIndex) {
+  const categoryIndex = Math.floor(stepIndex / 3);
+  const level = stepIndex % 3;
+  const defaultMain = MAINS[categoryIndex]?.options?.[0] ?? null;
+  const main = answers[categoryIndex * 3] ?? defaultMain;
+
+  let sub = null;
+  if (level >= 1) {
+    const subStep = resolveStep(categoryIndex * 3 + 1, {
+      ...answers,
+      [categoryIndex * 3]: main,
+    });
+    sub = answers[categoryIndex * 3 + 1] ?? subStep?.options?.[0] ?? null;
+  }
+
+  let subsub = null;
+  if (level >= 2) {
+    const subsubStep = resolveStep(categoryIndex * 3 + 2, {
+      ...answers,
+      [categoryIndex * 3]: main,
+      [categoryIndex * 3 + 1]: sub,
+    });
+    subsub = answers[categoryIndex * 3 + 2] ?? subsubStep?.options?.[0] ?? null;
+  }
+
+  return {
+    categoryIndex,
+    catState: normalizeCategoryState({ main, sub, subsub }),
+  };
+}
+
 export default function Quiz() {
   const panelRef = useRef(null);
   const contentRef = useRef(null);
@@ -61,8 +105,10 @@ export default function Quiz() {
     const manifest = getManifest();
     if (!manifest) return;
 
-    const filtered = filterImages(manifest, categoryIndex, catState);
-    const seed = `${categoryIndex}:${catState.main}:${catState.sub}:${catState.subsub}`;
+    const normalized = normalizeCategoryState(catState);
+
+    const filtered = filterImages(manifest, categoryIndex, normalized);
+    const seed = buildSeed(categoryIndex, normalized);
     const selected = selectForSlots(filtered, SLOT_COUNT, seed);
     const ids = selected.map(s => s.id);
     setActiveImageIds(ids);
@@ -81,11 +127,12 @@ export default function Quiz() {
   }, [updateBackground]);
 
   const preloadCategoryState = useCallback((manifest, categoryIndex, catState, maxImages = 14) => {
-    if (!catState.main) return;
-    const seed = `${categoryIndex}:${catState.main}:${catState.sub}:${catState.subsub}`;
+    const normalized = normalizeCategoryState(catState);
+    if (!normalized.main) return;
+    const seed = buildSeed(categoryIndex, normalized);
     if (warmedSeedsRef.current.has(seed)) return;
 
-    const filtered = filterImages(manifest, categoryIndex, catState);
+    const filtered = filterImages(manifest, categoryIndex, normalized);
     const ids = selectForSlots(filtered, SLOT_COUNT, seed).map(s => s.id);
     if (ids.length === 0) return;
 
@@ -183,6 +230,20 @@ export default function Quiz() {
     }, 0);
   }, []);
 
+  const invalidatePendingBackgroundWork = useCallback(() => {
+    tapVersionRef.current += 1;
+
+    if (deferredWorkTimeoutRef.current !== null) {
+      clearTimeout(deferredWorkTimeoutRef.current);
+      deferredWorkTimeoutRef.current = null;
+    }
+
+    if (backgroundRafRef.current !== null) {
+      cancelAnimationFrame(backgroundRafRef.current);
+      backgroundRafRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     const cacheCanvasElement = () => {
       canvasElementRef.current = document.querySelector('[class*="canvas"]');
@@ -231,6 +292,20 @@ export default function Quiz() {
     scheduleUpcomingPreload(0, { 0: defaultMain });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Commit the currently displayed default choice so store state and UI stay in sync.
+  useEffect(() => {
+    const defaultOption = step?.options?.[0];
+    if (!defaultOption) return;
+    if (answers[currentStep] != null) return;
+    selectAnswer(currentStep, defaultOption);
+  }, [currentStep, answers, step, selectAnswer]);
+
+  // Keep background deterministic for any step transition, including back navigation.
+  useEffect(() => {
+    const { categoryIndex, catState } = deriveDeterministicCategoryState(answers, currentStep);
+    queueBackgroundUpdate(categoryIndex, catState);
+  }, [currentStep, answers, queueBackgroundUpdate]);
+
   const handleSelect = useCallback((value) => {
     const level = currentStep % 3; // 0=main, 1=sub, 2=subsub
     const categoryIndex = Math.floor(currentStep / 3);
@@ -270,7 +345,7 @@ export default function Quiz() {
 
     // Auto-commit the visually-displayed default if the user never explicitly clicked an option.
     const { currentStep: cs, answers: ans, selectAnswer: save } = useQuizStore.getState();
-    if (!ans[cs]) {
+    if (ans[cs] == null) {
       const stepData = resolveStep(cs, ans);
       if (stepData?.options[0]) save(cs, stepData.options[0]);
     }
@@ -318,7 +393,7 @@ export default function Quiz() {
         } else {
           // Auto-save default for the arriving step so the filter narrows
           const curAns = useQuizStore.getState().answers;
-          if (!curAns[newStep]) {
+          if (curAns[newStep] == null) {
             const stepData = resolveStep(newStep, curAns);
             if (stepData?.options[0]) save(newStep, stepData.options[0]);
           }
@@ -356,7 +431,7 @@ export default function Quiz() {
               });
             } else {
               // Auto-save default for the arriving step so the filter narrows
-              if (!freshAns[newCs]) {
+              if (freshAns[newCs] == null) {
                 const stepData = resolveStep(newCs, freshAns);
                 if (stepData?.options[0]) freshSave(newCs, stepData.options[0]);
               }
@@ -405,6 +480,7 @@ export default function Quiz() {
         </div>
         <div className={styles.navRow}>
           <button className={styles.backBtn} onClick={() => {
+            invalidatePendingBackgroundWork();
             if (isInUpdateCategory && level === 0) returnToOutput();
             else goBack();
           }}>
@@ -414,7 +490,7 @@ export default function Quiz() {
             if (isInUpdateCategory && level === 2) {
               // Auto-commit default if user never explicitly chose
               const { currentStep: cs, answers: ans, selectAnswer: save } = useQuizStore.getState();
-              if (!ans[cs]) {
+              if (ans[cs] == null) {
                 const stepData = resolveStep(cs, ans);
                 if (stepData?.options[0]) save(cs, stepData.options[0]);
               }
