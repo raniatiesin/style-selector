@@ -29,12 +29,85 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { tally, styleId, sessionId, matchCount } = req.body;
+  const {
+    action,
+    handle,
+    tally,
+    styleId,
+    sessionId,
+    matchCount,
+    content,
+    embedding,
+    metadata,
+    selected,
+  } = req.body || {};
   const N = matchCount || 6;
 
   try {
+    if (action === 'initSession') {
+      const normalizedHandle = typeof handle === 'string' && handle.trim()
+        ? handle.trim()
+        : null;
+
+      const { data: session, error: insertErr } = await supabase
+        .from('sessions')
+        .insert({ prospect: normalizedHandle })
+        .select('id')
+        .single();
+
+      if (insertErr) {
+        console.error('Session init error:', insertErr);
+        return res.status(500).json({ error: 'Session creation failed' });
+      }
+
+      return res.status(200).json({
+        sessionId: session.id,
+        handle: normalizedHandle,
+      });
+    }
+
+    if (action === 'updateSession') {
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Missing sessionId' });
+      }
+
+      const updates = {};
+      if (Object.prototype.hasOwnProperty.call(req.body || {}, 'content')) {
+        updates.content = content || null;
+      }
+      if (Object.prototype.hasOwnProperty.call(req.body || {}, 'embedding')) {
+        updates.embedding = embedding || null;
+      }
+      if (Object.prototype.hasOwnProperty.call(req.body || {}, 'metadata')) {
+        updates.metadata = metadata || null;
+      }
+      if (Object.prototype.hasOwnProperty.call(req.body || {}, 'selected')) {
+        updates.selected = selected || null;
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(200).json({ success: true, skipped: true });
+      }
+
+      const { error: updateErr } = await supabase
+        .from('sessions')
+        .update(updates)
+        .eq('id', sessionId);
+
+      if (updateErr) {
+        console.error('Session update error:', updateErr);
+        return res.status(500).json({ error: 'Session update failed' });
+      }
+
+      return res.status(200).json({ success: true });
+    }
+
     // ── Mode 1: tally-based (initial quiz result) ──
     if (tally && typeof tally === 'string') {
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Missing sessionId' });
+      }
+
       // 1. Embed the tally via RunPod (Qwen3-Embedding-4B, preloaded)
       console.log('[RunPod] → Sending embedding request');
       console.log('[RunPod]   Input:', tally);
@@ -66,16 +139,15 @@ export default async function handler(req, res) {
 
       const embedding = '[' + embeddingArr.join(',') + ']';
 
-      // 2. Insert session row (content + embedding) into sessions table
-      const { data: session, error: insertErr } = await supabase
+      // 2. Update existing session row with final tally + embedding
+      const { error: updateErr } = await supabase
         .from('sessions')
-        .insert({ content: tally, embedding })
-        .select('id')
-        .single();
+        .update({ content: tally, embedding })
+        .eq('id', sessionId);
 
-      if (insertErr) {
-        console.error('Session insert error:', insertErr);
-        return res.status(500).json({ error: 'Session creation failed' });
+      if (updateErr) {
+        console.error('Session update error:', updateErr);
+        return res.status(500).json({ error: 'Session update failed' });
       }
 
       // 3. pgvector similarity search
@@ -102,9 +174,9 @@ export default async function handler(req, res) {
       await supabase
         .from('sessions')
         .update({ metadata: { result_ids: results.map(r => r.id) } })
-        .eq('id', session.id);
+        .eq('id', sessionId);
 
-      return res.status(200).json({ sessionId: session.id, results });
+      return res.status(200).json({ sessionId, results });
     }
 
     // ── Mode 2 / 3: styleId-based (rabbit hole or show more) ──

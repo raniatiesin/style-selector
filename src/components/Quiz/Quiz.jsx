@@ -81,10 +81,13 @@ export default function Quiz() {
 
   const currentStep = useQuizStore(s => s.currentStep);
   const answers = useQuizStore(s => s.answers);
+  const sessionId = useQuizStore(s => s.sessionId);
   const selectAnswer = useQuizStore(s => s.selectAnswer);
   const advanceStep = useQuizStore(s => s.advanceStep);
   const setActiveImageIds = useQuizStore(s => s.setActiveImageIds);
   const goBack = useQuizStore(s => s.goBack);
+  const ensureSession = useQuizStore(s => s.ensureSession);
+  const updateSessionProgress = useQuizStore(s => s.updateSessionProgress);
   const updateMode = useQuizStore(s => s.updateMode);
   const updateCategoryIndex = useQuizStore(s => s.updateCategoryIndex);
   const returnToOutput = useQuizStore(s => s.returnToOutput);
@@ -350,19 +353,45 @@ export default function Quiz() {
       if (stepData?.options[0]) save(cs, stepData.options[0]);
     }
 
+    const freshAnswers = useQuizStore.getState().answers;
+    const progressContent = Array.from({ length: 12 }, (_, i) => freshAnswers[i * 3 + 2])
+      .filter(Boolean)
+      .join(', ');
+
+    (async () => {
+      const ensuredSessionId = sessionId || await ensureSession();
+      if (!ensuredSessionId) return;
+
+      await updateSessionProgress({
+        content: progressContent || null,
+        metadata: {
+          completedStep: cs,
+          answeredCount: Object.keys(freshAnswers).length,
+          updatedAt: new Date().toISOString(),
+        },
+      });
+    })();
+
     // Fire /api/search immediately on the final step — saves transition + mount overhead.
     // OutputScreen will skip its own fetch because isSearching is already true.
     if (cs === 35) {
-      const freshAnswers = useQuizStore.getState().answers;
       const finalTally = Array.from({ length: 12 }, (_, i) => freshAnswers[i * 3 + 2])
         .filter(Boolean).join(', ');
       const { setIsSearching, setSessionId, setOutputResults } = useQuizStore.getState();
       setIsSearching(true);
-      fetch('/api/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tally: finalTally }),
-      })
+
+      (async () => {
+        const ensuredSessionId = sessionId || await ensureSession();
+        if (!ensuredSessionId) {
+          throw new Error('Missing session id for search');
+        }
+
+        return fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tally: finalTally, sessionId: ensuredSessionId }),
+        });
+      })()
         .then(r => r.ok ? r.json() : Promise.reject('Search API failed'))
         .then(data => {
           setSessionId(data.sessionId);
@@ -451,7 +480,15 @@ export default function Quiz() {
         duration: 0.08,
         ease: 'power2.out',
       });
-  }, [advanceStep, queueBackgroundUpdate, scheduleUpcomingPreload, queueVersionedDeferredWork]);
+  }, [
+    advanceStep,
+    ensureSession,
+    queueBackgroundUpdate,
+    scheduleUpcomingPreload,
+    queueVersionedDeferredWork,
+    sessionId,
+    updateSessionProgress,
+  ]);
 
   if (!step) return null;
 

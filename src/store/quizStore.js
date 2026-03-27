@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+let bootstrapSessionPromise = null;
+
 export const useQuizStore = create((set, get) => ({
   // --- Navigation ---
   screen: 'welcome', // 'welcome' | 'quiz' | 'output' | 'confirmation'
@@ -12,7 +14,10 @@ export const useQuizStore = create((set, get) => ({
   activeImageIds: [], // 60 style IDs for background
 
   // --- Output ---
+  handle: null, // URL handle from /@{handle}, nullable
   sessionId: null, // uuid from /api/search — links to Supabase sessions row
+  sessionReady: false,
+  sessionError: null,
   outputResults: [], // [{ id, similarity }] from pgvector
   outputHistory: [], // stack of { results, selected } for rabbit-hole back-nav
   isSearching: false, // true while /api/search is in flight
@@ -72,7 +77,103 @@ export const useQuizStore = create((set, get) => ({
     }
   },
 
+  setHandle: (handle) => set({ handle: handle || null }),
   setSessionId: (id) => set({ sessionId: id }),
+  bootstrapSession: async (handle) => {
+    const normalizedHandle = typeof handle === 'string' && handle.trim()
+      ? handle.trim()
+      : null;
+
+    if (get().sessionId) {
+      set({
+        handle: normalizedHandle,
+        sessionReady: true,
+        sessionError: null,
+      });
+      return get().sessionId;
+    }
+
+    if (bootstrapSessionPromise) {
+      return bootstrapSessionPromise;
+    }
+
+    set({
+      handle: normalizedHandle,
+      sessionReady: false,
+      sessionError: null,
+    });
+
+    bootstrapSessionPromise = (async () => {
+      try {
+        const res = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'initSession',
+            handle: normalizedHandle,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error('Session init failed');
+        }
+
+        const data = await res.json();
+        const nextId = data?.sessionId || null;
+
+        if (!nextId) {
+          throw new Error('Session init missing id');
+        }
+
+        set({
+          sessionId: nextId,
+          sessionReady: true,
+          sessionError: null,
+        });
+        return nextId;
+      } catch (err) {
+        console.error('Session bootstrap failed:', err);
+        set({
+          sessionReady: false,
+          sessionError: 'session_init_failed',
+        });
+        return null;
+      } finally {
+        bootstrapSessionPromise = null;
+      }
+    })();
+
+    return bootstrapSessionPromise;
+  },
+  ensureSession: async () => {
+    const current = get().sessionId;
+    if (current) return current;
+    return get().bootstrapSession(get().handle);
+  },
+  updateSessionProgress: async (patch = {}) => {
+    const sessionId = get().sessionId;
+    if (!sessionId) {
+      return false;
+    }
+
+    const body = {
+      action: 'updateSession',
+      sessionId,
+      ...patch,
+    };
+
+    try {
+      const res = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return res.ok;
+    } catch (err) {
+      console.error('Session progress update failed:', err);
+      return false;
+    }
+  },
   setOutputResults: (results) => set({ outputResults: results }),
   setIsSearching: (val) => set({ isSearching: val }),
   setSelectedCarousel: (id) => set({ selectedCarousel: id }),
@@ -117,7 +218,6 @@ export const useQuizStore = create((set, get) => ({
       updateMode: false,
       updateCategoryIndex: null,
       outputResults: [],
-      sessionId: null,
       selectedCarousel: null,
       outputHistory: [],
     });
@@ -133,11 +233,22 @@ export const useQuizStore = create((set, get) => ({
   submitConfirmation: async (name, email) => {
     set({ submitting: true, submitError: null });
     try {
-      const { sessionId, selectedStyle } = get();
+      const ensuredSessionId = await get().ensureSession();
+      if (!ensuredSessionId) {
+        throw new Error('Missing session id');
+      }
+
+      const { selectedStyle, handle } = get();
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, name, email, selected: selectedStyle }),
+        body: JSON.stringify({
+          sessionId: ensuredSessionId,
+          handle: handle ?? null,
+          name,
+          email,
+          selected: selectedStyle,
+        }),
       });
       if (res.ok) {
         set({ submitted: true, submitting: false });

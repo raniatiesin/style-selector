@@ -9,10 +9,12 @@ import Confirmation from './components/Confirmation/Confirmation';
 
 export default function App() {
   const canvasRef = useRef(null);
+  const didBootstrapRef = useRef(false);
   const screen = useQuizStore(s => s.screen);
   const welcomePanel = useQuizStore(s => s.welcomePanel);
   const currentStep = useQuizStore(s => s.currentStep);
   const activeImageIds = useQuizStore(s => s.activeImageIds);
+  const bootstrapSession = useQuizStore(s => s.bootstrapSession);
   const blurred = screen === 'output' || screen === 'confirmation';
   const isOutputVisible = screen === 'output';
   const showCard1 = screen === 'quiz' && currentStep === 0;
@@ -24,6 +26,18 @@ export default function App() {
     if (!el) return;
     gsap.to(el, { opacity: 0, duration: 0.4, ease: 'power2.in', delay: 0.1, onComplete: () => el.remove() });
   }, []);
+
+  useEffect(() => {
+    if (didBootstrapRef.current) return;
+    didBootstrapRef.current = true;
+
+    const pathname = window.location.pathname || '/';
+    const extractedHandle = pathname.startsWith('/@')
+      ? decodeURIComponent(pathname.slice(2)) || null
+      : null;
+
+    bootstrapSession(extractedHandle);
+  }, [bootstrapSession]);
 
   return (
     <>

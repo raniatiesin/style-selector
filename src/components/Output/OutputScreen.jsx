@@ -104,6 +104,8 @@ export default function OutputScreen() {
   const outputResults = useQuizStore(s => s.outputResults);
   const sessionId = useQuizStore(s => s.sessionId);
   const selectedCarousel = useQuizStore(s => s.selectedCarousel);
+  const ensureSession = useQuizStore(s => s.ensureSession);
+  const updateSessionProgress = useQuizStore(s => s.updateSessionProgress);
 
   const setOutputResults = useQuizStore(s => s.setOutputResults);
   const setSessionId = useQuizStore(s => s.setSessionId);
@@ -241,10 +243,15 @@ export default function OutputScreen() {
       setIsSearching(true);
 
       try {
+        const ensuredSessionId = sessionId || await ensureSession();
+        if (!ensuredSessionId) {
+          throw new Error('Missing session id for output search');
+        }
+
         const res = await fetch('/api/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tally }),
+          body: JSON.stringify({ tally, sessionId: ensuredSessionId }),
         });
 
         if (!res.ok) throw new Error('Search API failed');
@@ -264,7 +271,13 @@ export default function OutputScreen() {
     }
 
     computeResults();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [answers, ensureSession, outputResults.length, sessionId, setIsSearching, setOutputResults, setSessionId]);
+
+  useEffect(() => {
+    if (!sessionId || !selectedCarousel) return;
+
+    updateSessionProgress({ selected: selectedCarousel });
+  }, [selectedCarousel, sessionId, updateSessionProgress]);
 
   // Preload result rep images immediately when they arrive
   useEffect(() => {
@@ -678,11 +691,12 @@ export default function OutputScreen() {
     }
 
     try {
+      const ensuredSessionId = sessionId || await ensureSession();
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
-        body: JSON.stringify({ styleId: targetStyleId, sessionId }),
+        body: JSON.stringify({ styleId: targetStyleId, sessionId: ensuredSessionId }),
       });
 
       if (!res.ok) throw new Error('Find similar failed');
@@ -710,7 +724,17 @@ export default function OutputScreen() {
         findSimilarAbortRef.current = null;
       }
     }
-  }, [isMobileCoarse, selectedCarousel, sessionId, simLoading, pushToHistory, setOutputResults, setIsSearching, resolveActiveMobileStyleId]);
+  }, [
+    ensureSession,
+    isMobileCoarse,
+    selectedCarousel,
+    sessionId,
+    simLoading,
+    pushToHistory,
+    setOutputResults,
+    setIsSearching,
+    resolveActiveMobileStyleId,
+  ]);
 
   const handleTagClick = useCallback((categoryIndex) => {
     jumpToQuizStep(categoryIndex * 3);

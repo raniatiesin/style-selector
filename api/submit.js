@@ -36,7 +36,7 @@ async function sendN8nSubmitWebhook(payload) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { sessionId, name, email, selected, favorites } = req.body;
+  const { sessionId, handle, name, email, selected, favorites } = req.body;
 
   if (!sessionId || !name || !email) {
     return res.status(400).json({ error: 'Missing fields' });
@@ -61,6 +61,7 @@ export default async function handler(req, res) {
 
     await sendN8nSubmitWebhook({
       sessionId,
+      handle: handle ?? null,
       name: name.trim(),
       email: email.trim(),
       selected: selected || null,
