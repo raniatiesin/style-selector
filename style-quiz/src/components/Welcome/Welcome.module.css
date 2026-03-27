@@ -1,0 +1,77 @@
+/* Fullscreen centering overlay */
+.container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* Dark glass card */
+.card {
+  pointer-events: auto;
+  background: rgba(10, 10, 10, 0.62);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  padding: 52px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (max-width: 767px) {
+  .card {
+    padding: 40px 28px;
+    max-width: 92vw;
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+  }
+}
+
+.headline {
+  font-family: var(--font);
+  font-size: clamp(2.8rem, 5vw, 5.2rem);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: var(--white-92);
+  line-height: 1.1;
+  text-align: center;
+  margin: 0;
+}
+
+.sub {
+  font-family: var(--font);
+  font-size: clamp(0.78rem, 1.1vw, 0.95rem);
+  font-weight: 300;
+  letter-spacing: 0.14em;
+  color: var(--white-55);
+  text-transform: uppercase;
+  text-align: center;
+  margin-top: var(--space-16);
+}
+
+.makeBtn {
+  margin-top: var(--space-48);
+  font-family: var(--font);
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--white-92);
+  background: transparent;
+  border: 1px solid var(--white-25);
+  border-radius: 0;
+  padding: 16px 52px;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+
+.makeBtn:hover {
+  color: rgba(255, 255, 255, 1);
+  border-color: var(--white-82);
+}

@@ -1,0 +1,672 @@
+/* ── Split layout ── */
+.splitLayout {
+  position: fixed;
+  inset: 0;
+  height: var(--output-vh, 100dvh);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Left panel — selected style detail */
+.leftPanel {
+  flex: 0 0 38%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 40px 32px;
+  gap: 20px;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+.leftPanel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.leftPanel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.leftHeading {
+  font-family: var(--font);
+  font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+  font-weight: 200;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.scrollHint {
+  position: static;
+  margin: 6px 0 0;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+  pointer-events: none;
+  user-select: none;
+}
+
+.tallyGrid {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  width: 100%;
+  padding: 0 4px;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.desktopTallyRows {
+  display: none;
+}
+
+.desktopTallyRowShell {
+  position: relative;
+  width: 100%;
+}
+
+.desktopTallyRowShell::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24px;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(10, 10, 10, 0), rgba(10, 10, 10, 0.44) 78%);
+}
+
+.desktopTallyRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 1px 6px 1px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
+  contain: layout paint;
+}
+
+.desktopTallyRow::-webkit-scrollbar {
+  display: none;
+}
+
+.desktopTallyRow > * {
+  flex: 0 0 auto;
+}
+
+.desktopTallyRow::after {
+  content: '';
+  flex: 0 0 24px;
+}
+
+.selectedCarouselWrap {
+  width: 100%;
+  max-width: min(340px, 92vw);
+}
+
+/* Right panel — similarity carousels */
+.rightPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+  gap: 24px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  position: relative;
+}
+
+.rightPanel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.rightPanel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.carouselGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 900px;
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  .splitLayout {
+    flex-direction: column;
+  }
+
+  .leftPanel {
+    display: none;
+  }
+
+  .rightPanel {
+    flex: 1;
+    width: 100%;
+    justify-content: stretch;
+    align-items: stretch;
+    min-height: 0;
+    padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 12px;
+    gap: 12px;
+    overflow: hidden;
+  }
+
+  .carouselGrid {
+    display: none;
+  }
+
+  .selectedCarouselWrap {
+    max-width: min(220px, 68vw);
+  }
+
+  .mobileTagRow {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 6px;
+    padding-top: 4px;
+    padding-bottom: 1px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobileTagRow::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobileCardDeck {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    touch-action: pan-y;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobileCardDeck::after {
+    content: '';
+    display: block;
+    height: 24px;
+    pointer-events: none;
+  }
+
+  .mobileCardDeck::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobileCardSlot {
+    position: relative;
+    height: calc(var(--output-vh, 100dvh) - 80px);
+    min-height: calc(var(--output-vh, 100dvh) - 80px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    overflow: hidden;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    padding: env(safe-area-inset-top, 8px) 0 8px;
+    padding-bottom: 80px;
+  }
+
+  .mobileSlotTagRibbon {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+    padding: 12px 12px 8px;
+    position: static;
+  }
+
+  .mobileCardFrame {
+    position: relative;
+    width: clamp(280px, 85vw, 360px);
+    flex: 0 0 auto;
+    min-height: 0;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobileCardFrame .carouselContainer {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: unset;
+  }
+
+  .mobileCardTracker {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  .mobileTrackerDot {
+    width: 3px;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.28);
+    transition: height 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                background 220ms ease;
+    flex-shrink: 0;
+  }
+
+  .mobileTrackerDotActive {
+    height: 20px;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 2px;
+  }
+
+  .mobileBottomZone {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 14px 20px calc(env(safe-area-inset-bottom, 20px) + 12px);
+    background: rgba(10, 10, 10, 0.62);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+    z-index: 20;
+  }
+
+  .mobileBottomZone .buttonRow {
+    flex-wrap: nowrap;
+  }
+
+  .mobileBottomZone .confirmBtn,
+  .mobileBottomZone .findSimilarBtn {
+    flex: 1;
+    padding: 16px 0;
+  }
+}
+
+/* Carousel container */
+.carouselContainer {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  cursor: pointer;
+  aspect-ratio: 2/3;
+  background: var(--bg);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  touch-action: pan-y;
+  -webkit-touch-callout: none;
+}
+
+.carouselContainer:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.75);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+/* Image strip inside carousel */
+.strip {
+  display: flex;
+  height: 100%;
+}
+
+.strip.animating {
+  will-change: transform;
+}
+
+.strip img {
+  width: 100%;
+  min-width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  flex-shrink: 0;
+  backface-visibility: hidden;
+}
+
+/* Pagination dots */
+.dots {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  z-index: 6;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transition: background 0.2s ease;
+}
+
+.dot.active {
+  background: rgba(255, 255, 255, 0.88);
+}
+
+/* Shimmer placeholder for loading segments */
+.shimmer {
+  width: 100%;
+  min-width: 100%;
+  height: 100%;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Similarity badge on carousels */
+.similarityBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-family: var(--font);
+  font-size: 0.62rem;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(10, 10, 10, 0.62);
+  padding: 3px 8px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Desktop-only carousel arrows */
+.carouselArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font);
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  z-index: 2;
+  transition: color 0.2s ease;
+}
+
+.carouselContainer:hover .carouselArrow {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.carouselArrow:hover {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.arrowLeft {
+  left: 4px;
+}
+
+.arrowRight {
+  right: 4px;
+}
+
+.historyNavArrow {
+  position: static;
+  top: auto;
+  transform: none;
+  color: rgba(255, 255, 255, 0.42);
+  padding: 8px 6px;
+  line-height: 1;
+}
+
+.historyNavArrow:hover {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+@media (max-width: 767px) {
+  .carouselArrow {
+    display: none;
+  }
+}
+
+/* Button row — Confirm + Find Similar */
+.buttonRow {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+  .leftPanel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(12px, 2vh, 24px);
+    padding: clamp(16px, 3vh, 40px) clamp(16px, 2vw, 32px);
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .selectedCarouselWrap {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: min(280px, 85%);
+    margin: 0 auto;
+    margin-top: 0;
+    padding-top: 0;
+    display: block;
+  }
+
+  .rightPanel {
+    align-items: center;
+    justify-content: center;
+    padding: clamp(16px, 3vh, 40px) clamp(16px, 2vw, 40px);
+  }
+
+  .carouselGrid {
+    max-width: min(720px, 90%);
+    gap: clamp(10px, 1.2vw, 20px);
+    margin: 0 auto;
+  }
+
+  .leftPanel .tallyGrid {
+    display: none;
+  }
+
+  .leftPanel .desktopTallyRows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: clamp(350px, 93%, 500px);
+    max-width: 100%;
+    align-self: stretch;
+    margin: 0 auto;
+  }
+
+  .leftPanel .buttonRow {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: nowrap;
+    overflow: visible;
+    margin-top: 0;
+    padding-top: 4px;
+  }
+
+  .leftPanel .scrollHint {
+    margin-top: 10px;
+    margin-bottom: 0;
+    align-self: center;
+  }
+
+  .leftPanel .historyNavArrow {
+    position: static;
+    top: auto;
+    transform: none;
+    color: rgba(255, 255, 255, 0.42);
+    padding: 8px 6px;
+    line-height: 1;
+  }
+
+  .leftPanel .historyNavArrow:hover {
+    color: rgba(255, 255, 255, 0.92) !important;
+  }
+
+  .confirmBtn {
+    background: #ffffff;
+    color: #0a0a0a;
+    border: 1px solid #ffffff;
+  }
+
+  .confirmBtn:hover {
+    background: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+  }
+}
+
+.confirmBtn,
+.findSimilarBtn {
+  font-family: var(--font);
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 12px 28px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+  border-radius: 0;
+}
+
+.confirmBtn {
+  color: rgba(10, 10, 10, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  will-change: transform, opacity;
+  transform-origin: center;
+}
+
+.findSimilarBtn {
+  color: rgba(255, 255, 255, 0.4);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.findSimilarBtn:hover {
+  color: rgba(255, 255, 255, 0.88);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.confirmBtn:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(255, 255, 255, 1);
+  color: #000;
+}
+
+/* Loading screen */
+.loadingContainer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.loadingInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.loadingText {
+  font-family: var(--font);
+  font-size: clamp(1.6rem, 3.2vw, 2.8rem);
+  font-weight: 200;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: center;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.loadingLine {
+  width: 120px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.25);
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.loadingSubText {
+  font-family: var(--font);
+  font-size: 0.68rem;
+  font-weight: 300;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: center;
+  margin: 0;
+}
+
+/* Find-similar loading overlay */
+.simLoadingOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  z-index: 320;
+  background: transparent;
+  pointer-events: all;
+}
+
+.simLoadingText {
+  font-family: var(--font);
+  font-size: clamp(1.1rem, 2.2vw, 1.8rem);
+  font-weight: 200;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: center;
+  margin: 0;
+  line-height: 1.2;
+}
