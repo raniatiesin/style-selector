@@ -94,8 +94,19 @@
   gap: 8px;
   width: 100%;
   max-width: 520px;
-  align-items: start;
+  position: relative;
+  align-items: stretch;
   justify-items: center;
+}
+
+.gridDivider {
+  position: absolute;
+  left: calc(50% - 0.5px);
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
 }
 
 .columnLabels {

@@ -226,6 +226,7 @@ export default function Quiz() {
             </div>
           ) : null}
           <div className={`${styles.optionsRow} ${isCombinedQ2Step ? styles.optionsGrid : ''}`}>
+            {isCombinedQ2Step ? <div className={styles.gridDivider} /> : null}
             {step.options.map(opt => (
               <button
                 key={opt}
