@@ -104,6 +104,8 @@ export default function Quiz() {
 
   // Update-mode helpers
   const level = currentStep % STEPS_PER_STAGE;
+  const isCombinedQ2Step = level === STEPS_PER_STAGE - 1;
+  const columnLabels = isCombinedQ2Step ? step?.columnLabels : null;
   const isInUpdateCategory = updateMode && Math.floor(currentStep / STEPS_PER_STAGE) === updateCategoryIndex;
   const backLabel = isInUpdateCategory && level === 0 ? '← Return' : '← Back';
   const nextLabel = isInUpdateCategory && level === STEPS_PER_STAGE - 1 ? 'Update →' : 'Next →';
@@ -494,7 +496,13 @@ export default function Quiz() {
         <ProgressBar currentStep={currentStep} />
         <div ref={contentRef} className={styles.panelContent}>
           <p className={styles.question}>{step.question}</p>
-          <div className={`${styles.optionsRow} ${level === STEPS_PER_STAGE - 1 ? styles.optionsGrid : ''}`}>
+          {isCombinedQ2Step && Array.isArray(columnLabels) && columnLabels.length === 2 ? (
+            <div className={styles.columnLabels}>
+              <span className={styles.columnLabel}>{columnLabels[0]}</span>
+              <span className={styles.columnLabel}>{columnLabels[1]}</span>
+            </div>
+          ) : null}
+          <div className={`${styles.optionsRow} ${isCombinedQ2Step ? styles.optionsGrid : ''}`}>
             {step.options.map(opt => (
               <button
                 key={opt}

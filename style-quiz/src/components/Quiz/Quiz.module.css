@@ -91,9 +91,30 @@
 .optionsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   max-width: 520px;
+  align-items: start;
+  justify-items: center;
+}
+
+.columnLabels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  max-width: 520px;
+  margin: -10px 0 8px;
+}
+
+.columnLabel {
+  font-family: var(--font);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.48);
+  opacity: 0.72;
+  text-align: center;
 }
 
 /* Option button */
@@ -114,8 +135,10 @@
 }
 
 .optionsGrid .option {
-  white-space: normal;
-  min-height: 56px;
+  width: auto;
+  max-width: 100%;
+  align-self: start;
+  white-space: nowrap;
 }
 
 .option:hover {
