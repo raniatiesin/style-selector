@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import gsap from 'gsap';
 import { useQuizStore } from '../../store/quizStore';
-import { getVisibleStageIndex } from '../../config/questionTree';
+import { getVisibleStageIndex, STEPS_PER_STAGE } from '../../config/questionTree';
 import { getManifest, getStyleTallyMap } from '../../utils/dataCache';
 import { preloadImagesPriority } from '../../utils/preloader';
 import { buildCanonicalTallyArray, buildCanonicalTallyString, isCanonicalStageEditable } from '../../utils/tally';
@@ -736,7 +736,7 @@ export default function OutputScreen() {
     if (!isCanonicalStageEditable(canonicalStageIndex)) return;
     const visibleStageIndex = getVisibleStageIndex(canonicalStageIndex);
     if (visibleStageIndex == null) return;
-    jumpToQuizStep(visibleStageIndex * 3);
+    jumpToQuizStep(visibleStageIndex * STEPS_PER_STAGE);
   }, [jumpToQuizStep]);
 
   const handleTagRowWheel = useCallback((event) => {

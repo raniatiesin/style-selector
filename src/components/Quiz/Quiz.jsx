@@ -1,7 +1,15 @@
 import { useRef, useEffect, useCallback } from 'react';
 import gsap from 'gsap';
 import { useQuizStore } from '../../store/quizStore';
-import { resolveStep, MAINS, MAX_VISIBLE_STEP_INDEX, getCanonicalStageIndex } from '../../config/questionTree';
+import {
+  resolveStep,
+  MAINS,
+  MAX_VISIBLE_STEP_INDEX,
+  STEPS_PER_STAGE,
+  getCanonicalStageIndex,
+  getMainAnswerIndex,
+  getLeafAnswerIndex,
+} from '../../config/questionTree';
 import { filterImages, selectForSlots } from '../../utils/filter';
 import { buildCanonicalTallyArray, buildCanonicalTallyString } from '../../utils/tally';
 import { getManifest } from '../../utils/dataCache';
@@ -15,12 +23,18 @@ const SLOT_COUNT = typeof window !== 'undefined' && window.innerWidth >= 768
   ? DESKTOP_SLOTS.length
   : MOBILE_SLOTS.length;
 
+function getAnswerIndexForStep(stepIndex) {
+  const categoryIndex = Math.floor(stepIndex / STEPS_PER_STAGE);
+  const level = stepIndex % STEPS_PER_STAGE;
+  return level === 0 ? getMainAnswerIndex(categoryIndex) : getLeafAnswerIndex(categoryIndex);
+}
+
 /** Derive the current category's {main, sub, subsub} from the answers map */
 function getCategoryState(answers, categoryIndex) {
   return {
-    main:   answers[categoryIndex * 3]     ?? null,
-    sub:    answers[categoryIndex * 3 + 1] ?? null,
-    subsub: answers[categoryIndex * 3 + 2] ?? null,
+    main: answers[getMainAnswerIndex(categoryIndex)] ?? null,
+    sub: null,
+    subsub: answers[getLeafAnswerIndex(categoryIndex)] ?? null,
   };
 }
 
@@ -38,33 +52,23 @@ function buildSeed(canonicalStageIndex, catState) {
 }
 
 function deriveDeterministicCategoryState(answers, stepIndex) {
-  const categoryIndex = Math.floor(stepIndex / 3);
-  const level = stepIndex % 3;
+  const categoryIndex = Math.floor(stepIndex / STEPS_PER_STAGE);
+  const level = stepIndex % STEPS_PER_STAGE;
   const defaultMain = MAINS[categoryIndex]?.options?.[0] ?? null;
-  const main = answers[categoryIndex * 3] ?? defaultMain;
-
-  let sub = null;
-  if (level >= 1) {
-    const subStep = resolveStep(categoryIndex * 3 + 1, {
-      ...answers,
-      [categoryIndex * 3]: main,
-    });
-    sub = answers[categoryIndex * 3 + 1] ?? subStep?.options?.[0] ?? null;
-  }
+  const main = answers[getMainAnswerIndex(categoryIndex)] ?? defaultMain;
 
   let subsub = null;
-  if (level >= 2) {
-    const subsubStep = resolveStep(categoryIndex * 3 + 2, {
+  if (level >= 1) {
+    const leafStep = resolveStep(categoryIndex * STEPS_PER_STAGE + 1, {
       ...answers,
-      [categoryIndex * 3]: main,
-      [categoryIndex * 3 + 1]: sub,
+      [getMainAnswerIndex(categoryIndex)]: main,
     });
-    subsub = answers[categoryIndex * 3 + 2] ?? subsubStep?.options?.[0] ?? null;
+    subsub = answers[getLeafAnswerIndex(categoryIndex)] ?? leafStep?.options?.[0] ?? null;
   }
 
   return {
     categoryIndex,
-    catState: normalizeCategoryState({ main, sub, subsub }),
+    catState: normalizeCategoryState({ main, sub: null, subsub }),
   };
 }
 
@@ -96,13 +100,13 @@ export default function Quiz() {
 
   // Resolve current question
   const step = resolveStep(currentStep, answers);
-  const selectedOption = answers[currentStep] || step?.options[0];
+  const selectedOption = answers[getAnswerIndexForStep(currentStep)] || step?.options[0];
 
   // Update-mode helpers
-  const level = currentStep % 3;
-  const isInUpdateCategory = updateMode && Math.floor(currentStep / 3) === updateCategoryIndex;
+  const level = currentStep % STEPS_PER_STAGE;
+  const isInUpdateCategory = updateMode && Math.floor(currentStep / STEPS_PER_STAGE) === updateCategoryIndex;
   const backLabel = isInUpdateCategory && level === 0 ? '← Return' : '← Back';
-  const nextLabel = isInUpdateCategory && level === 2 ? 'Update →' : 'Next →';
+  const nextLabel = isInUpdateCategory && level === STEPS_PER_STAGE - 1 ? 'Update →' : 'Next →';
 
   // Recompute background images for the given category state
   const updateBackground = useCallback((categoryIndex, catState) => {
@@ -152,8 +156,8 @@ export default function Quiz() {
     const manifest = getManifest();
     if (!manifest) return;
 
-    const categoryIndex = Math.floor(stepIndex / 3);
-    const level = stepIndex % 3;
+    const categoryIndex = Math.floor(stepIndex / STEPS_PER_STAGE);
+    const level = stepIndex % STEPS_PER_STAGE;
     const catState = getCategoryState(sourceAnswers, categoryIndex);
 
     // Warm defaults for the next two categories while user is in the current one.
@@ -166,23 +170,12 @@ export default function Quiz() {
 
     // Warm likely immediate branches in the current category.
     if (level === 0 && catState.main) {
-      const subStep = resolveStep(categoryIndex * 3 + 1, {
+      const leafStep = resolveStep(categoryIndex * STEPS_PER_STAGE + 1, {
         ...sourceAnswers,
-        [categoryIndex * 3]: catState.main,
+        [getMainAnswerIndex(categoryIndex)]: catState.main,
       });
-      subStep?.options?.slice(0, 2).forEach(sub => {
-        preloadCategoryState(manifest, categoryIndex, { main: catState.main, sub, subsub: null }, 10);
-      });
-    }
-
-    if (level <= 1 && catState.main && catState.sub) {
-      const subsubStep = resolveStep(categoryIndex * 3 + 2, {
-        ...sourceAnswers,
-        [categoryIndex * 3]: catState.main,
-        [categoryIndex * 3 + 1]: catState.sub,
-      });
-      subsubStep?.options?.slice(0, 2).forEach(subsub => {
-        preloadCategoryState(manifest, categoryIndex, { main: catState.main, sub: catState.sub, subsub }, 8);
+      leafStep?.options?.slice(0, 2).forEach(leaf => {
+        preloadCategoryState(manifest, categoryIndex, { main: catState.main, sub: null, subsub: leaf }, 10);
       });
     }
   }, [preloadCategoryState]);
@@ -304,8 +297,9 @@ export default function Quiz() {
   useEffect(() => {
     const defaultOption = step?.options?.[0];
     if (!defaultOption) return;
-    if (answers[currentStep] != null) return;
-    selectAnswer(currentStep, defaultOption);
+    const answerIndex = getAnswerIndexForStep(currentStep);
+    if (answers[answerIndex] != null) return;
+    selectAnswer(answerIndex, defaultOption);
   }, [currentStep, answers, step, selectAnswer]);
 
   // Keep background deterministic for any step transition, including back navigation.
@@ -315,25 +309,20 @@ export default function Quiz() {
   }, [currentStep, answers, queueBackgroundUpdate]);
 
   const handleSelect = useCallback((value) => {
-    const level = currentStep % 3; // 0=main, 1=sub, 2=subsub
-    const categoryIndex = Math.floor(currentStep / 3);
+    const level = currentStep % STEPS_PER_STAGE; // 0=main, 1=leaf
+    const categoryIndex = Math.floor(currentStep / STEPS_PER_STAGE);
+    const answerIndex = getAnswerIndexForStep(currentStep);
 
     // Build updated answers, clearing orphaned child selections when parent changes
-    const updatedAnswers = { ...answers, [currentStep]: value };
+    const updatedAnswers = { ...answers, [answerIndex]: value };
     if (level === 0) {
-      delete updatedAnswers[categoryIndex * 3 + 1]; // clear SUB
-      delete updatedAnswers[categoryIndex * 3 + 2]; // clear SUBSUB
-    } else if (level === 1) {
-      delete updatedAnswers[categoryIndex * 3 + 2]; // clear SUBSUB
+      delete updatedAnswers[getLeafAnswerIndex(categoryIndex)];
     }
 
     // Persist all changed keys to store
-    selectAnswer(currentStep, value);
+    selectAnswer(answerIndex, value);
     if (level === 0) {
-      selectAnswer(categoryIndex * 3 + 1, undefined);
-      selectAnswer(categoryIndex * 3 + 2, undefined);
-    } else if (level === 1) {
-      selectAnswer(categoryIndex * 3 + 2, undefined);
+      selectAnswer(getLeafAnswerIndex(categoryIndex), undefined);
     }
 
     // Trigger answer pulse
@@ -353,9 +342,10 @@ export default function Quiz() {
 
     // Auto-commit the visually-displayed default if the user never explicitly clicked an option.
     const { currentStep: cs, answers: ans, selectAnswer: save } = useQuizStore.getState();
-    if (ans[cs] == null) {
+    const csAnswerIndex = getAnswerIndexForStep(cs);
+    if (ans[csAnswerIndex] == null) {
       const stepData = resolveStep(cs, ans);
-      if (stepData?.options[0]) save(cs, stepData.options[0]);
+      if (stepData?.options[0]) save(csAnswerIndex, stepData.options[0]);
     }
 
     const freshAnswers = useQuizStore.getState().answers;
@@ -414,21 +404,22 @@ export default function Quiz() {
       // Update background for the new step
       const newStep = cs + 1;
       if (newStep <= MAX_VISIBLE_STEP_INDEX) {
-        const newCat = Math.floor(newStep / 3);
-        const isNewCategory = newStep % 3 === 0;
+        const newCat = Math.floor(newStep / STEPS_PER_STAGE);
+        const isNewCategory = newStep % STEPS_PER_STAGE === 0;
         if (isNewCategory) {
           const defaultMain = MAINS[newCat].options[0];
-          save(newCat * 3, defaultMain);
+          save(getMainAnswerIndex(newCat), defaultMain);
           queueVersionedDeferredWork(tapVersion, () => {
             queueBackgroundUpdate(newCat, { main: defaultMain, sub: null, subsub: null });
-            scheduleUpcomingPreload(newStep, { ...useQuizStore.getState().answers, [newCat * 3]: defaultMain });
+            scheduleUpcomingPreload(newStep, { ...useQuizStore.getState().answers, [getMainAnswerIndex(newCat)]: defaultMain });
           });
         } else {
           // Auto-save default for the arriving step so the filter narrows
           const curAns = useQuizStore.getState().answers;
-          if (curAns[newStep] == null) {
+          const nextAnswerIndex = getAnswerIndexForStep(newStep);
+          if (curAns[nextAnswerIndex] == null) {
             const stepData = resolveStep(newStep, curAns);
-            if (stepData?.options[0]) save(newStep, stepData.options[0]);
+            if (stepData?.options[0]) save(nextAnswerIndex, stepData.options[0]);
           }
           const freshAns = useQuizStore.getState().answers;
           queueVersionedDeferredWork(tapVersion, () => {
@@ -453,20 +444,21 @@ export default function Quiz() {
           // After advancing, update background for the new step
           const { currentStep: newCs, answers: freshAns, selectAnswer: freshSave } = useQuizStore.getState();
           if (newCs <= MAX_VISIBLE_STEP_INDEX) {
-            const newCat = Math.floor(newCs / 3);
-            const isNewCategory = newCs % 3 === 0;
+            const newCat = Math.floor(newCs / STEPS_PER_STAGE);
+            const isNewCategory = newCs % STEPS_PER_STAGE === 0;
             if (isNewCategory) {
               const defaultMain = MAINS[newCat].options[0];
-              freshSave(newCat * 3, defaultMain);
+              freshSave(getMainAnswerIndex(newCat), defaultMain);
               queueVersionedDeferredWork(tapVersion, () => {
                 queueBackgroundUpdate(newCat, { main: defaultMain, sub: null, subsub: null });
-                scheduleUpcomingPreload(newCs, { ...useQuizStore.getState().answers, [newCat * 3]: defaultMain });
+                scheduleUpcomingPreload(newCs, { ...useQuizStore.getState().answers, [getMainAnswerIndex(newCat)]: defaultMain });
               });
             } else {
               // Auto-save default for the arriving step so the filter narrows
-              if (freshAns[newCs] == null) {
+              const nextAnswerIndex = getAnswerIndexForStep(newCs);
+              if (freshAns[nextAnswerIndex] == null) {
                 const stepData = resolveStep(newCs, freshAns);
-                if (stepData?.options[0]) freshSave(newCs, stepData.options[0]);
+                if (stepData?.options[0]) freshSave(nextAnswerIndex, stepData.options[0]);
               }
               const latestAns = useQuizStore.getState().answers;
               queueVersionedDeferredWork(tapVersion, () => {
@@ -502,7 +494,7 @@ export default function Quiz() {
         <ProgressBar currentStep={currentStep} />
         <div ref={contentRef} className={styles.panelContent}>
           <p className={styles.question}>{step.question}</p>
-          <div className={styles.optionsRow}>
+          <div className={`${styles.optionsRow} ${level === STEPS_PER_STAGE - 1 ? styles.optionsGrid : ''}`}>
             {step.options.map(opt => (
               <button
                 key={opt}
@@ -528,12 +520,13 @@ export default function Quiz() {
             {backLabel}
           </button>
           <button className={styles.nextBtn} onClick={() => {
-            if (isInUpdateCategory && level === 2) {
+            if (isInUpdateCategory && level === STEPS_PER_STAGE - 1) {
               // Auto-commit default if user never explicitly chose
               const { currentStep: cs, answers: ans, selectAnswer: save } = useQuizStore.getState();
-              if (ans[cs] == null) {
+              const answerIndex = getAnswerIndexForStep(cs);
+              if (ans[answerIndex] == null) {
                 const stepData = resolveStep(cs, ans);
-                if (stepData?.options[0]) save(cs, stepData.options[0]);
+                if (stepData?.options[0]) save(answerIndex, stepData.options[0]);
               }
               updateAndReturn();
             } else {

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { MAX_VISIBLE_STEP_INDEX } from '../config/questionTree';
+import { MAX_VISIBLE_STEP_INDEX, STEPS_PER_STAGE } from '../config/questionTree';
 
 let bootstrapSessionPromise = null;
 
@@ -205,7 +205,7 @@ export const useQuizStore = create((set, get) => ({
       screen: 'quiz',
       currentStep: stepIndex,
       updateMode: true,
-      updateCategoryIndex: Math.floor(stepIndex / 3),
+      updateCategoryIndex: Math.floor(stepIndex / STEPS_PER_STAGE),
     });
   },
 

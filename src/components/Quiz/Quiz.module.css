@@ -99,9 +99,22 @@
   max-width: 480px;
 }
 
+.optionsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+}
+
 @media (max-width: 767px) {
   .optionsRow {
     width: 100%;
+    gap: 8px;
+  }
+
+  .optionsGrid {
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
   }
 }
@@ -121,6 +134,11 @@
   border-radius: 0;
   transition: background-color 90ms ease-out, border-color 90ms ease-out;
   white-space: nowrap;
+}
+
+.optionsGrid .option {
+  white-space: normal;
+  min-height: 56px;
 }
 
 @media (max-width: 767px) {
