@@ -1,19 +1,14 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import gsap from 'gsap';
 import { useQuizStore } from '../../store/quizStore';
+import { getVisibleStageIndex } from '../../config/questionTree';
 import { getManifest } from '../../utils/dataCache';
 import { preloadImagesPriority } from '../../utils/preloader';
+import { buildCanonicalTallyArray, buildCanonicalTallyString, isCanonicalStageEditable } from '../../utils/tally';
 import { EASE, DUR, STAGGER } from '../../config/animation';
-import { STAGES } from '../../config/questionTree';
 import StyleCarousel from './StyleCarousel';
 import TagPill from '../shared/TagPill';
 import styles from './Output.module.css';
-
-function buildFinalTally(answers) {
-  return Array.from({ length: 12 }, (_, i) => answers[i * 3 + 2])
-    .filter(Boolean)
-    .join(', ');
-}
 
 /**
  * Tag-overlap fallback — used when /api/search is unreachable.
@@ -76,7 +71,7 @@ export default function OutputScreen() {
 
   // User's tally tags from quiz answers
   const userTags = useMemo(() => {
-    return Array.from({ length: 12 }, (_, i) => answers[i * 3 + 2]).filter(Boolean);
+    return buildCanonicalTallyArray(answers);
   }, [answers]);
 
   // Selected style's tally tags
@@ -90,7 +85,7 @@ export default function OutputScreen() {
     if (outputResults.length > 0) return;
     if (useQuizStore.getState().isSearching) return; // Quiz already fired this early
 
-    const tally = buildFinalTally(answers);
+    const tally = buildCanonicalTallyString(answers);
 
     async function computeResults() {
       setIsSearching(true);
@@ -333,8 +328,11 @@ export default function OutputScreen() {
     popHistory();
   }, [popHistory]);
 
-  const handleTagClick = useCallback((categoryIndex) => {
-    jumpToQuizStep(categoryIndex * 3);
+  const handleTagClick = useCallback((canonicalStageIndex) => {
+    if (!isCanonicalStageEditable(canonicalStageIndex)) return;
+    const visibleStageIndex = getVisibleStageIndex(canonicalStageIndex);
+    if (visibleStageIndex == null) return;
+    jumpToQuizStep(visibleStageIndex * 3);
   }, [jumpToQuizStep]);
 
   return (

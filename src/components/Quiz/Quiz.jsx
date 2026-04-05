@@ -1,8 +1,9 @@
 import { useRef, useEffect, useCallback } from 'react';
 import gsap from 'gsap';
 import { useQuizStore } from '../../store/quizStore';
-import { resolveStep, MAINS } from '../../config/questionTree';
+import { resolveStep, MAINS, MAX_VISIBLE_STEP_INDEX, getCanonicalStageIndex } from '../../config/questionTree';
 import { filterImages, selectForSlots } from '../../utils/filter';
+import { buildCanonicalTallyArray, buildCanonicalTallyString } from '../../utils/tally';
 import { getManifest } from '../../utils/dataCache';
 import { preloadImages, preloadImagesPriority } from '../../utils/preloader';
 import { DESKTOP_SLOTS, MOBILE_SLOTS } from '../../config/generateSlots';
@@ -31,9 +32,9 @@ function normalizeCategoryState(catState) {
   };
 }
 
-function buildSeed(categoryIndex, catState) {
+function buildSeed(canonicalStageIndex, catState) {
   const normalized = normalizeCategoryState(catState);
-  return `${categoryIndex}:${normalized.main}:${normalized.sub}:${normalized.subsub}`;
+  return `${canonicalStageIndex}:${normalized.main}:${normalized.sub}:${normalized.subsub}`;
 }
 
 function deriveDeterministicCategoryState(answers, stepIndex) {
@@ -107,11 +108,13 @@ export default function Quiz() {
   const updateBackground = useCallback((categoryIndex, catState) => {
     const manifest = getManifest();
     if (!manifest) return;
+    const canonicalStageIndex = getCanonicalStageIndex(categoryIndex);
+    if (canonicalStageIndex == null) return;
 
     const normalized = normalizeCategoryState(catState);
 
-    const filtered = filterImages(manifest, categoryIndex, normalized);
-    const seed = buildSeed(categoryIndex, normalized);
+    const filtered = filterImages(manifest, canonicalStageIndex, normalized);
+    const seed = buildSeed(canonicalStageIndex, normalized);
     const selected = selectForSlots(filtered, SLOT_COUNT, seed);
     const ids = selected.map(s => s.id);
     setActiveImageIds(ids);
@@ -130,12 +133,14 @@ export default function Quiz() {
   }, [updateBackground]);
 
   const preloadCategoryState = useCallback((manifest, categoryIndex, catState, maxImages = 14) => {
+    const canonicalStageIndex = getCanonicalStageIndex(categoryIndex);
+    if (canonicalStageIndex == null) return;
     const normalized = normalizeCategoryState(catState);
     if (!normalized.main) return;
-    const seed = buildSeed(categoryIndex, normalized);
+    const seed = buildSeed(canonicalStageIndex, normalized);
     if (warmedSeedsRef.current.has(seed)) return;
 
-    const filtered = filterImages(manifest, categoryIndex, normalized);
+    const filtered = filterImages(manifest, canonicalStageIndex, normalized);
     const ids = selectForSlots(filtered, SLOT_COUNT, seed).map(s => s.id);
     if (ids.length === 0) return;
 
@@ -154,7 +159,7 @@ export default function Quiz() {
     // Warm defaults for the next two categories while user is in the current one.
     for (let offset = 1; offset <= 2; offset++) {
       const nextCat = categoryIndex + offset;
-      if (nextCat > 11) break;
+      if (nextCat >= MAINS.length) break;
       const defaultMain = MAINS[nextCat].options[0];
       preloadCategoryState(manifest, nextCat, { main: defaultMain, sub: null, subsub: null }, 12);
     }
@@ -354,7 +359,7 @@ export default function Quiz() {
     }
 
     const freshAnswers = useQuizStore.getState().answers;
-    const progressContent = Array.from({ length: 12 }, (_, i) => freshAnswers[i * 3 + 2])
+    const progressContent = buildCanonicalTallyArray(freshAnswers)
       .filter(Boolean)
       .join(', ');
 
@@ -374,9 +379,8 @@ export default function Quiz() {
 
     // Fire /api/search immediately on the final step — saves transition + mount overhead.
     // OutputScreen will skip its own fetch because isSearching is already true.
-    if (cs === 35) {
-      const finalTally = Array.from({ length: 12 }, (_, i) => freshAnswers[i * 3 + 2])
-        .filter(Boolean).join(', ');
+    if (cs === MAX_VISIBLE_STEP_INDEX) {
+      const finalTally = buildCanonicalTallyString(freshAnswers);
       const { setIsSearching, setSessionId, setOutputResults } = useQuizStore.getState();
       setIsSearching(true);
 
@@ -409,7 +413,7 @@ export default function Quiz() {
       advanceStep();
       // Update background for the new step
       const newStep = cs + 1;
-      if (newStep <= 35) {
+      if (newStep <= MAX_VISIBLE_STEP_INDEX) {
         const newCat = Math.floor(newStep / 3);
         const isNewCategory = newStep % 3 === 0;
         if (isNewCategory) {
@@ -448,7 +452,7 @@ export default function Quiz() {
 
           // After advancing, update background for the new step
           const { currentStep: newCs, answers: freshAns, selectAnswer: freshSave } = useQuizStore.getState();
-          if (newCs <= 35) {
+          if (newCs <= MAX_VISIBLE_STEP_INDEX) {
             const newCat = Math.floor(newCs / 3);
             const isNewCategory = newCs % 3 === 0;
             if (isNewCategory) {

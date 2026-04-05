@@ -1,11 +1,12 @@
 import { create } from 'zustand';
+import { MAX_VISIBLE_STEP_INDEX } from '../config/questionTree';
 
 export const useQuizStore = create((set, get) => ({
   // --- Navigation ---
   screen: 'welcome', // 'welcome' | 'quiz' | 'output' | 'confirmation'
 
   // --- Quiz ---
-  currentStep: 0, // 0–35
+  currentStep: 0, // 0–MAX_VISIBLE_STEP_INDEX
   answers: {}, // { [stepIndex]: tagString }
   activeImageIds: [], // 60 style IDs for background
 
@@ -37,7 +38,7 @@ export const useQuizStore = create((set, get) => ({
 
   advanceStep: () => {
     const next = get().currentStep + 1;
-    if (next > 35) {
+    if (next > MAX_VISIBLE_STEP_INDEX) {
       set({ screen: 'output' });
     } else {
       set({ currentStep: next });

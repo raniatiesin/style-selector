@@ -4,20 +4,47 @@
  * SUBSUB leaf values match manifest tally tags exactly.
  */
 
+export const CANONICAL_STAGE_COUNT = 12;
+
+export const VISIBLE_TO_CANONICAL_STAGE = [0, 1, 2, 3, 4, 7, 8, 10];
+
+export const REMOVED_STAGE_DEFAULTS = {
+  5: "Smooth Undulating",
+  6: "Visual Equilibrium",
+  9: "Impossible Landscapes",
+  11: "Standing Pose",
+};
+
 export const STAGES = [
   { stage: 0, name: "Primary Vibe", question: "What's the primary VIBE you want to communicate?", options: ["Dreamlike & Surreal", "Bold & Striking", "Calm & Serene", "Playful & Whimsical", "Mysterious & Moody", "Energetic & Dynamic", "Elegant & Refined", "Raw & Authentic"] },
   { stage: 1, name: "Realism Level", question: "How REALISTIC should the image feel?", options: ["Photorealistic", "Illustrated/Painted", "3D Rendered", "Flat Graphic", "Mixed Media", "Abstract Forms", "Sketch/Line Art", "Pixel Art"] },
   { stage: 2, name: "Texture Quality", question: "What TEXTURE quality do you prefer?", options: ["Ultra Smooth/Clean", "Grainy/Noisy", "Painterly/Brushed", "Pointillistic/Dotted", "Geometric/Patterned", "Organic/Natural", "Glitch/Digital Artifacts", "Layered/Dimensional"] },
   { stage: 3, name: "Color Philosophy", question: "What's your COLOR philosophy?", options: ["Vibrant & Saturated", "Pastel & Soft", "Muted & Desaturated", "Monochromatic", "High Contrast", "Neon & Fluorescent", "Natural & Organic", "Metallic & Iridescent"] },
   { stage: 4, name: "Lighting Setup", question: "What LIGHTING sets the scene?", options: ["Natural Daylight", "Golden Hour Warm", "Dramatic Side/Rim", "Soft Diffused", "Neon/Artificial", "Moonlight/Night", "Backlit/Silhouette", "Studio Controlled"] },
-  { stage: 5, name: "Form Dominance", question: "What FORMS should dominate the composition?", options: ["Organic/Flowing", "Geometric/Angular", "Simplified/Minimalist", "Detailed/Intricate", "Anthropomorphic/Character", "Architectural/Structural", "Nature-Inspired", "Abstract/Non-Objective"] },
-  { stage: 6, name: "Composition Structure", question: "What's your COMPOSITION preference?", options: ["Centered/Symmetrical", "Rule of Thirds", "Dynamic Diagonal", "Frame within Frame", "Negative Space", "Depth Layers", "Chaotic/Scattered", "Minimal/Empty"] },
   { stage: 7, name: "Emotional Mood", question: "What EMOTIONAL MOOD should viewers feel?", options: ["Joyful/Uplifting", "Melancholic/Nostalgic", "Contemplative/Introspective", "Energetic/Exciting", "Mysterious/Enigmatic", "Serene/Peaceful", "Dramatic/Intense", "Whimsical/Fantastical"] },
   { stage: 8, name: "Motion & Energy", question: "How does MOVEMENT feel?", options: ["Speed Lines/Blur", "Frozen Action", "Flowing Curves", "Static Stillness", "Spiral/Vortex", "Explosive/Radiating", "Collapsing/Heavy", "Rhythmic/Oscillating"] },
-  { stage: 9, name: "Art Movement", question: "Any ARTISTIC MOVEMENT or style inspiration?", options: ["Vaporwave/Synthwave", "Surrealism", "Pop Art", "Art Nouveau", "Bauhaus/Modernist", "Impressionist", "Psychedelic", "Minimalism"] },
   { stage: 10, name: "Detail Level", question: "What LEVEL OF DETAIL is appropriate?", options: ["Hyperdetailed", "High Detail", "Moderate Detail", "Low Detail", "Minimal Detail", "Abstract/Suggestive", "Textural Detail", "Atmospheric Detail"] },
-  { stage: 11, name: "Subject Focus", question: "What's the PRIMARY SUBJECT FOCUS?", options: ["Portraits/Figures", "Objects/Still Life", "Landscapes/Environments", "Abstract Concepts", "Typography/Text", "Creatures/Animals", "Architecture/Spaces", "Patterns/Textures"] },
 ];
+
+export const VISIBLE_STAGE_COUNT = STAGES.length;
+export const TOTAL_VISIBLE_STEPS = VISIBLE_STAGE_COUNT * 3;
+export const MAX_VISIBLE_STEP_INDEX = TOTAL_VISIBLE_STEPS - 1;
+
+const CANONICAL_TO_VISIBLE_STAGE = (() => {
+  const map = {};
+  for (let visibleIdx = 0; visibleIdx < VISIBLE_TO_CANONICAL_STAGE.length; visibleIdx++) {
+    map[VISIBLE_TO_CANONICAL_STAGE[visibleIdx]] = visibleIdx;
+  }
+  return map;
+})();
+
+export function getCanonicalStageIndex(visibleStageIndex) {
+  return VISIBLE_TO_CANONICAL_STAGE[visibleStageIndex] ?? null;
+}
+
+export function getVisibleStageIndex(canonicalStageIndex) {
+  return CANONICAL_TO_VISIBLE_STAGE[canonicalStageIndex] ?? null;
+}
 
 // Backward-compat alias used by Quiz.jsx
 export const MAINS = STAGES;
@@ -395,24 +422,25 @@ export const SUBSUB_DESCENDANTS = (() => {
 // step = categoryIndex * 3 + level  (0=main, 1=sub, 2=subsub)
 export function resolveStep(stepIndex, answers) {
   const level         = stepIndex % 3;
-  const categoryIndex = Math.floor(stepIndex / 3);
-  const stage         = STAGES[categoryIndex];
+  const visibleStageIndex = Math.floor(stepIndex / 3);
+  const canonicalStageIndex = getCanonicalStageIndex(visibleStageIndex);
+  const stage         = STAGES[visibleStageIndex];
   if (!stage) return null;
 
   if (level === 0) return { question: stage.question, options: stage.options };
 
-  const mainAnswer = answers[categoryIndex * 3];
+  const mainAnswer = answers[visibleStageIndex * 3];
 
   if (level === 1) return SUBS[mainAnswer] ?? SUBS[stage.options[0]];
 
   if (level === 2) {
-    const subAnswer = answers[categoryIndex * 3 + 1];
+    const subAnswer = answers[visibleStageIndex * 3 + 1];
     // Check category-specific overrides first (handles duplicate SUB names)
-    const override = SUBSUBS_OVERRIDES[categoryIndex]?.[subAnswer];
+    const override = SUBSUBS_OVERRIDES[canonicalStageIndex]?.[subAnswer];
     if (override) return override;
     if (SUBSUBS[subAnswer]) return SUBSUBS[subAnswer];
     const mainConfig = SUBS[mainAnswer] ?? SUBS[stage.options[0]];
-    return mainConfig ? (SUBSUBS_OVERRIDES[categoryIndex]?.[mainConfig.options[0]] || SUBSUBS[mainConfig.options[0]]) ?? null : null;
+    return mainConfig ? (SUBSUBS_OVERRIDES[canonicalStageIndex]?.[mainConfig.options[0]] || SUBSUBS[mainConfig.options[0]]) ?? null : null;
   }
 
   return null;

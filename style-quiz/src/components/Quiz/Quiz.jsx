@@ -1,8 +1,9 @@
 import { useRef, useEffect, useCallback } from 'react';
 import gsap from 'gsap';
 import { useQuizStore } from '../../store/quizStore';
-import { resolveStep, MAINS } from '../../config/questionTree';
+import { resolveStep, MAINS, MAX_VISIBLE_STEP_INDEX, getCanonicalStageIndex } from '../../config/questionTree';
 import { filterImages, selectForSlots } from '../../utils/filter';
+import { buildCanonicalTallyString } from '../../utils/tally';
 import { getManifest } from '../../utils/dataCache';
 import { preloadImages } from '../../utils/preloader';
 import { DESKTOP_SLOTS, MOBILE_SLOTS } from '../../config/generateSlots';
@@ -52,9 +53,11 @@ export default function Quiz() {
   const updateBackground = useCallback((categoryIndex, catState) => {
     const manifest = getManifest();
     if (!manifest) return;
+    const canonicalStageIndex = getCanonicalStageIndex(categoryIndex);
+    if (canonicalStageIndex == null) return;
 
-    const filtered = filterImages(manifest, categoryIndex, catState);
-    const seed = `${categoryIndex}:${catState.main}:${catState.sub}:${catState.subsub}`;
+    const filtered = filterImages(manifest, canonicalStageIndex, catState);
+    const seed = `${canonicalStageIndex}:${catState.main}:${catState.sub}:${catState.subsub}`;
     const selected = selectForSlots(filtered, SLOT_COUNT, seed);
     const ids = selected.map(s => s.id);
     setActiveImageIds(ids);
@@ -110,10 +113,9 @@ export default function Quiz() {
 
     // Fire /api/search immediately on the final step — saves transition + mount overhead.
     // OutputScreen will skip its own fetch because isSearching is already true.
-    if (cs === 35) {
+    if (cs === MAX_VISIBLE_STEP_INDEX) {
       const freshAnswers = useQuizStore.getState().answers;
-      const finalTally = Array.from({ length: 12 }, (_, i) => freshAnswers[i * 3 + 2])
-        .filter(Boolean).join(', ');
+      const finalTally = buildCanonicalTallyString(freshAnswers);
       const { setIsSearching, setSessionId, setOutputResults } = useQuizStore.getState();
       setIsSearching(true);
       fetch('/api/search', {
@@ -138,19 +140,22 @@ export default function Quiz() {
       advanceStep();
       // Update background for the new step
       const newStep = cs + 1;
-      if (newStep <= 35) {
+      if (newStep <= MAX_VISIBLE_STEP_INDEX) {
         const newCat = Math.floor(newStep / 3);
         const isNewCategory = newStep % 3 === 0;
         if (isNewCategory) {
           const defaultMain = MAINS[newCat].options[0];
           save(newCat * 3, defaultMain);
           updateBackground(newCat, { main: defaultMain, sub: null, subsub: null });
-          if (newCat < 11) {
+          if (newCat < MAINS.length - 1) {
             const mf = getManifest();
             if (mf) {
               const nextMain = MAINS[newCat + 1].options[0];
-              const nf = filterImages(mf, newCat + 1, { main: nextMain, sub: null, subsub: null });
-              preloadImages(selectForSlots(nf, SLOT_COUNT, `${newCat + 1}:${nextMain}:null:null`).map(s => s.id));
+              const nextCanonical = getCanonicalStageIndex(newCat + 1);
+              if (nextCanonical != null) {
+                const nf = filterImages(mf, nextCanonical, { main: nextMain, sub: null, subsub: null });
+                preloadImages(selectForSlots(nf, SLOT_COUNT, `${nextCanonical}:${nextMain}:null:null`).map(s => s.id));
+              }
             }
           }
         } else {
@@ -179,19 +184,22 @@ export default function Quiz() {
 
           // After advancing, update background for the new step
           const { currentStep: newCs, answers: freshAns, selectAnswer: freshSave } = useQuizStore.getState();
-          if (newCs <= 35) {
+          if (newCs <= MAX_VISIBLE_STEP_INDEX) {
             const newCat = Math.floor(newCs / 3);
             const isNewCategory = newCs % 3 === 0;
             if (isNewCategory) {
               const defaultMain = MAINS[newCat].options[0];
               freshSave(newCat * 3, defaultMain);
               updateBackground(newCat, { main: defaultMain, sub: null, subsub: null });
-              if (newCat < 11) {
+              if (newCat < MAINS.length - 1) {
                 const mf = getManifest();
                 if (mf) {
                   const nextMain = MAINS[newCat + 1].options[0];
-                  const nf = filterImages(mf, newCat + 1, { main: nextMain, sub: null, subsub: null });
-                  preloadImages(selectForSlots(nf, SLOT_COUNT, `${newCat + 1}:${nextMain}:null:null`).map(s => s.id));
+                  const nextCanonical = getCanonicalStageIndex(newCat + 1);
+                  if (nextCanonical != null) {
+                    const nf = filterImages(mf, nextCanonical, { main: nextMain, sub: null, subsub: null });
+                    preloadImages(selectForSlots(nf, SLOT_COUNT, `${nextCanonical}:${nextMain}:null:null`).map(s => s.id));
+                  }
                 }
               }
             } else {
