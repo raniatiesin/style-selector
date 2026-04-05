@@ -89,14 +89,15 @@
 }
 
 .optionsGrid {
+  --q2-spacing: clamp(8px, 1.5vw, 12px);
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  column-gap: 0;
+  row-gap: var(--q2-spacing);
   width: 100%;
   max-width: 520px;
   position: relative;
   align-items: stretch;
-  justify-items: center;
 }
 
 .gridDivider {
@@ -110,12 +111,14 @@
 }
 
 .columnLabels {
+  --q2-spacing: clamp(8px, 1.5vw, 12px);
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  column-gap: 0;
+  row-gap: var(--q2-spacing);
   width: 100%;
   max-width: 520px;
-  margin: -10px 0 8px;
+  margin: -10px 0 var(--q2-spacing);
 }
 
 .columnLabel {
@@ -126,6 +129,16 @@
   color: rgba(255, 255, 255, 0.48);
   opacity: 0.72;
   text-align: center;
+}
+
+.columnLabel:first-child {
+  justify-self: end;
+  margin-right: var(--q2-spacing);
+}
+
+.columnLabel:last-child {
+  justify-self: start;
+  margin-left: var(--q2-spacing);
 }
 
 /* Option button */
@@ -149,7 +162,39 @@
   width: auto;
   max-width: 100%;
   align-self: start;
-  white-space: nowrap;
+  white-space: normal;
+}
+
+.optionsGrid .option:nth-of-type(odd) {
+  justify-self: end;
+  margin-right: var(--q2-spacing);
+}
+
+.optionsGrid .option:nth-of-type(even) {
+  justify-self: start;
+  margin-left: var(--q2-spacing);
+}
+
+@media (max-width: 767px) {
+  .optionsGrid {
+    grid-template-columns: 1fr;
+    row-gap: var(--q2-spacing);
+  }
+
+  .columnLabels {
+    margin: -8px 0 var(--q2-spacing);
+  }
+
+  .gridDivider {
+    display: none;
+  }
+
+  .optionsGrid .option:nth-of-type(odd),
+  .optionsGrid .option:nth-of-type(even) {
+    justify-self: center;
+    margin-right: 0;
+    margin-left: 0;
+  }
 }
 
 .option:hover {

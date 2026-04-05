@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo, memo, forwardRef } from 'react';
+import React, { useRef, useEffect, useMemo, useState, memo, forwardRef } from 'react';
 import { DESKTOP_SLOTS, MOBILE_SLOTS } from '../../config/generateSlots';
 import Slot from './Slot';
 import styles from './Background.module.css';
@@ -16,6 +16,7 @@ function areImageIdsEqual(prevIds, nextIds) {
 function areBackgroundPropsEqual(prevProps, nextProps) {
   if (prevProps.blurred !== nextProps.blurred) return false;
   if (prevProps.isOutputVisible !== nextProps.isOutputVisible) return false;
+  if (prevProps.rapidSwapActive !== nextProps.rapidSwapActive) return false;
   if (prevProps.showCard1 !== nextProps.showCard1) return false;
   if (prevProps.showCard2 !== nextProps.showCard2) return false;
   if (prevProps.showCard3 !== nextProps.showCard3) return false;
@@ -185,17 +186,142 @@ function computeAssignment(slots, imageIds) {
  * Background — 60 permanent slots with drift, parallax, and staggered image swap.
  * Wrapped in React.memo, entirely prop-driven.
  */
-const Background = memo(forwardRef(function Background({ imageIds, blurred, isOutputVisible, showCard1 = false, showCard2 = false, showCard3 = false }, canvasRef) {
+const Background = memo(forwardRef(function Background({ imageIds, blurred, isOutputVisible, rapidSwapActive = false, showCard1 = false, showCard2 = false, showCard3 = false }, canvasRef) {
   const layer1Ref = useRef(null);
   const layer2Ref = useRef(null);
   const layer3Ref = useRef(null);
+  const settleTimerRef = useRef(null);
+  const [animatedImageIds, setAnimatedImageIds] = useState(imageIds);
 
   const slots = useDeviceSlots();
   const isDesktop = slots === DESKTOP_SLOTS;
 
+  useEffect(() => {
+    if (settleTimerRef.current !== null) {
+      clearTimeout(settleTimerRef.current);
+      settleTimerRef.current = null;
+    }
+
+    if (rapidSwapActive) return;
+    setAnimatedImageIds(imageIds);
+  }, [imageIds, rapidSwapActive]);
+
+  useEffect(() => {
+    return () => {
+      if (settleTimerRef.current !== null) {
+        clearTimeout(settleTimerRef.current);
+        settleTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!rapidSwapActive || !Array.isArray(imageIds) || imageIds.length === 0) {
+      return undefined;
+    }
+
+    const pool = imageIds;
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+    const pulseCountBase = reducedMotion ? 3 : (isDesktop ? 6 : 4);
+    const intervalBase = reducedMotion ? 320 : (isDesktop ? 170 : 230);
+    const recentWindow = reducedMotion ? 10 : 16;
+    const startTs = performance.now();
+
+    let rafId = 0;
+    let lastPulseTs = 0;
+    let lastFpsSampleTs = startTs;
+    let frameCounter = 0;
+    let fps = 60;
+    const recent = [];
+
+    const nextFromPool = (excludeSet) => {
+      const maxAttempts = 10;
+      for (let i = 0; i < maxAttempts; i++) {
+        const candidate = pool[Math.floor(Math.random() * pool.length)];
+        if (!candidate) continue;
+        if (excludeSet.has(candidate)) continue;
+        if (recent.includes(candidate)) continue;
+        return candidate;
+      }
+      return pool[Math.floor(Math.random() * pool.length)] ?? null;
+    };
+
+    const pulse = () => {
+      setAnimatedImageIds((prev) => {
+        if (!Array.isArray(prev) || prev.length === 0) return prev;
+        const next = [...prev];
+        const indexes = Array.from({ length: next.length }, (_, i) => i);
+
+        for (let i = indexes.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [indexes[i], indexes[j]] = [indexes[j], indexes[i]];
+        }
+
+        const chosen = new Set();
+        const loadFactor = fps < 45 ? 0.55 : (fps < 54 ? 0.78 : 1);
+        const swapCount = Math.max(2, Math.round(pulseCountBase * loadFactor));
+        const count = Math.min(swapCount, indexes.length);
+
+        for (let i = 0; i < count; i++) {
+          const idx = indexes[i];
+          const replacement = nextFromPool(chosen);
+          if (!replacement) continue;
+          next[idx] = replacement;
+          chosen.add(replacement);
+          recent.push(replacement);
+        }
+
+        if (recent.length > recentWindow) {
+          recent.splice(0, recent.length - recentWindow);
+        }
+
+        return next;
+      });
+    };
+
+    const tick = (now) => {
+      frameCounter += 1;
+
+      const elapsedSinceFpsSample = now - lastFpsSampleTs;
+      if (elapsedSinceFpsSample >= 1000) {
+        fps = Math.round((frameCounter * 1000) / elapsedSinceFpsSample);
+        frameCounter = 0;
+        lastFpsSampleTs = now;
+      }
+
+      const activeFor = now - startTs;
+      let intervalMs = intervalBase;
+      if (activeFor >= 4000) intervalMs = Math.round(intervalMs * 1.55);
+      if (fps < 50) intervalMs = Math.round(intervalMs * 1.3);
+      if (fps < 42) intervalMs = Math.round(intervalMs * 1.7);
+
+      // Skip ultra-fast searches to avoid loader flicker artifacts.
+      const canPulse = activeFor >= 500;
+      if (canPulse && (now - lastPulseTs >= intervalMs)) {
+        lastPulseTs = now;
+        pulse();
+      }
+
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (settleTimerRef.current !== null) {
+        clearTimeout(settleTimerRef.current);
+      }
+      settleTimerRef.current = setTimeout(() => {
+        setAnimatedImageIds(imageIds);
+        settleTimerRef.current = null;
+      }, 200);
+    };
+  }, [imageIds, isDesktop, rapidSwapActive]);
+
   const assignedSlots = useMemo(
-    () => computeAssignment(slots, imageIds),
-    [imageIds, slots]
+    () => computeAssignment(slots, animatedImageIds),
+    [animatedImageIds, slots]
   );
 
   // Split assigned slots by layer for rendering
@@ -355,7 +481,7 @@ const Background = memo(forwardRef(function Background({ imageIds, blurred, isOu
           <Slot key={slot.id} slot={slot} isOutputVisible={isOutputVisible} />
         ))}
       </div>
-      {(!imageIds || imageIds.length === 0) && (
+      {(!animatedImageIds || animatedImageIds.length === 0) && (
         <p className={styles.emptyHint}>Coming soon — keep exploring</p>
       )}
     </div>

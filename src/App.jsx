@@ -6,6 +6,7 @@ import Welcome from './components/Welcome/Welcome';
 import Quiz from './components/Quiz/Quiz';
 import OutputScreen from './components/Output/OutputScreen';
 import Confirmation from './components/Confirmation/Confirmation';
+import { WELCOME_IMAGE_IDS } from './config/welcome-images';
 
 export default function App() {
   const canvasRef = useRef(null);
@@ -14,9 +15,14 @@ export default function App() {
   const welcomePanel = useQuizStore(s => s.welcomePanel);
   const currentStep = useQuizStore(s => s.currentStep);
   const activeImageIds = useQuizStore(s => s.activeImageIds);
+  const isSearching = useQuizStore(s => s.isSearching);
+  const outputResults = useQuizStore(s => s.outputResults);
   const bootstrapSession = useQuizStore(s => s.bootstrapSession);
   const blurred = screen === 'output' || screen === 'confirmation';
   const isOutputVisible = screen === 'output';
+  const isResultFlow = screen === 'output' || screen === 'confirmation';
+  const isInitialMatchLoading = screen === 'output' && isSearching && outputResults.length === 0;
+  const backgroundImageIds = isResultFlow ? WELCOME_IMAGE_IDS : activeImageIds;
   const showCard1 = screen === 'quiz' && currentStep === 0;
   const showCard2 = screen === 'quiz' && currentStep === 1;
   const showCard3 = screen === 'quiz' && currentStep === 2;
@@ -43,9 +49,10 @@ export default function App() {
     <>
       <Background
         ref={canvasRef}
-        imageIds={activeImageIds}
+        imageIds={backgroundImageIds}
         blurred={blurred}
         isOutputVisible={isOutputVisible}
+        rapidSwapActive={isInitialMatchLoading}
         showCard1={showCard1}
         showCard2={showCard2}
         showCard3={showCard3}
