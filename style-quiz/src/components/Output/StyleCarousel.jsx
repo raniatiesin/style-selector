@@ -46,6 +46,17 @@ export default function StyleCarousel({ styleId, similarity, onClick }) {
     });
   }, [getCarouselWidth]);
 
+  useEffect(() => {
+    setCurrentSlide(0);
+    currentOffset.current = 0;
+    isDragging.current = false;
+
+    if (stripRef.current) {
+      gsap.killTweensOf(stripRef.current);
+      gsap.set(stripRef.current, { x: 0 });
+    }
+  }, [styleId]);
+
   const snapBack = useCallback(() => {
     gsap.to(stripRef.current, {
       x: currentOffset.current,

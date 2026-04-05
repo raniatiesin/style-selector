@@ -377,7 +377,7 @@ export default function OutputScreen() {
                   ))}
                 </div>
                 <div className={styles.selectedCarouselWrap}>
-                  <StyleCarousel styleId={selectedCarousel} />
+                  <StyleCarousel key={selectedCarousel} styleId={selectedCarousel} />
                 </div>
                 <div className={styles.buttonRow}>
                   <button

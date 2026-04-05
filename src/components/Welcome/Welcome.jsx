@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useMemo, useState } from 'react';
+import { memo, useRef, useEffect, useCallback, useMemo, useState } from 'react';
 import gsap from 'gsap';
 import { useQuizStore } from '../../store/quizStore';
 import { WELCOME_IMAGE_IDS } from '../../config/welcome-images';
@@ -173,6 +173,31 @@ const FAQ_GROUPS = [
 const WHEEL_THRESHOLD = 90;
 const SWIPE_THRESHOLD = 54;
 
+const FaqItem = memo(function FaqItem({ itemKey, item, isOpen, onToggle }) {
+  const answerId = `faq-answer-${itemKey.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`;
+
+  return (
+    <section className={styles.faqItem}>
+      <button
+        className={`${styles.faqTrigger} ${isOpen ? styles.faqTriggerOpen : ''}`}
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={answerId}
+        onClick={() => onToggle(itemKey)}
+      >
+        <h3 className={styles.faqQuestion}>{item.question}</h3>
+        <span className={styles.faqChevron} aria-hidden="true">+</span>
+      </button>
+      <div
+        id={answerId}
+        className={`${styles.faqAnswer} ${isOpen ? styles.faqAnswerOpen : ''}`}
+      >
+        <p>{item.answer}</p>
+      </div>
+    </section>
+  );
+});
+
 export default function Welcome({ canvasRef }) {
   const headlineRef = useRef(null);
   const subRef = useRef(null);
@@ -242,7 +267,7 @@ export default function Welcome({ canvasRef }) {
       { opacity: 1, y: 0, duration: DUR.deliberate, ease: EASE.out },
       0
     );
-  }, [openWelcomeFaq, setWelcomePanelAnimating, welcomePanel, welcomePanelAnimating]);
+  }, [canvasRef, openWelcomeFaq, setWelcomePanelAnimating, welcomePanel, welcomePanelAnimating]);
 
   const animateToHero = useCallback(() => {
     if (welcomePanelAnimating || welcomePanel !== 'faq') return;
@@ -464,27 +489,15 @@ export default function Welcome({ canvasRef }) {
                       {group.items.map((item) => {
                         const itemKey = `${group.label}::${item.question}`;
                         const isOpen = expandedFaqKey === itemKey;
-                        const answerId = `faq-answer-${itemKey.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`;
 
                         return (
-                          <section key={item.question} className={styles.faqItem}>
-                            <button
-                              className={`${styles.faqTrigger} ${isOpen ? styles.faqTriggerOpen : ''}`}
-                              type="button"
-                              aria-expanded={isOpen}
-                              aria-controls={answerId}
-                              onClick={() => toggleFaqItem(itemKey)}
-                            >
-                              <h3 className={styles.faqQuestion}>{item.question}</h3>
-                              <span className={styles.faqChevron} aria-hidden="true">+</span>
-                            </button>
-                            <div
-                              id={answerId}
-                              className={`${styles.faqAnswer} ${isOpen ? styles.faqAnswerOpen : ''}`}
-                            >
-                              <p>{item.answer}</p>
-                            </div>
-                          </section>
+                          <FaqItem
+                            key={itemKey}
+                            itemKey={itemKey}
+                            item={item}
+                            isOpen={isOpen}
+                            onToggle={toggleFaqItem}
+                          />
                         );
                       })}
                     </div>

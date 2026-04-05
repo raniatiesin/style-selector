@@ -136,6 +136,19 @@ const StyleCarousel = React.memo(function StyleCarousel({
     });
   }, [getCarouselWidth]);
 
+  useEffect(() => {
+    setCurrentSlide(0);
+    currentOffset.current = 0;
+    isDragging.current = false;
+    didDrag.current = false;
+
+    if (stripRef.current) {
+      gsap.killTweensOf(stripRef.current);
+      gsap.set(stripRef.current, { x: 0 });
+      stripRef.current.classList.remove('animating');
+    }
+  }, [styleId]);
+
   const snapBack = useCallback(() => {
     gsap.to(stripRef.current, {
       x: currentOffset.current,

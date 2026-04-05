@@ -857,7 +857,7 @@ export default function OutputScreen() {
                     ←
                   </button>
                   <div className={styles.selectedCarouselWrap}>
-                    <StyleCarousel styleId={selectedCarousel} />
+                    <StyleCarousel key={selectedCarousel} styleId={selectedCarousel} />
                   </div>
                   <button
                     style={{
@@ -961,6 +961,7 @@ export default function OutputScreen() {
 
                           <div className={styles.mobileCardFrame}>
                             <StyleCarousel
+                              key={result.id}
                               styleId={result.id}
                               similarity={result.similarity}
                               shouldLoadSegments={true}

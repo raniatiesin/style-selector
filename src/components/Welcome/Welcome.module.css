@@ -126,14 +126,15 @@
 }
 
 .faqAnswer {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.2s ease, opacity 0.2s ease;
+  max-height: 0;
+  overflow: hidden;
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.16s ease, visibility 0.16s linear;
 }
 
 .faqAnswer > p {
-  overflow: hidden;
   margin: 0;
   padding-top: 0;
   font-family: var(--font);
@@ -142,15 +143,20 @@
   letter-spacing: 0.02em;
   color: var(--white-55);
   line-height: 1.55;
+  transform: translateY(-2px);
+  transition: transform 0.16s ease;
 }
 
 .faqAnswerOpen {
-  grid-template-rows: 1fr;
+  max-height: none;
   opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .faqAnswerOpen > p {
   padding-top: 8px;
+  transform: translateY(0);
 }
 
 .faqTrigger {
@@ -247,6 +253,11 @@
     padding: 10px 10px;
     content-visibility: auto;
     contain-intrinsic-size: 120px;
+  }
+
+  .faqAnswer,
+  .faqAnswer > p {
+    transition: none;
   }
 
   .scrollHint {
