@@ -1,3 +1,11 @@
+/* Core OBS Transparency Override */
+html:has(.overlay-root),
+body:has(.overlay-root),
+body:has(.overlay-root) #root,
+html:has(.overlay-root) body {
+  background: transparent !important;
+}
+
 .overlay-root {
   position: relative;
   width: 1440px;
