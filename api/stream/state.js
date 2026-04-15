@@ -38,14 +38,33 @@ export default async function handler(req, res) {
       .from('overlay')
       .select('*')
       .order('updated_at', { ascending: false })
-      .limit(10); // Grabs the 10 most recent updates
+      .limit(50); // Grabs the 50 most recent updates so metrics won't fall off the list
 
     if (error) throw error;
+
+    let tasks = [];
+    let globalMetrics = null;
+
+    if (data && data.length > 0) {
+       for (let row of data) {
+         if (row.id === "global_metrics") {
+            try {
+              // Parse the JSON.stringify payload from the metrics endpoint
+              globalMetrics = JSON.parse(row.name);
+            } catch (e) {
+              globalMetrics = null;
+            }
+         } else {
+            tasks.push(row);
+         }
+       }
+    }
 
     return res.status(200).json({
       success: true,
       timestamp: Date.now(),
-      tasks: data || []
+      tasks: tasks,
+      metrics: globalMetrics
     });
 
   } catch (error) {

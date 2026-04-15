@@ -4,7 +4,7 @@ import './TiedInApp.css';
 // --- CONFIG ---
 const OBS_WS_URL = "ws://localhost:4455";
 const SCENE_WORK = "Work";
-const SCENE_TALK = "Talk";
+const SCENE_EXPLAIN = "Explain";
 const SCENE_BREAK = "Break";
 const HOURS_TARGET = 2000;
 const CHALLENGE_START = "2026-04-10";
@@ -114,7 +114,7 @@ function getInitialState() {
   }
 
   const storedMode = localStorage.getItem(KEYS.mode);
-  const mode = ["work", "talk", "break"].includes(storedMode) ? storedMode : "work";
+  const mode = ["work", "explain", "break"].includes(storedMode) ? storedMode : "work";
 
   return {
     mode,
@@ -130,12 +130,9 @@ function getInitialState() {
   };
 }
 
-export default function TiedInApp() {
+export default function TiedInApp({ displayMode }) {
   const [state, setState] = useState(getInitialState);
   const [now, setNow] = useState(new Date());
-  const [obsConnected, setObsConnected] = useState(false);
-  const [obsPassword, setObsPassword] = useState("TODO_SET_OBS_PASSWORD"); 
-  const obsRef = useRef(null);
 
   // --- Core Timer ---
   useEffect(() => {
@@ -185,7 +182,21 @@ export default function TiedInApp() {
         const response = await fetch("https://tiesin.me/api/stream/state");
         if (!response.ok) return;
         const stateData = await response.json();
-        
+                let newStateProps = {};
+
+        // Sync global metrics from the new `/control` panel
+        if (stateData?.metrics) {
+           newStateProps.contactedCount = Number(stateData.metrics.contactedCount) || 0;
+           newStateProps.convertedCount = Number(stateData.metrics.convertedCount) || 0;
+           
+           if (stateData.metrics.mode) {
+              const fetchedMode = stateData.metrics.mode;
+              // If Vercel tells us we changed mode, update everything right here!
+              // (OBS handles its side via webhooks if OBS wants to switch scenes itself eventually, 
+              // but we are driving OBS scenes via the Control Panel currently)
+              newStateProps.mode = fetchedMode;
+           }
+        }
         if (stateData?.tasks && Array.isArray(stateData.tasks)) {
           setState(prev => {
             let tasks = [...prev.tasks];
@@ -240,7 +251,22 @@ export default function TiedInApp() {
               }
             });
 
-            return changed ? { ...prev, tasks, currentTaskId } : prev;
+            const merged = { ...prev };
+            let hasNewProps = Object.keys(newStateProps).length > 0;
+            
+            if (hasNewProps) {
+              if (newStateProps.contactedCount !== prev.contactedCount) { merged.contactedCount = newStateProps.contactedCount; changed = true; }
+              if (newStateProps.convertedCount !== prev.convertedCount) { merged.convertedCount = newStateProps.convertedCount; changed = true; }
+              if (newStateProps.mode && newStateProps.mode !== prev.mode) { 
+                merged.mode = newStateProps.mode; 
+                // We should also adjust break/session start times if mode changed
+                merged.breakStartTime = newStateProps.mode === "break" ? Date.now() : prev.breakStartTime;
+                merged.sessionSeconds = (prev.mode === "break" && newStateProps.mode !== "break") ? 0 : prev.sessionSeconds;
+                changed = true; 
+              }
+            }
+
+            return changed ? { ...merged, tasks, currentTaskId } : prev;      
           });
         }
       } catch (e) {
@@ -252,71 +278,6 @@ export default function TiedInApp() {
     pollingInterval = setInterval(fetchKanbanState, 5000);
     return () => clearInterval(pollingInterval);
   }, []);
-
-  // --- OBS Setup ---
-  useEffect(() => {
-    if (typeof window.OBSWebSocket === "undefined") return;
-    let keepConnecting = true;
-    obsRef.current = new window.OBSWebSocket();
-
-    async function connect() {
-      if (!keepConnecting) return;
-      try {
-        await obsRef.current.connect(OBS_WS_URL, obsPassword);
-        setObsConnected(true);
-        // NOTE: We omit syncing local UI to OBS here on start to avoid jumping. 
-        // Let user clicks drive it.
-        
-        obsRef.current.on("CurrentProgramSceneChanged", (event) => {
-           const map = { [SCENE_WORK]: "work", [SCENE_TALK]: "talk", [SCENE_BREAK]: "break" };
-           const mapped = map[event.sceneName];
-           if (mapped) {
-             setState(s => {
-               if (s.mode === mapped) return s;
-               let breakStart = mapped === "break" ? Date.now() : s.breakStartTime;
-               let sessionSecs = (s.mode === "break" && mapped !== "break") ? 0 : s.sessionSeconds;
-               return { ...s, mode: mapped, breakStartTime: breakStart, sessionSeconds: sessionSecs };
-             });
-           }
-        });
-
-        obsRef.current.on("ConnectionClosed", () => {
-          setObsConnected(false);
-          setTimeout(connect, 5000);
-        });
-
-      } catch (err) {
-        setObsConnected(false);
-        setTimeout(connect, 5000);
-      }
-    }
-    
-    connect();
-    return () => { keepConnecting = false; };
-  }, [obsPassword]);
-
-
-  // --- Actions ---
-  const handleMode = (m) => {
-    if (state.mode === m) return;
-    setState(s => {
-      let breakStart = m === "break" ? Date.now() : s.breakStartTime;
-      let sessionSecs = (s.mode === "break" && m !== "break") ? 0 : s.sessionSeconds;
-      return { ...s, mode: m, breakStartTime: breakStart, sessionSeconds: sessionSecs };
-    });
-
-    if (obsRef.current && obsConnected) {
-      const scene = m === "work" ? SCENE_WORK : m === "talk" ? SCENE_TALK : SCENE_BREAK;
-      obsRef.current.call("SetCurrentProgramScene", { sceneName: scene }).catch(() => {});
-    }
-  };
-
-  const adjustMetric = (metric, delta) => {
-    setState(s => ({
-      ...s,
-      [metric]: Math.max(0, s[metric] + delta)
-    }));
-  };
 
   // --- Render Mappings ---
   const progress = clamp(state.todayWorkSeconds / (7 * 3600), 0, 1);
@@ -350,7 +311,7 @@ export default function TiedInApp() {
   })();
 
   return (
-    <div className={`overlay-root mode-${state.mode}`}>
+    <div className={`overlay-root mode-${displayMode || state.mode}`}>
       
       <div className="obs-frame frame-display" aria-hidden="true"></div>
       <div className="obs-frame frame-webcam" aria-hidden="true"></div>
@@ -379,7 +340,7 @@ export default function TiedInApp() {
         </aside>
       </section>
 
-      <section className="context-shell" id="contextShell" aria-label="Work and talk context panel">
+      <section className="context-shell" id="contextShell" aria-label="Work and explain context panel">
         <div className="context-panel">
           <div className="hero-col">
             <div className="context-pill stack hero-timer-pill">
@@ -414,42 +375,9 @@ export default function TiedInApp() {
       <section className="break-screen" id="breakScreen">
         <div className="break-fill" style={{ width: `${(progress * CANVAS_WIDTH).toFixed(2)}px` }}></div>
         <div className="break-content">
-          <div className="obs-status inverted">OBS: {obsConnected ? 'connected' : 'disconnected'}</div>
           <div className="break-clock inverted">{formatHM(now)}</div>
           <div className="break-date inverted">{toLongDate(now)}</div>
           <div className="break-duration inverted">BREAK - {formatHMS(breakSeconds).slice(3)}</div>
-
-          <div className="mode-buttons">
-            <button className={`mode-btn inverted ${state.mode === 'work' ? 'active' : ''}`} onClick={() => handleMode('work')}>WORK</button>
-            <button className={`mode-btn inverted ${state.mode === 'talk' ? 'active' : ''}`} onClick={() => handleMode('talk')}>TALK</button>
-            <button className={`mode-btn inverted ${state.mode === 'break' ? 'active' : ''}`} onClick={() => handleMode('break')}>BREAK</button>
-          </div>
-
-          <div className="controls-row inverted">
-            <div className="counter">
-              <div className="counter-label">Contacted</div>
-              <button type="button" onClick={() => adjustMetric('contactedCount', -1)}>-</button>
-              <div className="counter-label counter-value">{state.contactedCount}</div>
-              <button type="button" onClick={() => adjustMetric('contactedCount', 1)}>+</button>
-            </div>
-
-            <div className="counter">
-              <div className="counter-label">Converted</div>
-              <button type="button" onClick={() => adjustMetric('convertedCount', -1)}>-</button>
-              <div className="counter-label counter-value">{state.convertedCount}</div>
-              <button type="button" onClick={() => adjustMetric('convertedCount', 1)}>+</button>
-            </div>
-            
-            <div style={{ marginLeft: 20 }}>
-               <input 
-                  type="password" 
-                  value={obsPassword} 
-                  onChange={e => setObsPassword(e.target.value)} 
-                  placeholder="Set OBS Password" 
-                  style={{ width: 140, height: 42, padding: '0 12px' }} 
-               />
-            </div>
-          </div>
 
           <div className="break-summary inverted">
              {hours}h / {HOURS_TARGET}h - Day {dayNumber} / {CHALLENGE_TOTAL_DAYS} - Session {formatHMS(state.sessionSeconds)} - Today {formatHMS(state.todayWorkSeconds)}
