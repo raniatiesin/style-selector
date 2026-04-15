@@ -23,17 +23,25 @@ export default function TiedInControl() {
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [obsConnected, setObsConnected] = useState(false);
+  const [logs, setLogs] = useState([]);
   const obsRef = useRef(null);
+
+  const addLog = (msg) => setLogs(l => [...l, `[${new Date().toLocaleTimeString()}] ${msg}`].slice(-20));
 
   // 1. Fetch Initial State from Vercel so Dashboard doesn't default to 0 on reload.
   useEffect(() => {
     if (isLocked) return;
     async function loadMetrics() {
+       addLog("Fetching initial state from Vercel...");
        try {
          const response = await fetch("https://tiesin.me/api/stream/state");
-         if (!response.ok) return;
+         if (!response.ok) {
+           addLog(`Vercel fetch failed with status ${response.status}`);
+           return;
+         }
          const data = await response.json();
          if (data?.metrics) {
+           addLog("Vercel state loaded.");
            setState({
              contactedCount: Number(data.metrics.contactedCount) || 0,
              convertedCount: Number(data.metrics.convertedCount) || 0,
@@ -41,6 +49,7 @@ export default function TiedInControl() {
            });
          }
        } catch (e) {
+         addLog(`Vercel fetch error: ${e.message}`);
          console.warn("Failed loading metrics on dash start", e);
        }
     }
@@ -49,22 +58,31 @@ export default function TiedInControl() {
 
   // 2. Connect to OBS when unlocked
   useEffect(() => {
-    if (isLocked || typeof window.OBSWebSocket === "undefined") return;
+    if (isLocked) return;
+    if (typeof window.OBSWebSocket === "undefined") {
+      addLog("OBSWebSocket library not found globally.");
+      return;
+    }
+    
     let keepConnecting = true;
     obsRef.current = new window.OBSWebSocket();
 
     async function connect() {
       if (!keepConnecting) return;
       try {
+        addLog(`Attempting OBS WS connection to ${OBS_WS_URL}...`);
         await obsRef.current.connect(OBS_WS_URL, obsPassword);
+        addLog("OBS Connected successfully!");
         setObsConnected(true);
 
         obsRef.current.on("CurrentProgramSceneChanged", (event) => {
+           addLog(`OBS Scene changed to: ${event.sceneName}`);
            const map = { [SCENE_WORK]: "work", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break" };
            const mapped = map[event.sceneName];
            if (mapped) {
              setState(s => {
                if (s.mode !== mapped) {
+                 addLog(`Syncing new mode to Vercel: ${mapped}`);
                  pushUpdate({ ...s, mode: mapped }, true);
                  return { ...s, mode: mapped };
                }
@@ -74,11 +92,13 @@ export default function TiedInControl() {
         });
 
         obsRef.current.on("ConnectionClosed", () => {
+          addLog("OBS Connection Closed. Retrying in 5s...");
           setObsConnected(false);
           setTimeout(connect, 5000);
         });
 
       } catch (err) {
+        addLog(`OBS Connection Error: ${err.message || err.code || err}`);
         setObsConnected(false);
         setTimeout(connect, 5000);
       }
@@ -117,6 +137,7 @@ export default function TiedInControl() {
     if (!silent) setIsSyncing(true);
     
     try {
+      addLog(`Pushing state update...`);
       const res = await fetch('/api/stream/metrics', {
         method: 'POST',
         headers: {
@@ -127,13 +148,16 @@ export default function TiedInControl() {
       });
 
       if (res.status === 401) {
+        addLog("Sync Error: Unauthorized! Wrong STREAM_ADMIN_KEY.");
         alert("Unauthorized! Your STREAM_ADMIN_KEY is wrong.");
         logout();
         return;
       }
       
+      addLog("State update synced.");
       if (!silent) setState(newState);
     } catch (e) {
+      addLog(`Sync error: ${e.message}`);
       console.error("Failed to sync:", e);
     } finally {
       if (!silent) setIsSyncing(false);
@@ -151,8 +175,13 @@ export default function TiedInControl() {
     if (state.mode === mode) return;
 
     if (obsRef.current && obsConnected) {
+      addLog(`Telling OBS to switch scene to: ${mode}`);
       const scene = mode === "work" ? SCENE_WORK : mode === "explain" ? SCENE_EXPLAIN : SCENE_BREAK;
-      obsRef.current.call("SetCurrentProgramScene", { sceneName: scene }).catch(() => {});
+      obsRef.current.call("SetCurrentProgramScene", { sceneName: scene })
+        .then(() => addLog("OBS switch command succeeded"))
+        .catch((e) => addLog(`OBS switch command failed: ${e.message}`));
+    } else {
+      addLog(`Cannot control OBS. Connection is down.`);
     }
 
     pushUpdate({ ...state, mode });
@@ -238,6 +267,14 @@ export default function TiedInControl() {
               <button type="button" onClick={() => handleMetric('convertedCount', -1)} style={{ fontSize: 32, padding: '0 24px', border: '0', borderLeft: '1px solid var(--white-25)', background: 'transparent', color: 'inherit', cursor: 'pointer' }}>-</button>
               <input 
                 type="number" 
+         {/* Diagnostics Log Panel */}
+         <div className="logs-panel" style={{ marginTop: 60, height: 200, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
+            <div style={{ marginBottom: 16, color: 'var(--white-92)', borderBottom: '1px solid var(--white-12)', paddingBottom: 8 }}>DIAGNOSTIC LOGS</div>
+            {logs.length === 0 ? <div style={{ color: 'var(--white-45)' }}>Waiting for activity...</div> : logs.map((log, i) => (
+              <div key={i} style={{ marginBottom: 4 }}>{log}</div>
+            ))}
+         </div>
+
                 value={state.convertedCount} 
                 onChange={(e) => pushUpdate({ ...state, convertedCount: Math.max(0, parseInt(e.target.value) || 0) })} 
                 className="counter-label counter-value" 
