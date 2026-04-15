@@ -233,12 +233,13 @@ export default function TiedInApp({ displayMode }) {
 
               const taskId = String(data.id);
 
-              tasks = tasks.filter(t => {
+              // Ensure only one task can be in_progress at a time
+              tasks = tasks.map(t => {
                 if (mappedStatus === "in_progress" && t.status === "in_progress" && t.id !== taskId) {
                   changed = true;
                   return { ...t, status: "waiting" };
                 }
-                return true;
+                return t;
               });
 
               let existingIdx = tasks.findIndex(t => t.id === taskId);
@@ -331,11 +332,15 @@ export default function TiedInApp({ displayMode }) {
       .filter(t => (t.completedAt || t.createdAt) >= startOfToday)
       .sort((a, b) => (b.completedAt || b.createdAt) - (a.completedAt || a.createdAt));
 
+  const waitingTasks = state.tasks.filter(t => t.status === "waiting" && t.id !== currentTask?.id)
+      .sort((a, b) => a.createdAt - b.createdAt);
+
   const displayTasks = [];
   displayTasks.push(...upNextTasks);
   if (currentTask) displayTasks.push(currentTask);
   displayTasks.push(...inReviewTasks);
   displayTasks.push(...doneTasks);
+  displayTasks.push(...waitingTasks);
 
   const adminTasks = (() => {
     let c = currentTask || null;
