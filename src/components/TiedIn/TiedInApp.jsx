@@ -410,8 +410,7 @@ export default function TiedInApp({ displayMode }) {
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '40px' }}>
           
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0px' }}>
-            <div style={{ fontSize: '200px', fontWeight: 300, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--f0e8e3)', whiteSpace: 'nowrap' }}>
-              WILL BE BACK
+            <div style={{ fontSize: '32px', fontWeight: 300, lineHeight: 1, letterSpacing: '0.2em', color: 'var(--f0e8e3)', whiteSpace: 'nowrap', opacity: 0.7 }}>
             </div>
             <div style={{ fontSize: '220px', fontWeight: 300, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--f0e8e3)', fontFamily: 'monospace' }}>     
               {formatHMS(breakSeconds)}
