@@ -63,11 +63,16 @@ export default async function handler(req, res) {
     if (action === 'sync') {
        inProgress = inProgressTasks || inProgress;
        done = doneTasks || done;
-    } else if (rawStatus === 'in progress' || rawStatus === 'in_progress') {
+    } else if (['in progress', 'in_progress', 'up next', 'up_next', 'upnext', 'in review', 'in_review', 'waiting'].includes(rawStatus)) {
+       let normalizedStatus = 'waiting';
+       if (rawStatus.includes('progress')) normalizedStatus = 'in_progress';
+       else if (rawStatus.includes('next')) normalizedStatus = 'up_next';
+       else if (rawStatus.includes('review')) normalizedStatus = 'in_review';
+       
        inProgress.push({
          id: taskId,
          name: String(task || "Untitled Task"),
-         status: "in_progress",
+         status: normalizedStatus,
          createdAt: time ? new Date(time).getTime() : Date.now(),
          completedAt: null
        });
@@ -80,8 +85,7 @@ export default async function handler(req, res) {
          completedAt: time ? new Date(time).getTime() : Date.now()
        });
     } else {
-       // Status is 'waiting', 'upnext', 'in review', etc.
-       // It's already filtered out of inProgress and done arrays above!
+       // Ignore unrecognized statuses instead of crashing
     }
 
     // Save the modified arrays back to Supabase

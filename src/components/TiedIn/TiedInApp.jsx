@@ -223,14 +223,16 @@ export default function TiedInApp({ displayMode }) {
 
             stateData.tasks.forEach(data => {
               if (!data.id || !data.name) return;
-              
+
               const safeInputStatus = String(data.status || "waiting").toLowerCase();
               let mappedStatus = "waiting";
-              if (safeInputStatus === "in progress") mappedStatus = "in_progress";
-              else if (safeInputStatus === "done" || safeInputStatus === "in review") mappedStatus = "done";
+              if (safeInputStatus === "in progress" || safeInputStatus === "in_progress") mappedStatus = "in_progress";
+              else if (safeInputStatus.includes("done") || safeInputStatus.includes("completed")) mappedStatus = "done";
+              else if (safeInputStatus.includes("next")) mappedStatus = "up_next";
+              else if (safeInputStatus.includes("review")) mappedStatus = "in_review";
 
               const taskId = String(data.id);
-              
+
               tasks = tasks.filter(t => {
                 if (mappedStatus === "in_progress" && t.status === "in_progress" && t.id !== taskId) {
                   changed = true;
@@ -306,17 +308,19 @@ export default function TiedInApp({ displayMode }) {
           : 0;
 
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const activeTasks = state.tasks.filter(t => {
-    const time = t.status === "done" ? (t.completedAt || t.createdAt) : t.createdAt;
-    return time >= startOfToday && (t.status === "in_progress" || t.status === "done" || t.id === state.currentTaskId);
-  });
+
+  const currentTask = state.tasks.find(t => t.id === state.currentTaskId || t.status === "in_progress");
+  const inReviewTasks = state.tasks.filter(t => t.status === "in_review" && t.id !== currentTask?.id).sort((a, b) => b.createdAt - a.createdAt);
+  const upNextTasks = state.tasks.filter(t => t.status === "up_next" && t.id !== currentTask?.id).sort((a, b) => b.createdAt - a.createdAt);
   
-  const currentTask = activeTasks.find(t => t.id === state.currentTaskId || t.status === "in_progress");
-  const doneTasks = activeTasks.filter(t => t.id !== currentTask?.id && t.status === "done")
+  const doneTasks = state.tasks.filter(t => t.status === "done" && t.id !== currentTask?.id)
+      .filter(t => (t.completedAt || t.createdAt) >= startOfToday)
       .sort((a, b) => (b.completedAt || b.createdAt) - (a.completedAt || a.createdAt));
-  
+
   const displayTasks = [];
   if (currentTask) displayTasks.push(currentTask);
+  displayTasks.push(...inReviewTasks);
+  displayTasks.push(...upNextTasks);
   displayTasks.push(...doneTasks);
 
   const adminTasks = (() => {
@@ -342,9 +346,18 @@ export default function TiedInApp({ displayMode }) {
                 const pillClass = isCurrent ? "tl-pill current" : "tl-pill done";
                 const metaClass = isCurrent ? "tl-meta current" : "tl-meta done";
                 const when = task.status === "done" ? (task.completedAt || task.createdAt) : task.createdAt;
-                const statusStr = isCurrent ? "in progress" : "done";
-                const timeStr = isCurrent ? "started " + relativeTime(task.createdAt) : relativeTime(when);
                 
+                let statusStr = "waiting";
+                if (task.status === "in_progress") statusStr = "in progress";
+                else if (task.status === "in_review") statusStr = "in review";
+                else if (task.status === "up_next") statusStr = "up next";
+                else if (task.status === "done") statusStr = "done";
+                
+                let timeStr = "";
+                if (task.status === "in_progress") timeStr = "started " + relativeTime(task.createdAt);
+                else if (task.status === "done") timeStr = "finished " + relativeTime(when);
+                else timeStr = "added " + relativeTime(task.createdAt);
+
                 return (
                   <div key={task.id} className="tl-item">
                     <div className={pillClass}>
