@@ -66,7 +66,7 @@ function relativeTime(timestamp) {
   return `${days}d ago`;
 }
 function normalizeTaskStatus(status) {
-  if (["done", "waiting", "in_progress"].includes(status)) return status;
+  if (["done", "waiting", "in_progress", "in_review", "up_next"].includes(status)) return status;       
   return "waiting";
 }
 function statusLabel(status) {
@@ -273,6 +273,10 @@ export default function TiedInApp({ displayMode }) {
                   status: mappedStatus,
                   createdAt: Number(data.createdAt) || Date.now(),
                   completedAt: data.completedAt ? Number(data.completedAt) : (mappedStatus === "done" ? Date.now() : null)
+                });
+              }
+
+              if (mappedStatus === "in_progress") {
                 currentTaskId = taskId;
                 changed = true;
               } else if (mappedStatus === "done" && currentTaskId === taskId) {
@@ -328,9 +332,9 @@ export default function TiedInApp({ displayMode }) {
       .sort((a, b) => (b.completedAt || b.createdAt) - (a.completedAt || a.createdAt));
 
   const displayTasks = [];
+  displayTasks.push(...upNextTasks);
   if (currentTask) displayTasks.push(currentTask);
   displayTasks.push(...inReviewTasks);
-  displayTasks.push(...upNextTasks);
   displayTasks.push(...doneTasks);
 
   const adminTasks = (() => {
