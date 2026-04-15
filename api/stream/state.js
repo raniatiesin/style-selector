@@ -22,8 +22,8 @@ export default async function handler(req, res) {
     // IMPORTANT: Since Vercel Serverless has no "memory" (it destroys itself after every request),
     // we use your existing Supabase connection to act as the "notepad" passing the task to OBS.
 
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       return res.status(500).json({ error: 'Supabase credentials missing from Vercel Env variables.' });
