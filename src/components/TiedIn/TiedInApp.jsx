@@ -245,9 +245,23 @@ export default function TiedInApp({ displayMode }) {
               
               if (existingIdx !== -1) {
                 let existing = tasks[existingIdx];
-                if (existing.name !== data.name || existing.status !== mappedStatus) {
+                const dCreatedAt = Number(data.createdAt);
+                const dCompletedAt = data.completedAt ? Number(data.completedAt) : null;
+                
+                if (
+                  existing.name !== data.name || 
+                  existing.status !== mappedStatus || 
+                  (dCreatedAt && existing.createdAt !== dCreatedAt) ||
+                  (dCompletedAt && existing.completedAt !== dCompletedAt)
+                ) {
                   changed = true;
-                  let updated = { ...existing, name: data.name, status: mappedStatus };
+                  let updated = { 
+                    ...existing, 
+                    name: data.name, 
+                    status: mappedStatus,
+                    createdAt: dCreatedAt || existing.createdAt,
+                    completedAt: dCompletedAt || existing.completedAt
+                  };
                   if (mappedStatus === "done" && !updated.completedAt) updated.completedAt = Date.now();
                   tasks[existingIdx] = updated;
                 }
@@ -257,12 +271,8 @@ export default function TiedInApp({ displayMode }) {
                   id: taskId,
                   name: String(data.name).trim(),
                   status: mappedStatus,
-                  createdAt: Date.now(),
-                  completedAt: mappedStatus === "done" ? Date.now() : null
-                });
-              }
-
-              if (mappedStatus === "in_progress" && currentTaskId !== taskId) {
+                  createdAt: Number(data.createdAt) || Date.now(),
+                  completedAt: data.completedAt ? Number(data.completedAt) : (mappedStatus === "done" ? Date.now() : null)
                 currentTaskId = taskId;
                 changed = true;
               } else if (mappedStatus === "done" && currentTaskId === taskId) {
