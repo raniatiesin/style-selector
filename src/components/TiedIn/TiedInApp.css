@@ -242,9 +242,9 @@ html:has(.overlay-root) body {
   line-height: 1.2;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--white-92);
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--white-45);
   padding: 9px 22px;
   border-radius: 0;
   transition: color 0.18s ease, border-color 0.18s ease;
@@ -278,7 +278,7 @@ html:has(.overlay-root) body {
   width: 1075.33px;
   height: 21px;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--white-45);
   border-radius: 0;
   overflow: hidden;
   display: block;
@@ -509,7 +509,7 @@ html:has(.overlay-root) body {
 
 .obs-frame {
   position: absolute;
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--white-45);
   background: transparent;
   pointer-events: none;
   z-index: 10;
