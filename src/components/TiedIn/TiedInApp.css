@@ -1,9 +1,19 @@
-/* Core OBS Transparency Override */
+/* Core OBS Transparency Override & Absolute Sizing */
 html:has(.overlay-root),
 body:has(.overlay-root),
 body:has(.overlay-root) #root,
 html:has(.overlay-root) body {
   background: transparent !important;
+  width: 1440px !important;
+  height: 1080px !important;
+  min-height: 1080px !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  transform: none !important;
+  zoom: 1 !important;
 }
 
 .overlay-root {
