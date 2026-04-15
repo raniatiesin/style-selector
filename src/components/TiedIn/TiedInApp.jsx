@@ -336,11 +336,11 @@ export default function TiedInApp({ displayMode }) {
       .sort((a, b) => a.createdAt - b.createdAt);
 
   const displayTasks = [];
+  displayTasks.push(...waitingTasks);
   displayTasks.push(...upNextTasks);
   if (currentTask) displayTasks.push(currentTask);
   displayTasks.push(...inReviewTasks);
   displayTasks.push(...doneTasks);
-  displayTasks.push(...waitingTasks);
 
   const adminTasks = (() => {
     let c = currentTask || null;
