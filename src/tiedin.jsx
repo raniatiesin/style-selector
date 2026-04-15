@@ -11,20 +11,20 @@ if (rootElement) {
   const path = window.location.pathname;
   
   let componentToRender;
-  
-  if (path.includes('/control') || window.location.search.includes('control')) {
+
+  if (path.includes('/controls') || window.location.search.includes('controls')) {
     componentToRender = <TiedInControl />;
-  } else if (path.includes('explain')) {
+  } else if (path.includes('overlays/explain')) {
     componentToRender = <TiedInApp displayMode="explain" />;
-  } else if (path.includes('break')) {
+  } else if (path.includes('overlays/break')) {
     componentToRender = <TiedInApp displayMode="break" />;
-  } else if (path.includes('work')) {
+  } else if (path.includes('overlays/work')) {
     componentToRender = <TiedInApp displayMode="work" />;
   } else {
     // Default fallback
-    componentToRender = <div style={{ color: 'white', padding: '20px' }}>Please specify an overlay path like /tiedin/work, /tiedin/explain, or /tiedin/break</div>;
+    componentToRender = <div style={{ color: 'white', padding: '20px' }}>Please specify an overlay path like /tiedin/overlays/work, /tiedin/overlays/explain, /tiedin/overlays/break, or /tiedin/controls</div>;
   }
-  
+
   createRoot(rootElement).render(
     <StrictMode>
       {componentToRender}

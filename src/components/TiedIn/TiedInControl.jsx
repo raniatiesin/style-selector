@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import './TiedInApp.css';
 
 const OBS_WS_URL = "ws://localhost:4455";
-const SCENE_WORK = "Work";
-const SCENE_EXPLAIN = "Explain";
-const SCENE_BREAK = "Break";
+const SCENE_WORK = "work";
+const SCENE_EXPLAIN = "explain";
+const SCENE_BREAK = "break";
 
 export default function TiedInControl() {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem('STREAM_ADMIN_KEY') || '');
