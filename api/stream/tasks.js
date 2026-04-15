@@ -86,6 +86,11 @@ export default async function handler(req, res) {
            status: "done",
            createdAt: Date.now(),
            completedAt: time ? new Date(time).getTime() : Date.now()
+         });
+       }
+    }
+
+    // Save the modified arrays back to Supabase
     const { error: updateErr } = await supabase
       .from('stream_metrics')
       .upsert({
