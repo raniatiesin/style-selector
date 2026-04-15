@@ -335,15 +335,6 @@ export default function TiedInApp({ displayMode }) {
   displayTasks.push(...inReviewTasks);
   displayTasks.push(...doneTasks);
 
-  const adminTasks = (() => {
-    let c = currentTask || null;
-    let d = state.tasks.filter(t => t.status === "done" && t.id !== c?.id).sort((a,b) => b.createdAt - a.createdAt);
-    let w = state.tasks.filter(t => t.status === "waiting" && t.id !== c?.id).sort((a,b) => b.createdAt - a.createdAt);
-    let all = [];
-    if(c) all.push(c);
-    return all.concat(d).concat(w).slice(0, 12);
-  })();
-
   return (
     <div className={`overlay-root mode-${displayMode || state.mode}`}>
       
