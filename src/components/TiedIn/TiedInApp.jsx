@@ -233,15 +233,6 @@ export default function TiedInApp({ displayMode }) {
 
               const taskId = String(data.id);
 
-              // Ensure only one task can be in_progress at a time
-              tasks = tasks.map(t => {
-                if (mappedStatus === "in_progress" && t.status === "in_progress" && t.id !== taskId) {
-                  changed = true;
-                  return { ...t, status: "waiting" };
-                }
-                return t;
-              });
-
               let existingIdx = tasks.findIndex(t => t.id === taskId);
               
               if (existingIdx !== -1) {
@@ -324,21 +315,23 @@ export default function TiedInApp({ displayMode }) {
 
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
-  const currentTask = state.tasks.find(t => t.id === state.currentTaskId || t.status === "in_progress");
-  const inReviewTasks = state.tasks.filter(t => t.status === "in_review" && t.id !== currentTask?.id).sort((a, b) => b.createdAt - a.createdAt);
-  const upNextTasks = state.tasks.filter(t => t.status === "up_next" && t.id !== currentTask?.id).sort((a, b) => b.createdAt - a.createdAt);
-  
-  const doneTasks = state.tasks.filter(t => t.status === "done" && t.id !== currentTask?.id)
+  const inProgressTasks = state.tasks.filter(t => t.status === "in_progress").sort((a, b) => b.createdAt - a.createdAt);
+  const inProgressIds = new Set(inProgressTasks.map(t => t.id));
+
+  const inReviewTasks = state.tasks.filter(t => t.status === "in_review" && !inProgressIds.has(t.id)).sort((a, b) => b.createdAt - a.createdAt);
+  const upNextTasks = state.tasks.filter(t => t.status === "up_next" && !inProgressIds.has(t.id)).sort((a, b) => b.createdAt - a.createdAt);
+
+  const doneTasks = state.tasks.filter(t => t.status === "done" && !inProgressIds.has(t.id))
       .filter(t => (t.completedAt || t.createdAt) >= startOfToday)
       .sort((a, b) => (b.completedAt || b.createdAt) - (a.completedAt || a.createdAt));
 
-  const waitingTasks = state.tasks.filter(t => t.status === "waiting" && t.id !== currentTask?.id)
+  const waitingTasks = state.tasks.filter(t => t.status === "waiting" && !inProgressIds.has(t.id))
       .sort((a, b) => a.createdAt - b.createdAt);
 
   const displayTasks = [];
   displayTasks.push(...waitingTasks);
   displayTasks.push(...upNextTasks);
-  if (currentTask) displayTasks.push(currentTask);
+  displayTasks.push(...inProgressTasks);
   displayTasks.push(...inReviewTasks);
   displayTasks.push(...doneTasks);
 
@@ -361,7 +354,7 @@ export default function TiedInApp({ displayMode }) {
         <aside className="timeline" id="timeline">
           <div className="timeline-list">
              {displayTasks.map(task => {
-                const isCurrent = currentTask?.id === task.id;
+                const isCurrent = inProgressIds.has(task.id);
                 const pillClass = isCurrent ? "tl-pill current" : "tl-pill done";
                 const metaClass = isCurrent ? "tl-meta current" : "tl-meta done";
                 const when = task.status === "done" ? (task.completedAt || task.createdAt) : task.createdAt;
