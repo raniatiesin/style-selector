@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   }
 
   // 1. Same Secret Auth Lock as your Webhook
-  const WEBHOOK_SECRET = process.env.OVERLAY_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET;
+  const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
   if (!WEBHOOK_SECRET) {
     return res.status(500).json({ error: "Missing Secret" });
@@ -35,16 +35,22 @@ export default async function handler(req, res) {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Secret Hack: We use the existing 'overlay' table so you don't even have to touch your database schema!
-    // We just give the global metrics a unique ID of "global_metrics" and JSON stringify the state into the "name" field.
+    // Upsert into the new stream_metrics table
+    const today = new Date().toISOString().split('T')[0];
+    
+    // We only update the fields that the client sends to us.
+    const updateData = { date: today, updated_at: new Date().toISOString() };
+    if (Object.hasOwn(payload, 'mode')) updateData.mode = payload.mode;
+    if (Object.hasOwn(payload, 'contactedCount')) updateData.contacted_count = payload.contactedCount;
+    if (Object.hasOwn(payload, 'convertedCount')) updateData.converted_count = payload.convertedCount;
+    if (Object.hasOwn(payload, 'todayWorkSeconds')) updateData.today_seconds = payload.todayWorkSeconds;
+    if (Object.hasOwn(payload, 'accumulatedTotalSeconds')) updateData.accumulated_seconds = payload.accumulatedTotalSeconds;
+    if (Object.hasOwn(payload, 'inProgressTasks')) updateData.in_progress_tasks = payload.inProgressTasks;
+    if (Object.hasOwn(payload, 'doneTasks')) updateData.done_tasks = payload.doneTasks;
+
     const { data, error } = await supabase
-      .from('overlay')
-      .upsert({
-         id: "global_metrics",
-         name: JSON.stringify(payload), // The payload has your mode, contacted count, converted count
-         status: "system", // hidden from kanban system
-         updated_at: new Date().toISOString()
-      }, { onConflict: 'id' });
+      .from('stream_metrics')
+      .upsert(updateData, { onConflict: 'date' });
 
     if (error) {
       console.error('[Supabase Write Error]', error);

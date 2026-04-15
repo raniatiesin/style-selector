@@ -33,38 +33,42 @@ export default async function handler(req, res) {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch the single most recent active task state from a dedicated table
+const today = new Date().toISOString().split('T')[0];
+    
+    // Fetch today's metrics
     const { data, error } = await supabase
-      .from('overlay')
+      .from('stream_metrics')
       .select('*')
-      .order('updated_at', { ascending: false })
-      .limit(50); // Grabs the 50 most recent updates so metrics won't fall off the list
+      .eq('date', today)
+      .single();
 
-    if (error) throw error;
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      throw error;
+    }
 
-    let tasks = [];
     let globalMetrics = null;
+    let tasks = [];
 
-    if (data && data.length > 0) {
-       for (let row of data) {
-         if (row.id === "global_metrics") {
-            try {
-              // Parse the JSON.stringify payload from the metrics endpoint
-              globalMetrics = JSON.parse(row.name);
-            } catch (e) {
-              globalMetrics = null;
-            }
-         } else {
-            tasks.push(row);
-         }
-       }
+    if (data) {
+       globalMetrics = {
+          mode: data.mode,
+          contactedCount: data.contacted_count,
+          convertedCount: data.converted_count,
+          accumulatedTotalSeconds: data.accumulated_seconds,
+          todayWorkSeconds: data.today_seconds,
+       };
+       // Combine the arrays for the frontend logic if needed
+       tasks = [
+         ...(data.in_progress_tasks || []),
+         ...(data.done_tasks || [])
+       ];
     }
 
     return res.status(200).json({
       success: true,
       timestamp: Date.now(),
       tasks: tasks,
-      metrics: globalMetrics
+      metrics: globalMetrics || { mode: 'work', contactedCount: 0, convertedCount: 0 }
     });
 
   } catch (error) {
