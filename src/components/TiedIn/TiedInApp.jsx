@@ -277,7 +277,7 @@ export default function TiedInApp({ displayMode }) {
     }
 
     fetchKanbanState();
-    pollingInterval = setInterval(fetchKanbanState, 5000);
+    pollingInterval = setInterval(fetchKanbanState, 1500); // 1.5s snappy sync
     return () => clearInterval(pollingInterval);
   }, []);
 
