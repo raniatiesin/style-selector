@@ -171,16 +171,25 @@ export default function TiedInApp({ displayMode }) {
     localStorage.setItem(KEYS.converted, String(state.convertedCount));
     localStorage.setItem(KEYS.currentTaskId, state.currentTaskId || "");
     localStorage.setItem(KEYS.tasks, JSON.stringify(state.tasks));
-  }, [state]);
 
-  // --- Vercel Polling ---
-  useEffect(() => {
-    let pollingInterval;
-    
-    async function fetchKanbanState() {
-      try {
-        const response = await fetch("https://tiesin.me/api/stream/state");
-        if (!response.ok) return;
+    // If we transition into break mode, push the finalized time to the cloud    
+    // so we don't drop accumulated time in the DB.
+    if (state.mode === 'break') {
+      const adminKey = localStorage.getItem('STREAM_ADMIN_KEY');
+      if (adminKey) {
+        fetch('https://tiesin.me/api/stream/metrics', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminKey}`
+          },
+          body: JSON.stringify({
+            todayWorkSeconds: state.todayWorkSeconds,
+            accumulatedTotalSeconds: state.accumulatedTotalSeconds
+          })
+        }).catch(() => {});
+      }
+    }
         const stateData = await response.json();
                 let newStateProps = {};
 
