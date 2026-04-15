@@ -53,41 +53,35 @@ export default async function handler(req, res) {
     let done = data?.done_tasks || [];
 
     // --- TASK ACTION ROUTING ---
+    const rawStatus = String(status || '').toLowerCase().trim();
+    const taskId = String(id || Date.now());
+
+    // Clean up task from everywhere first to prevent duplicates
+    inProgress = inProgress.filter(t => t.id !== taskId);
+    done = done.filter(t => t.id !== taskId);
+
     if (action === 'sync') {
-       // Manual overwrite (useful if mirroring full arrays)
        inProgress = inProgressTasks || inProgress;
        done = doneTasks || done;
-    } else if (status === 'in_progress' || status === 'todo') { // Using status for backwards/forwards compat
-       const taskId = String(id || Date.now());
-       const newTask = {
+    } else if (rawStatus === 'in progress' || rawStatus === 'in_progress') {
+       inProgress.push({
          id: taskId,
          name: String(task || "Untitled Task"),
          status: "in_progress",
          createdAt: time ? new Date(time).getTime() : Date.now(),
          completedAt: null
-       };
-       // Remove it if it already exists to avoid duplicates
-       inProgress = inProgress.filter(t => t.id !== taskId);
-       inProgress.push(newTask);
-    } else if (status === 'done' || status === 'completed') {
-       const targetId = String(id);
-       const existingIndex = inProgress.findIndex(t => t.id === targetId);
-
-       if (existingIndex > -1) {
-         const [completedTask] = inProgress.splice(existingIndex, 1);
-         completedTask.status = "done";
-         completedTask.completedAt = time ? new Date(time).getTime() : Date.now();
-         done.unshift(completedTask); // Add to the top of the done list
-       } else {
-         // Fallback just in case the task wasn't in the active list
-         done.unshift({
-           id: targetId,
-           name: String(task || "Completed Task"),
-           status: "done",
-           createdAt: Date.now(),
-           completedAt: time ? new Date(time).getTime() : Date.now()
-         });
-       }
+       });
+    } else if (rawStatus === 'done' || rawStatus === 'completed') {
+       done.unshift({
+         id: taskId,
+         name: String(task || "Completed Task"),
+         status: "done",
+         createdAt: Date.now(), // Fallback if it didn't exist before
+         completedAt: time ? new Date(time).getTime() : Date.now()
+       });
+    } else {
+       // Status is 'waiting', 'upnext', 'in review', etc.
+       // It's already filtered out of inProgress and done arrays above!
     }
 
     // Save the modified arrays back to Supabase
