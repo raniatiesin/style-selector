@@ -17,6 +17,7 @@ html:has(.overlay-root) body {
   --bg: #0a0a0a;
 
   --white-100: rgba(255, 255, 255, 1.00);
+  --c0a08e: #c0a08e;
   --white-92: rgba(255, 255, 255, 0.92);
   --white-82: rgba(255, 255, 255, 0.82);
   --white-70: rgba(255, 255, 255, 0.70);
@@ -335,7 +336,7 @@ html:has(.overlay-root) body {
 }
 
 .inverted {
-  color: var(--white-100);
+  color: var(--c0a08e);
   mix-blend-mode: difference;
 }
 
@@ -372,7 +373,7 @@ html:has(.overlay-root) body {
 }
 
 .mode-btn.active {
-  background: var(--white-100);
+  background: var(--c0a08e);
   color: #0a0a0a;
   border-color: transparent;
 }
