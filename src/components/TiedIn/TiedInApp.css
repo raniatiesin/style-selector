@@ -89,7 +89,7 @@ html:has(.overlay-root) body {
 .mode-work .timeline {
   display: block;
 }
-.mode-explain .timeline,
+.mode-explain .timeline { display: block; } 
 .mode-break .timeline {
   display: none; 
 }
