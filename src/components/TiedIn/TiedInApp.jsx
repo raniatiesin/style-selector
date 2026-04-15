@@ -409,11 +409,13 @@ export default function TiedInApp({ displayMode }) {
       <section className="break-screen" id="breakScreen" style={{ display: (displayMode || state.mode) === 'break' ? 'flex' : 'none', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0a0a', position: 'absolute', inset: 0, zIndex: 100 }}>
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '40px' }}>
           
-          <div style={{ fontSize: '220px', fontWeight: 300, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--white-100)', fontFamily: 'monospace' }}>
-            {formatHMS(breakSeconds)}
-          </div>
-
-          <div style={{ width: '60px', height: '2px', background: 'var(--white-25)' }}></div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0px' }}>
+            <div style={{ fontSize: '200px', fontWeight: 300, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--white-100)', whiteSpace: 'nowrap' }}>
+              WILL BE BACK
+            </div>
+            <div style={{ fontSize: '220px', fontWeight: 300, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--white-100)', fontFamily: 'monospace' }}>     
+              {formatHMS(breakSeconds)}
+            </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ fontSize: '32px', color: 'var(--white-75)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
