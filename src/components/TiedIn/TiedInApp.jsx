@@ -141,21 +141,32 @@ export default function TiedInApp({ displayMode }) {
       setNow(currentNow);
 
       setState(prev => {
-        let { mode, sessionSeconds, todayWorkSeconds, accumulatedTotalSeconds } = prev;
-        
+        let { mode, sessionSeconds, todayWorkSeconds, accumulatedTotalSeconds, breakStartTime = prev.breakStartTime, lastProcessedSync = prev.lastProcessedSync } = prev;
+
+        const instantSync = localStorage.getItem('INSTANT_MODE_SYNC');
+        if (instantSync && instantSync !== lastProcessedSync) {
+          const [syncMode, syncTime] = instantSync.split(':');
+          if (syncMode && syncMode !== mode) {
+            mode = syncMode;
+            if (syncMode === 'break') breakStartTime = Number(syncTime) || Date.now();
+            else if (prev.mode === 'break') sessionSeconds = 0;
+          }
+          lastProcessedSync = instantSync;
+        }
+
         const dateKey = todayKey(currentNow);
         if (localStorage.getItem(KEYS.todayDate) !== dateKey) {
           todayWorkSeconds = 0;
           sessionSeconds = 0;
           localStorage.setItem(KEYS.todayDate, dateKey);
         }
-        
+
         if (mode !== "break") {
           sessionSeconds++;
           todayWorkSeconds++;
           accumulatedTotalSeconds++;
         }
-        return { ...prev, sessionSeconds, todayWorkSeconds, accumulatedTotalSeconds };
+        return { ...prev, mode, sessionSeconds, todayWorkSeconds, accumulatedTotalSeconds, breakStartTime, lastProcessedSync };
       });
     }, 1000);
     return () => clearInterval(interval);
