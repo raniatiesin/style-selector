@@ -222,9 +222,27 @@ export default function TiedInControl() {
 
   return (
     <div className={`overlay-root mode-${state.mode}`} style={{ width: '100vw', height: '100dvh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-      
-      <div style={{ width: 1000, maxWidth: '100%' }}>
-         
+
+      <div style={{ width: 1000, maxWidth: '100%', position: 'relative' }}>
+         {state.mode === 'work' && (
+           <div style={{
+             position: 'absolute',
+             top: -60,
+             left: '50%',
+             transform: 'translateX(-50%)',
+             color: '#ff4444',
+             fontSize: '32px',
+             fontWeight: '800',
+             letterSpacing: '0.15em',
+             fontFamily: 'var(--font)',
+             textShadow: '0 0 10px rgba(255, 68, 68, 0.4)',
+             pointerEvents: 'none',
+             animation: 'pulse 2s infinite'
+           }}>
+             DON'T TALK
+           </div>
+         )}
+
          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 80 }}>
             <div className="context-pill stack" style={{ display: 'inline-flex', padding: '12px 24px', flexDirection: 'row', gap: 16, alignItems: 'center', background: 'var(--panel-bg)' }}>
                <div className="tl-title" style={{ fontWeight: 500, letterSpacing: 1, fontSize: 18 }}>STREAM CONTROL CENTER</div>
