@@ -196,53 +196,21 @@ export default function TiedInControl() {
              <span className="session-label" style={{ letterSpacing: 2 }}>AUTHENTICATION REQUIRED</span>
           </div>
           
-          <div style={{ position: 'relative', width: '100%', marginBottom: 12 }}>
-            <input 
-              type="password"
-              placeholder="Vercel Webhook Secret"
-              value={inputKey}
-              onChange={e => setInputKey(e.target.value)}
-              style={{ width: '100%', height: 48, padding: '0 80px', background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', textAlign: 'center', fontFamily: 'var(--font)', fontSize: 16, outline: 'none' }}
-            />
-            <button 
-              type="button" 
-              onClick={async () => {
-                try {
-                  const text = await navigator.clipboard.readText();
-                  if (text) setInputKey(text);
-                } catch(err) {
-                  console.error("Paste failed", err);
-                }
-              }}
-              style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', height: 32, padding: '0 12px', fontSize: 12, background: 'transparent', color: 'var(--white-70)', border: '1px solid var(--white-25)', cursor: 'pointer', fontFamily: 'var(--font)' }}
-            >
-              PASTE
-            </button>
-          </div>
+          <input 
+            type="password"
+            placeholder="Vercel Webhook Secret"
+            value={inputKey}
+            onChange={e => setInputKey(e.target.value)}
+            style={{ width: '100%', height: 48, padding: '0 20px', marginBottom: 12, background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', textAlign: 'center', fontFamily: 'var(--font)', fontSize: 16, outline: 'none' }}
+          />
 
-          <div style={{ position: 'relative', width: '100%', marginBottom: 20 }}>
-            <input 
-              type="password"
-              placeholder="OBS WebSocket Password (Optional)"
-              value={inputObs}
-              onChange={e => setInputObs(e.target.value)}
-              style={{ width: '100%', height: 48, padding: '0 80px', background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', textAlign: 'center', fontFamily: 'var(--font)', fontSize: 16, outline: 'none' }}
-            />
-            <button 
-              type="button" 
-              onClick={async () => {
-                try {
-                  const text = await navigator.clipboard.readText();
-                  if (text) setInputObs(text);
-                } catch(err) {
-                  console.error("Paste failed", err);
-                }
-              }}
-              style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', height: 32, padding: '0 12px', fontSize: 12, background: 'transparent', color: 'var(--white-70)', border: '1px solid var(--white-25)', cursor: 'pointer', fontFamily: 'var(--font)' }}
-            >
-              PASTE
-            </button>
-          </div>
+          <input 
+            type="password"
+            placeholder="OBS WebSocket Password (Optional)"
+            value={inputObs}
+            onChange={e => setInputObs(e.target.value)}
+            style={{ width: '100%', height: 48, padding: '0 20px', marginBottom: 20, background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', textAlign: 'center', fontFamily: 'var(--font)', fontSize: 16, outline: 'none' }}
+          />
 
           <button type="submit" className="mode-btn inverted active" style={{ width: '100%', height: 48, fontSize: 16, border: 'none', cursor: 'pointer' }}>
             UNLOCK PANEL
@@ -310,7 +278,10 @@ export default function TiedInControl() {
 
          {/* Diagnostics Log Panel */}
          <div className="logs-panel" style={{ marginTop: 60, height: 200, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
-            <div style={{ marginBottom: 16, color: 'var(--white-92)', borderBottom: '1px solid var(--white-12)', paddingBottom: 8 }}>DIAGNOSTIC LOGS</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, color: 'var(--white-92)', borderBottom: '1px solid var(--white-12)', paddingBottom: 8 }}>
+               <span>DIAGNOSTIC LOGS</span>
+               <button onClick={() => navigator.clipboard.writeText(logs.join('\n')).then(() => alert('Logs copied!'))} style={{ background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}>COPY LOGS</button>
+            </div>
             {logs.length === 0 ? <div style={{ color: 'var(--white-45)' }}>Waiting for activity...</div> : logs.map((log, i) => (
               <div key={i} style={{ marginBottom: 4 }}>{log}</div>
             ))}
