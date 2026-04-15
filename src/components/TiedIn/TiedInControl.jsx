@@ -267,14 +267,6 @@ export default function TiedInControl() {
               <button type="button" onClick={() => handleMetric('convertedCount', -1)} style={{ fontSize: 32, padding: '0 24px', border: '0', borderLeft: '1px solid var(--white-25)', background: 'transparent', color: 'inherit', cursor: 'pointer' }}>-</button>
               <input 
                 type="number" 
-         {/* Diagnostics Log Panel */}
-         <div className="logs-panel" style={{ marginTop: 60, height: 200, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
-            <div style={{ marginBottom: 16, color: 'var(--white-92)', borderBottom: '1px solid var(--white-12)', paddingBottom: 8 }}>DIAGNOSTIC LOGS</div>
-            {logs.length === 0 ? <div style={{ color: 'var(--white-45)' }}>Waiting for activity...</div> : logs.map((log, i) => (
-              <div key={i} style={{ marginBottom: 4 }}>{log}</div>
-            ))}
-         </div>
-
                 value={state.convertedCount} 
                 onChange={(e) => pushUpdate({ ...state, convertedCount: Math.max(0, parseInt(e.target.value) || 0) })} 
                 className="counter-label counter-value" 
@@ -282,6 +274,14 @@ export default function TiedInControl() {
               />
               <button type="button" onClick={() => handleMetric('convertedCount', 1)} style={{ fontSize: 32, padding: '0 24px', border: '0', borderLeft: '1px solid var(--white-25)', background: 'transparent', color: 'inherit', cursor: 'pointer' }}>+</button>
             </div>
+         </div>
+
+         {/* Diagnostics Log Panel */}
+         <div className="logs-panel" style={{ marginTop: 60, height: 200, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
+            <div style={{ marginBottom: 16, color: 'var(--white-92)', borderBottom: '1px solid var(--white-12)', paddingBottom: 8 }}>DIAGNOSTIC LOGS</div>
+            {logs.length === 0 ? <div style={{ color: 'var(--white-45)' }}>Waiting for activity...</div> : logs.map((log, i) => (
+              <div key={i} style={{ marginBottom: 4 }}>{log}</div>
+            ))}
          </div>
 
       </div>
