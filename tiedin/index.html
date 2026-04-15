@@ -34,7 +34,8 @@
     <script>
       function fitToOBS() {
         const root = document.getElementById('root');
-        if (root) {
+        const isControls = window.location.pathname.includes('/controls') || window.location.search.includes('controls');
+        if (root && !isControls) {
           const scaleX = window.innerWidth / 1440;
           const scaleY = window.innerHeight / 1080;
           const scale = Math.min(scaleX, scaleY);
