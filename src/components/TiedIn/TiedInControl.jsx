@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import './TiedInApp.css';
 
-const OBS_WS_URL = "ws://127.0.0.1:4455";
+const OBS_WS_URL = "ws://localhost:4455";
 const SCENE_WORK = "work";
 const SCENE_EXPLAIN = "explain";
 const SCENE_BREAK = "break";
