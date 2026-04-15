@@ -201,6 +201,22 @@ export default function TiedInApp({ displayMode }) {
         const response = await fetch("https://tiesin.me/api/stream/state");
         if (!response.ok) return;
 
+        const stateData = await response.json();
+        let newStateProps = {};
+
+        // Sync global metrics from the new `/control` panel
+        if (stateData?.metrics) {
+           newStateProps.contactedCount = Number(stateData.metrics.contactedCount) || 0;
+           newStateProps.convertedCount = Number(stateData.metrics.convertedCount) || 0;
+
+           if (stateData.metrics.mode) {
+              const fetchedMode = stateData.metrics.mode;
+              newStateProps.mode = fetchedMode;
+           }
+        }
+
+        if (stateData?.tasks && Array.isArray(stateData.tasks)) {
+          setState(prev => {
             let tasks = [...prev.tasks];
             let currentTaskId = prev.currentTaskId;
             let changed = false;
