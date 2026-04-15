@@ -23,7 +23,13 @@ export default function TiedInControl() {
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [obsConnected, setObsConnected] = useState(false);
+  const [obsError, setObsError] = useState('');
+  const [debugLogs, setDebugLogs] = useState([]);
   const obsRef = useRef(null);
+
+  const addLog = (msg) => {
+    setDebugLogs(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 8));
+  };
 
   // 1. Fetch Initial State from Vercel so Dashboard doesn't default to 0 on reload.
   useEffect(() => {
@@ -58,6 +64,8 @@ export default function TiedInControl() {
       try {
         await obsRef.current.connect(OBS_WS_URL, obsPassword);
         setObsConnected(true);
+        setObsError('');
+        addLog(`Connected to OBS at ${OBS_WS_URL}`);
 
         obsRef.current.on("CurrentProgramSceneChanged", (event) => {
            const map = { [SCENE_WORK]: "work", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break" };
@@ -75,11 +83,15 @@ export default function TiedInControl() {
 
         obsRef.current.on("ConnectionClosed", () => {
           setObsConnected(false);
+          addLog("OBS connection closed organically.");
           setTimeout(connect, 5000);
         });
 
       } catch (err) {
         setObsConnected(false);
+        const errMsg = err.message || JSON.stringify(err) || "Unknown error";
+        setObsError(errMsg);
+        addLog(`OBS Error: ${errMsg}`);
         setTimeout(connect, 5000);
       }
     }
@@ -197,17 +209,31 @@ export default function TiedInControl() {
       <div style={{ width: 1000, maxWidth: '100%' }}>
          
          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 80 }}>
-            <div className="context-pill stack" style={{ display: 'inline-flex', padding: '12px 24px', flexDirection: 'row', gap: 16, alignItems: 'center', background: 'var(--panel-bg)' }}>
-               <div className="tl-title" style={{ fontWeight: 500, letterSpacing: 1, fontSize: 18 }}>STREAM CONTROL CENTER</div>
-               {isSyncing ? (
-                 <div className="tl-meta current" style={{ color: 'var(--white-45)', fontSize: 14 }}>&#9679;&nbsp;&nbsp;SYNCING TO VERCEL...</div>
-               ) : (
-                 <div className="tl-meta current" style={{ color: obsConnected ? '#00ff88' : '#ff4444', fontSize: 14 }}>
-                    &#9679;&nbsp;&nbsp;OBS {obsConnected ? 'CONNECTED' : 'DISCONNECTED'}
+            <div className="context-pill stack" style={{ display: 'inline-flex', padding: '12px 24px', flexDirection: 'column', gap: 16, alignItems: 'flex-start', background: 'var(--panel-bg)' }}>
+               <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                 <div className="tl-title" style={{ fontWeight: 500, letterSpacing: 1, fontSize: 18 }}>STREAM CONTROL CENTER</div>
+                 {isSyncing ? (
+                   <div className="tl-meta current" style={{ color: 'var(--white-45)', fontSize: 14 }}>&#9679;&nbsp;&nbsp;SYNCING TO VERCEL...</div>
+                 ) : (
+                   <div className="tl-meta current" style={{ color: obsConnected ? '#00ff88' : '#ff4444', fontSize: 14 }}>
+                      &#9679;&nbsp;&nbsp;OBS {obsConnected ? 'CONNECTED' : 'DISCONNECTED'}
+                   </div>
+                 )}
+               </div>
+               
+               {/* DEBUG LOG WINDOW */}
+               {debugLogs.length > 0 && (
+                 <div style={{ width: '100%', background: 'rgba(0,0,0,0.4)', padding: 12, borderRadius: 6, border: '1px solid var(--white-15)' }}>
+                    <div style={{ fontSize: 11, color: 'var(--white-45)', marginBottom: 8 }}>DEBUG LOGS:</div>
+                    {debugLogs.map((log, i) => (
+                      <div key={i} style={{ fontSize: 12, color: log.includes('Error') ? '#ff4444' : '#00ff88', fontFamily: 'monospace', marginBottom: 4 }}>
+                         {log}
+                      </div>
+                    ))}
                  </div>
                )}
             </div>
-            
+
             <button onClick={logout} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-55)', fontFamily: 'var(--font)', textTransform: 'uppercase', cursor: 'pointer', borderRadius: 4 }}>
                LOCK DASHBOARD
             </button>
