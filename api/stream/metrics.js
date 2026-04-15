@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   }
 
   // 1. Same Secret Auth Lock as your Webhook
-  const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+  const WEBHOOK_SECRET = process.env.OVERLAY_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET;
 
   if (!WEBHOOK_SECRET) {
     return res.status(500).json({ error: "Missing Secret" });
