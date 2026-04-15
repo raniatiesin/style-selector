@@ -141,32 +141,21 @@ export default function TiedInApp({ displayMode }) {
       setNow(currentNow);
 
       setState(prev => {
-        let { mode, sessionSeconds, todayWorkSeconds, accumulatedTotalSeconds, breakStartTime = prev.breakStartTime, lastProcessedSync = prev.lastProcessedSync } = prev;
-
-        const instantSync = localStorage.getItem('INSTANT_MODE_SYNC');
-        if (instantSync && instantSync !== lastProcessedSync) {
-          const [syncMode, syncTime] = instantSync.split(':');
-          if (syncMode && syncMode !== mode) {
-            mode = syncMode;
-            if (syncMode === 'break') breakStartTime = Number(syncTime) || Date.now();
-            else if (prev.mode === 'break') sessionSeconds = 0;
-          }
-          lastProcessedSync = instantSync;
-        }
-
+        let { mode, sessionSeconds, todayWorkSeconds, accumulatedTotalSeconds } = prev;
+        
         const dateKey = todayKey(currentNow);
         if (localStorage.getItem(KEYS.todayDate) !== dateKey) {
           todayWorkSeconds = 0;
           sessionSeconds = 0;
           localStorage.setItem(KEYS.todayDate, dateKey);
         }
-
+        
         if (mode !== "break") {
           sessionSeconds++;
           todayWorkSeconds++;
           accumulatedTotalSeconds++;
         }
-        return { ...prev, mode, sessionSeconds, todayWorkSeconds, accumulatedTotalSeconds, breakStartTime, lastProcessedSync };
+        return { ...prev, sessionSeconds, todayWorkSeconds, accumulatedTotalSeconds };
       });
     }, 1000);
     return () => clearInterval(interval);
@@ -427,6 +416,7 @@ export default function TiedInApp({ displayMode }) {
             <div style={{ fontSize: '220px', fontWeight: 300, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--white-100)', fontFamily: 'monospace' }}>     
               {formatHMS(breakSeconds)}
             </div>
+          </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ fontSize: '32px', color: 'var(--white-75)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
