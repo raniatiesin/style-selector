@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     // Fetch the current task arrays so we can dynamically modify them
     const { data, error: fetchError } = await supabase
       .from('stream_metrics')
-      .select('in_progress_tasks, done_tasks, webhook_logs')
+      .select('in_progress_tasks, in_review_tasks, up_next_tasks, done_tasks, webhook_logs')
       .eq('date', today)
       .single();
 
@@ -50,6 +50,8 @@ export default async function handler(req, res) {
     }
 
     let inProgress = data?.in_progress_tasks || [];
+    let inReview = data?.in_review_tasks || [];
+    let upNext = data?.up_next_tasks || [];
     let done = data?.done_tasks || [];
     let webhookLogs = data?.webhook_logs || [];
 
@@ -65,6 +67,8 @@ export default async function handler(req, res) {
 
     // Clean up task from everywhere first to prevent duplicates
     inProgress = inProgress.filter(t => t.id !== taskId);
+    inReview = inReview.filter(t => t.id !== taskId);
+    upNext = upNext.filter(t => t.id !== taskId);
     done = done.filter(t => t.id !== taskId);
 
     if (action === 'sync') {
@@ -75,14 +79,20 @@ export default async function handler(req, res) {
        if (rawStatus.includes('progress')) normalizedStatus = 'in_progress';
        else if (rawStatus.includes('next')) normalizedStatus = 'up_next';
        else if (rawStatus.includes('review')) normalizedStatus = 'in_review';
-       
-       inProgress.push({
+
+       const newTask = {
          id: taskId,
          name: String(task || "Untitled Task"),
          status: normalizedStatus,
          createdAt: time ? new Date(time).getTime() : Date.now(),
          completedAt: null
-       });
+       };
+
+       if (normalizedStatus === 'in_progress') inProgress.push(newTask);
+       else if (normalizedStatus === 'in_review') inReview.push(newTask);
+       else if (normalizedStatus === 'up_next') upNext.push(newTask);
+       else upNext.push(newTask); // Fallback waiting to upNext so it's not totally lost if sent exactly as "waiting"
+       
     } else if (rawStatus === 'done' || rawStatus === 'completed') {
        done.unshift({
          id: taskId,
@@ -101,6 +111,8 @@ export default async function handler(req, res) {
       .upsert({
          date: today,
          in_progress_tasks: inProgress,
+         in_review_tasks: inReview,
+         up_next_tasks: upNext,
          done_tasks: done,
          webhook_logs: webhookLogs,
          updated_at: new Date().toISOString()
