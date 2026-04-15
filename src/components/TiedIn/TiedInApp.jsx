@@ -374,31 +374,42 @@ export default function TiedInApp({ displayMode }) {
         <div className="progress-fill" style={{ width: `${(progress * CONTEXT_WIDTH).toFixed(2)}px` }}></div>
       </section>
 
-      <section className="break-screen" id="breakScreen">
-        <div className="break-fill" style={{ width: `${(progress * CANVAS_WIDTH).toFixed(2)}px` }}></div>
-        <div className="break-content">
-          <div className="break-clock inverted">{formatHM(now)}</div>
-          <div className="break-date inverted">{toLongDate(now)}</div>
-          <div className="break-duration inverted">BREAK - {formatHMS(breakSeconds).slice(3)}</div>
-
-          <div className="break-summary inverted">
-             {hours}h / {HOURS_TARGET}h - Day {dayNumber} / {CHALLENGE_TOTAL_DAYS} - Session {formatHMS(state.sessionSeconds)} - Today {formatHMS(state.todayWorkSeconds)}
+      <section className="break-screen" id="breakScreen" style={{ display: (displayMode || state.mode) === 'break' ? 'flex' : 'none', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0a0a', position: 'absolute', inset: 0, zIndex: 100 }}>
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '40px' }}>
+          
+          <div style={{ fontSize: '220px', fontWeight: 300, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--white-100)', fontFamily: 'monospace' }}>
+            {formatHMS(breakSeconds)}
           </div>
 
-          <div className="break-task-admin inverted">
-             {adminTasks.map(t => (
-               <div key={t.id} className="admin-row">
-                 <div className="admin-title">{statusLabel(t.status)} - {t.name}</div>
-                 <div className="admin-actions">
-                   {/* In React, you generally wouldn't push state edits from the read-only polling side, 
-                       but if needed locally you can set them. Since Vercel is the source of truth now, 
-                       the "admin panel" is mostly read-only unless you wire up POST requests here! */}
-                 </div>
-               </div>
-             ))}
+          <div style={{ width: '60px', height: '2px', background: 'var(--white-25)' }}></div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ fontSize: '32px', color: 'var(--white-75)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              {formatTime12(now)}
+            </div>
+            <div style={{ fontSize: '20px', color: 'var(--white-45)', letterSpacing: '0.02em' }}>
+              {toLongDate(now)}
+            </div>
           </div>
+
+          <div style={{ width: '60px', height: '2px', background: 'var(--white-25)' }}></div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+            <div style={{ fontSize: '14px', letterSpacing: '0.2em', color: 'var(--white-45)', textTransform: 'uppercase' }}>To Continue</div>
+            {state.tasks.filter(t => t.status === "in_progress").length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {state.tasks.filter(t => t.status === "in_progress").map(t => (
+                  <div key={t.id} style={{ fontSize: '24px', color: 'var(--white-92)', fontWeight: 400 }}>
+                     {t.name}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: '20px', color: 'var(--white-25)', fontStyle: 'italic' }}>Enjoy your break</div>
+            )}
+          </div>
+
         </div>
-        <div className="break-progress-base"></div>
       </section>
     </div>
   );
