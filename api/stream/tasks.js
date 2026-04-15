@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { action, task, inProgressTasks, doneTasks } = req.body;
+    const { id, task, status, time, action, inProgressTasks, doneTasks } = req.body;
 
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
@@ -57,43 +57,35 @@ export default async function handler(req, res) {
        // Manual overwrite (useful if mirroring full arrays)
        inProgress = inProgressTasks || inProgress;
        done = doneTasks || done;
-    } 
-    else if (action === 'add') {
-       // Add a new active task to the timeline
+    } else if (status === 'in_progress' || status === 'todo') { // Using status for backwards/forwards compat
+       const taskId = String(id || Date.now());
        const newTask = {
-         id: String(task.id || Date.now()),
-         name: String(task.name || "Untitled Task"),
+         id: taskId,
+         name: String(task || "Untitled Task"),
          status: "in_progress",
-         createdAt: Date.now(),
+         createdAt: time ? new Date(time).getTime() : Date.now(),
          completedAt: null
        };
        // Remove it if it already exists to avoid duplicates
-       inProgress = inProgress.filter(t => t.id !== newTask.id);
+       inProgress = inProgress.filter(t => t.id !== taskId);
        inProgress.push(newTask);
-    } 
-    else if (action === 'complete') {
-       // Move a task from in-progress to done
-       const targetId = String(task.id);
+    } else if (status === 'done' || status === 'completed') {
+       const targetId = String(id);
        const existingIndex = inProgress.findIndex(t => t.id === targetId);
-       
+
        if (existingIndex > -1) {
          const [completedTask] = inProgress.splice(existingIndex, 1);
          completedTask.status = "done";
-         completedTask.completedAt = Date.now();
+         completedTask.completedAt = time ? new Date(time).getTime() : Date.now();
          done.unshift(completedTask); // Add to the top of the done list
        } else {
          // Fallback just in case the task wasn't in the active list
          done.unshift({
            id: targetId,
-           name: String(task.name || "Completed Task"),
+           name: String(task || "Completed Task"),
            status: "done",
            createdAt: Date.now(),
-           completedAt: Date.now()
-         });
-       }
-    }
-
-    // Save the modified arrays back to Supabase
+           completedAt: time ? new Date(time).getTime() : Date.now()
     const { error: updateErr } = await supabase
       .from('stream_metrics')
       .upsert({
@@ -107,7 +99,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: `Task action '${action}' processed.`,
+      message: `Task status '${status}' processed.`,
       activeTasksCount: inProgress.length
     });
 
