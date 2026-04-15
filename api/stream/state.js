@@ -48,6 +48,7 @@ const today = new Date().toISOString().split('T')[0];
 
     let globalMetrics = null;
     let tasks = [];
+    let webhookLogs = [];
 
     if (data) {
        globalMetrics = {
@@ -57,6 +58,7 @@ const today = new Date().toISOString().split('T')[0];
           accumulatedTotalSeconds: data.accumulated_seconds,
           todayWorkSeconds: data.today_seconds,
        };
+       webhookLogs = data.webhook_logs || [];
        // Combine the arrays for the frontend logic if needed
        tasks = [
          ...(data.in_progress_tasks || []),
@@ -68,6 +70,7 @@ const today = new Date().toISOString().split('T')[0];
       success: true,
       timestamp: Date.now(),
       tasks: tasks,
+      webhookLogs: webhookLogs,
       metrics: globalMetrics || { mode: 'work', contactedCount: 0, convertedCount: 0 }
     });
 

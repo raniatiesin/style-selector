@@ -25,32 +25,36 @@ export default function TiedInControl() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [obsConnected, setObsConnected] = useState(false);
   const [logs, setLogs] = useState([]);
-  const [webhookLogs, setWebhookLogs] = useState([]);
   const obsRef = useRef(null);
 
   const addLog = (msg) => setLogs(l => [...l, `[${new Date().toLocaleTimeString()}] ${msg}`].slice(-20));
 
+  // 1. Fetch Initial State from Vercel so Dashboard doesn't default to 0 on reload.
   useEffect(() => {
     if (isLocked) return;
-
-    let intervalId;
-    let isFirst = true;
     async function loadMetrics() {
-      if (isFirst) addLog(`Fetching initial state...`);
-      try {
-        const res = await fetch(`https://tiesin.me/api/stream/state`);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data?.webhookLogs) setWebhookLogs(data.webhookLogs);
-        if (data?.metrics && isFirst) {
-           setState(s => ({ ...s, ...data.metrics }));
-           isFirst = false;
-        }
-      } catch (e) {}
+       addLog("Fetching initial state from Vercel...");
+       try {
+         const response = await fetch("https://tiesin.me/api/stream/state");
+         if (!response.ok) {
+           addLog(`Vercel fetch failed with status ${response.status}`);
+           return;
+         }
+         const data = await response.json();
+         if (data?.metrics) {
+           addLog("Vercel state loaded.");
+           setState({
+             contactedCount: Number(data.metrics.contactedCount) || 0,
+             convertedCount: Number(data.metrics.convertedCount) || 0,
+             mode: data.metrics.mode || 'work'
+           });
+         }
+       } catch (e) {
+         addLog(`Vercel fetch error: ${e.message}`);
+         console.warn("Failed loading metrics on dash start", e);
+       }
     }
     loadMetrics();
-    intervalId = setInterval(loadMetrics, 2000);
-    return () => clearInterval(intervalId);
   }, [isLocked]);
 
   // 2. Connect to OBS when unlocked
@@ -276,21 +280,10 @@ export default function TiedInControl() {
             </div>
          </div>
 
-         {/* Webhook Stream Logs Panel */}
+         {/* Diagnostics Log Panel */}
          <div className="logs-panel" style={{ marginTop: 60, height: 200, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, color: 'var(--white-92)', borderBottom: '1px solid var(--white-12)', paddingBottom: 8 }}>
-               <span>WEBHOOK ACTIVITY (SUPABASE)</span>
-               <button onClick={() => navigator.clipboard.writeText(webhookLogs.join('\n')).then(() => alert('Webhook Logs copied!'))} style={{ background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}>COPY WEBHOOKS</button>
-            </div>
-            {(!webhookLogs || webhookLogs.length === 0) ? <div style={{ color: 'var(--white-45)' }}>Waiting for external n8n/Twenty CRM webhooks...</div> : webhookLogs.slice().reverse().map((log, i) => (
-              <div key={i} style={{ marginBottom: 4, color: log.includes('error') ? '#ff4444' : log.includes('ignored') ? 'var(--white-45)' : '#00ff88' }}>{log}</div>
-            ))}
-         </div>
-
-         {/* Diagnostics Log Panel */}
-         <div className="logs-panel" style={{ marginTop: 20, height: 200, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, color: 'var(--white-92)', borderBottom: '1px solid var(--white-12)', paddingBottom: 8 }}>
-               <span>LOCAL DIAGNOSTIC LOGS</span>
+               <span>DIAGNOSTIC LOGS</span>
                <button onClick={() => navigator.clipboard.writeText(logs.join('\n')).then(() => alert('Logs copied!'))} style={{ background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}>COPY LOGS</button>
             </div>
             {logs.length === 0 ? <div style={{ color: 'var(--white-45)' }}>Waiting for activity...</div> : logs.map((log, i) => (

@@ -355,7 +355,7 @@ export default function TiedInApp({ displayMode }) {
                 
                 let timeStr = "";
                 if (task.status === "in_progress") timeStr = "started " + relativeTime(task.createdAt);
-                else if (task.status === "done") timeStr = "finished " + relativeTime(when);
+                else if (task.status === "done" || task.status === "in_review") timeStr = "finished " + relativeTime(when);
                 else timeStr = "added " + relativeTime(task.createdAt);
 
                 return (

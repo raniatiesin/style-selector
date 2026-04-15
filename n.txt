@@ -1,0 +1,297 @@
+     1	import { useState, useEffect, useRef } from 'react';
+     2	import OBSWebSocket from 'obs-websocket-js';
+     3	import './TiedInApp.css';
+     4	
+     5	const OBS_WS_URL = "ws://localhost:4455";
+     6	const SCENE_WORK = "work";
+     7	const SCENE_EXPLAIN = "explain";
+     8	const SCENE_BREAK = "break";
+     9	
+    10	export default function TiedInControl() {
+    11	  const [adminKey, setAdminKey] = useState(() => localStorage.getItem('STREAM_ADMIN_KEY') || '');
+    12	  const [obsPassword, setObsPassword] = useState(() => localStorage.getItem('OBS_PASS') || '');
+    13	  
+    14	  const [inputKey, setInputKey] = useState('');
+    15	  const [inputObs, setInputObs] = useState('');
+    16	  
+    17	  const [isLocked, setIsLocked] = useState(!adminKey);
+    18	
+    19	  const [state, setState] = useState({
+    20	    contactedCount: 0,
+    21	    convertedCount: 0,
+    22	    mode: 'work'
+    23	  });
+    24	
+    25	  const [isSyncing, setIsSyncing] = useState(false);
+    26	  const [obsConnected, setObsConnected] = useState(false);
+    27	  const [logs, setLogs] = useState([]);
+    28	  const obsRef = useRef(null);
+    29	
+    30	  const addLog = (msg) => setLogs(l => [...l, `[${new Date().toLocaleTimeString()}] ${msg}`].slice(-20));
+    31	
+    32	  // 1. Fetch Initial State from Vercel so Dashboard doesn't default to 0 on reload.
+    33	  useEffect(() => {
+    34	    if (isLocked) return;
+    35	    async function loadMetrics() {
+    36	       addLog("Fetching initial state from Vercel...");
+    37	       try {
+    38	         const response = await fetch("https://tiesin.me/api/stream/state");
+    39	         if (!response.ok) {
+    40	           addLog(`Vercel fetch failed with status ${response.status}`);
+    41	           return;
+    42	         }
+    43	         const data = await response.json();
+    44	         if (data?.metrics) {
+    45	           addLog("Vercel state loaded.");
+    46	           setState({
+    47	             contactedCount: Number(data.metrics.contactedCount) || 0,
+    48	             convertedCount: Number(data.metrics.convertedCount) || 0,
+    49	             mode: data.metrics.mode || 'work'
+    50	           });
+    51	         }
+    52	       } catch (e) {
+    53	         addLog(`Vercel fetch error: ${e.message}`);
+    54	         console.warn("Failed loading metrics on dash start", e);
+    55	       }
+    56	    }
+    57	    loadMetrics();
+    58	  }, [isLocked]);
+    59	
+    60	  // 2. Connect to OBS when unlocked
+    61	  useEffect(() => {
+    62	    if (isLocked) return;
+    63	
+    64	    let keepConnecting = true;
+    65	    obsRef.current = new OBSWebSocket();
+    66	
+    67	    async function connect() {
+    68	      if (!keepConnecting) return;
+    69	      try {
+    70	        addLog(`Attempting OBS WS connection to ${OBS_WS_URL}...`);
+    71	        await obsRef.current.connect(OBS_WS_URL, obsPassword);
+    72	        addLog("OBS Connected successfully!");
+    73	        setObsConnected(true);
+    74	
+    75	        obsRef.current.on("CurrentProgramSceneChanged", (event) => {
+    76	           addLog(`OBS Scene changed to: ${event.sceneName}`);
+    77	           const map = { [SCENE_WORK]: "work", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break" };
+    78	           const mapped = map[event.sceneName];
+    79	           if (mapped) {
+    80	             setState(s => {
+    81	               if (s.mode !== mapped) {
+    82	                 addLog(`Syncing new mode to Vercel: ${mapped}`);
+    83	                 pushUpdate({ ...s, mode: mapped }, true);
+    84	                 return { ...s, mode: mapped };
+    85	               }
+    86	               return s;
+    87	             });
+    88	           }
+    89	        });
+    90	
+    91	        obsRef.current.on("ConnectionClosed", () => {
+    92	          addLog("OBS Connection Closed. Retrying in 5s...");
+    93	          setObsConnected(false);
+    94	          setTimeout(connect, 5000);
+    95	        });
+    96	
+    97	      } catch (err) {
+    98	        addLog(`OBS Connection Error: ${err.message || err.code || err}`);
+    99	        setObsConnected(false);
+   100	        setTimeout(connect, 5000);
+   101	      }
+   102	    }
+   103	
+   104	    connect();
+   105	    return () => { keepConnecting = false; };
+   106	  }, [isLocked, obsPassword]);
+   107	
+   108	
+   109	  const saveAdminKey = (e) => {
+   110	    e.preventDefault();
+   111	    if (inputKey.trim()) {
+   112	      localStorage.setItem('STREAM_ADMIN_KEY', inputKey.trim());
+   113	      localStorage.setItem('OBS_PASS', inputObs.trim());
+   114	      setAdminKey(inputKey.trim());
+   115	      setObsPassword(inputObs.trim());
+   116	      setIsLocked(false);
+   117	    }
+   118	  };
+   119	
+   120	  const logout = () => {
+   121	    localStorage.removeItem('STREAM_ADMIN_KEY');
+   122	    localStorage.removeItem('OBS_PASS');
+   123	    setAdminKey('');
+   124	    setObsPassword('');
+   125	    setIsLocked(true);
+   126	    setObsConnected(false);
+   127	    if (obsRef.current) {
+   128	       obsRef.current.disconnect();
+   129	    }
+   130	  };
+   131	
+   132	  const pushUpdate = async (newState, silent = false) => {
+   133	    if (!adminKey) return;
+   134	    if (!silent) setIsSyncing(true);
+   135	    
+   136	    try {
+   137	      addLog(`Pushing state update...`);
+   138	      const res = await fetch('https://tiesin.me/api/stream/metrics', {
+   139	        method: 'POST',
+   140	        headers: {
+   141	          'Content-Type': 'application/json',
+   142	          'Authorization': `Bearer ${adminKey}`
+   143	        },
+   144	        body: JSON.stringify(newState)
+   145	      });
+   146	
+   147	      if (!res.ok) {
+   148	        if (res.status === 401) {
+   149	          addLog("Sync Error: Unauthorized! Wrong STREAM_ADMIN_KEY.");
+   150	          alert("Unauthorized! Your STREAM_ADMIN_KEY is wrong.");
+   151	          logout();
+   152	          return;
+   153	        }
+   154	        
+   155	        let errData;
+   156	        try { errData = await res.json(); } catch(e) {}
+   157	        
+   158	        throw new Error(`Server returned ${res.status}: ${errData?.error || ''} ${errData?.details || ''}`);
+   159	      }
+   160	      
+   161	      addLog("State update synced.");
+   162	      if (!silent) setState(newState);
+   163	    } catch (e) {
+   164	      addLog(`Sync error: ${e.message}`);
+   165	      console.error("Failed to sync:", e);
+   166	    } finally {
+   167	      if (!silent) setIsSyncing(false);
+   168	    }
+   169	  };
+   170	
+   171	  const handleMetric = (key, delta) => {
+   172	    pushUpdate({
+   173	      ...state,
+   174	      [key]: Math.max(0, state[key] + delta)
+   175	    });
+   176	  };
+   177	
+   178	  const setMode = (mode) => {
+   179	    if (state.mode === mode) return;
+   180	
+   181	    if (obsRef.current && obsConnected) {
+   182	      addLog(`Telling OBS to switch scene to: ${mode}`);
+   183	      const scene = mode === "work" ? SCENE_WORK : mode === "explain" ? SCENE_EXPLAIN : SCENE_BREAK;
+   184	      obsRef.current.call("SetCurrentProgramScene", { sceneName: scene })
+   185	        .then(() => addLog("OBS switch command succeeded"))
+   186	        .catch((e) => addLog(`OBS switch command failed: ${e.message}`));
+   187	    } else {
+   188	      addLog(`Cannot control OBS. Connection is down.`);
+   189	    }
+   190	
+   191	    pushUpdate({ ...state, mode });
+   192	  };
+   193	
+   194	  if (isLocked) {
+   195	    return (
+   196	      <div className={`overlay-root mode-${state.mode}`} style={{ width: '100vw', height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+   197	        <form onSubmit={saveAdminKey} className="context-pill stack" style={{ padding: '60px', width: 460, textAlign: 'center', alignItems: 'center', background: 'var(--panel-bg)' }}>
+   198	          <div className="tl-title" style={{ fontSize: 24, marginBottom: 12 }}>TIEDIN DASHBOARD</div>
+   199	          <div className="session-line" style={{ marginBottom: 40, color: 'var(--white-55)' }}>
+   200	             <span className="session-label" style={{ letterSpacing: 2 }}>AUTHENTICATION REQUIRED</span>
+   201	          </div>
+   202	          
+   203	          <input 
+   204	            type="password"
+   205	            placeholder="Vercel Webhook Secret"
+   206	            value={inputKey}
+   207	            onChange={e => setInputKey(e.target.value)}
+   208	            style={{ width: '100%', height: 48, padding: '0 20px', marginBottom: 12, background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', textAlign: 'center', fontFamily: 'var(--font)', fontSize: 16, outline: 'none' }}
+   209	          />
+   210	
+   211	          <input 
+   212	            type="password"
+   213	            placeholder="OBS WebSocket Password (Optional)"
+   214	            value={inputObs}
+   215	            onChange={e => setInputObs(e.target.value)}
+   216	            style={{ width: '100%', height: 48, padding: '0 20px', marginBottom: 20, background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', textAlign: 'center', fontFamily: 'var(--font)', fontSize: 16, outline: 'none' }}
+   217	          />
+   218	
+   219	          <button type="submit" className="mode-btn inverted active" style={{ width: '100%', height: 48, fontSize: 16, border: 'none', cursor: 'pointer' }}>
+   220	            UNLOCK PANEL
+   221	          </button>
+   222	        </form>
+   223	      </div>
+   224	    );
+   225	  }
+   226	
+   227	  return (
+   228	    <div className={`overlay-root mode-${state.mode}`} style={{ width: '100vw', height: '100dvh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+   229	      
+   230	      <div style={{ width: 1000, maxWidth: '100%' }}>
+   231	         
+   232	         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 80 }}>
+   233	            <div className="context-pill stack" style={{ display: 'inline-flex', padding: '12px 24px', flexDirection: 'row', gap: 16, alignItems: 'center', background: 'var(--panel-bg)' }}>
+   234	               <div className="tl-title" style={{ fontWeight: 500, letterSpacing: 1, fontSize: 18 }}>STREAM CONTROL CENTER</div>
+   235	               {isSyncing ? (
+   236	                 <div className="tl-meta current" style={{ color: 'var(--white-45)', fontSize: 14 }}>&#9679;&nbsp;&nbsp;SYNCING TO VERCEL...</div>
+   237	               ) : (
+   238	                 <div className="tl-meta current" style={{ color: obsConnected ? '#00ff88' : '#ff4444', fontSize: 14 }}>
+   239	                    &#9679;&nbsp;&nbsp;OBS {obsConnected ? 'CONNECTED' : 'DISCONNECTED'}
+   240	                 </div>
+   241	               )}
+   242	            </div>
+   243	            
+   244	            <button onClick={logout} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-55)', fontFamily: 'var(--font)', textTransform: 'uppercase', cursor: 'pointer', borderRadius: 4 }}>
+   245	               LOCK DASHBOARD
+   246	            </button>
+   247	         </div>
+   248	
+   249	         <div className="mode-buttons" style={{ marginBottom: 80, justifyContent: 'space-between', width: '100%' }}>
+   250	            <button className={`mode-btn inverted ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')}>WORK</button>
+   251	            <button className={`mode-btn inverted ${state.mode === 'explain' ? 'active' : ''}`} onClick={() => setMode('explain')}>EXPLAIN</button>
+   252	            <button className={`mode-btn inverted ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')}>BREAK</button>
+   253	         </div>
+   254	
+   255	         <div className="controls-row inverted" style={{ gap: 60 }}>
+   256	            <div className="counter" style={{ background: 'var(--panel-bg)', display: 'flex', alignItems: 'stretch' }}>
+   257	              <div className="counter-label" style={{ fontSize: 24, padding: '0 32px', display: 'flex', alignItems: 'center' }}>Contacted</div>
+   258	              <button type="button" onClick={() => handleMetric('contactedCount', -1)} style={{ fontSize: 32, padding: '0 24px', border: '0', borderLeft: '1px solid var(--white-25)', background: 'transparent', color: 'inherit', cursor: 'pointer' }}>-</button>
+   259	              <input 
+   260	                type="number" 
+   261	                value={state.contactedCount} 
+   262	                onChange={(e) => pushUpdate({ ...state, contactedCount: Math.max(0, parseInt(e.target.value) || 0) })} 
+   263	                className="counter-label counter-value" 
+   264	                style={{ fontSize: 32, width: 100, border: '0', background: 'transparent', color: 'inherit', textAlign: 'center', fontFamily: 'var(--font)' }} 
+   265	              />
+   266	              <button type="button" onClick={() => handleMetric('contactedCount', 1)} style={{ fontSize: 32, padding: '0 24px', border: '0', borderLeft: '1px solid var(--white-25)', background: 'transparent', color: 'inherit', cursor: 'pointer' }}>+</button>
+   267	            </div>
+   268	
+   269	            <div className="counter" style={{ background: 'var(--panel-bg)', display: 'flex', alignItems: 'stretch' }}>
+   270	              <div className="counter-label" style={{ fontSize: 24, padding: '0 32px', display: 'flex', alignItems: 'center' }}>Converted</div>
+   271	              <button type="button" onClick={() => handleMetric('convertedCount', -1)} style={{ fontSize: 32, padding: '0 24px', border: '0', borderLeft: '1px solid var(--white-25)', background: 'transparent', color: 'inherit', cursor: 'pointer' }}>-</button>
+   272	              <input 
+   273	                type="number" 
+   274	                value={state.convertedCount} 
+   275	                onChange={(e) => pushUpdate({ ...state, convertedCount: Math.max(0, parseInt(e.target.value) || 0) })} 
+   276	                className="counter-label counter-value" 
+   277	                style={{ fontSize: 32, width: 100, border: '0', background: 'transparent', color: 'inherit', textAlign: 'center', fontFamily: 'var(--font)' }} 
+   278	              />
+   279	              <button type="button" onClick={() => handleMetric('convertedCount', 1)} style={{ fontSize: 32, padding: '0 24px', border: '0', borderLeft: '1px solid var(--white-25)', background: 'transparent', color: 'inherit', cursor: 'pointer' }}>+</button>
+   280	            </div>
+   281	         </div>
+   282	
+   283	         {/* Diagnostics Log Panel */}
+   284	         <div className="logs-panel" style={{ marginTop: 60, height: 200, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
+   285	            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, color: 'var(--white-92)', borderBottom: '1px solid var(--white-12)', paddingBottom: 8 }}>
+   286	               <span>DIAGNOSTIC LOGS</span>
+   287	               <button onClick={() => navigator.clipboard.writeText(logs.join('\n')).then(() => alert('Logs copied!'))} style={{ background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}>COPY LOGS</button>
+   288	            </div>
+   289	            {logs.length === 0 ? <div style={{ color: 'var(--white-45)' }}>Waiting for activity...</div> : logs.map((log, i) => (
+   290	              <div key={i} style={{ marginBottom: 4 }}>{log}</div>
+   291	            ))}
+   292	         </div>
+   293	
+   294	      </div>
+   295	    </div>
+   296	  );
+   297	}

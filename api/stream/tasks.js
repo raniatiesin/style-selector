@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     // Fetch the current task arrays so we can dynamically modify them
     const { data, error: fetchError } = await supabase
       .from('stream_metrics')
-      .select('in_progress_tasks, done_tasks')
+      .select('in_progress_tasks, done_tasks, webhook_logs')
       .eq('date', today)
       .single();
 
@@ -51,6 +51,13 @@ export default async function handler(req, res) {
 
     let inProgress = data?.in_progress_tasks || [];
     let done = data?.done_tasks || [];
+    let webhookLogs = data?.webhook_logs || [];
+
+    const shortTime = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const logMsg = `[${shortTime}] Webhook: '${task || 'Unknown Task'}' -> ${status || action || 'ignored'}`;
+    webhookLogs.push(logMsg);
+    // Keep only the last 30 logs so the DB doesn't explode
+    if (webhookLogs.length > 30) webhookLogs = webhookLogs.slice(-30);
 
     // --- TASK ACTION ROUTING ---
     const rawStatus = String(status || '').toLowerCase().trim();
@@ -95,6 +102,7 @@ export default async function handler(req, res) {
          date: today,
          in_progress_tasks: inProgress,
          done_tasks: done,
+         webhook_logs: webhookLogs,
          updated_at: new Date().toISOString()
       }, { onConflict: 'date' });
 
