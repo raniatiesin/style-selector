@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import OBSWebSocket from 'obs-websocket-js';
 import './TiedInApp.css';
 
 const OBS_WS_URL = "ws://localhost:4455";
@@ -59,13 +60,9 @@ export default function TiedInControl() {
   // 2. Connect to OBS when unlocked
   useEffect(() => {
     if (isLocked) return;
-    if (typeof window.OBSWebSocket === "undefined") {
-      addLog("OBSWebSocket library not found globally.");
-      return;
-    }
-    
+
     let keepConnecting = true;
-    obsRef.current = new window.OBSWebSocket();
+    obsRef.current = new OBSWebSocket();
 
     async function connect() {
       if (!keepConnecting) return;
