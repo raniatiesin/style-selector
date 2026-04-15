@@ -11,25 +11,25 @@ html:has(.overlay-root) body {
   width: 1440px;
   height: 1080px;
   font-family: var(--font, "Space Grotesk", system-ui, -apple-system, sans-serif);
-  color: var(--white-92, rgba(147, 140, 136, 0.92));
+  color: var(--white-92, rgba(162, 154, 150, 0.92));
   user-select: none;
 
   --bg: #0a0a0a;
 
-  --white-100: rgba(147, 140, 136, 1.00);
-  --938c88: #938C88;
-  --white-92: rgba(147, 140, 136, 0.92);
-  --white-82: rgba(147, 140, 136, 0.82);
-  --white-70: rgba(147, 140, 136, 0.70);
-  --white-55: rgba(147, 140, 136, 0.55);
-  --white-45: rgba(147, 140, 136, 0.45);
-  --white-40: rgba(147, 140, 136, 0.40);
-  --white-35: rgba(147, 140, 136, 0.35);
-  --white-25: rgba(147, 140, 136, 0.25);
-  --white-12: rgba(147, 140, 136, 0.12);
-  --white-10: rgba(147, 140, 136, 0.10);
-  --white-07: rgba(147, 140, 136, 0.07);
-  --white-06: rgba(147, 140, 136, 0.06);
+  --white-100: rgba(162, 154, 150, 1.00);
+  --a29a96: #A29A96;
+  --white-92: rgba(162, 154, 150, 0.92);
+  --white-82: rgba(162, 154, 150, 0.82);
+  --white-70: rgba(162, 154, 150, 0.70);
+  --white-55: rgba(162, 154, 150, 0.55);
+  --white-45: rgba(162, 154, 150, 0.45);
+  --white-40: rgba(162, 154, 150, 0.40);
+  --white-35: rgba(162, 154, 150, 0.35);
+  --white-25: rgba(162, 154, 150, 0.25);
+  --white-12: rgba(162, 154, 150, 0.12);
+  --white-10: rgba(162, 154, 150, 0.10);
+  --white-07: rgba(162, 154, 150, 0.07);
+  --white-06: rgba(162, 154, 150, 0.06);
 
   --panel-bg: rgba(10, 10, 10, 0.62);
 
@@ -63,7 +63,7 @@ html:has(.overlay-root) body {
 .overlay-root button:focus-visible,
 .overlay-root input:focus-visible,
 .overlay-root select:focus-visible {
-  outline: 1px solid rgba(147, 140, 136, 0.5);
+  outline: 1px solid rgba(162, 154, 150, 0.5);
   outline-offset: 2px;
 }
 
@@ -295,7 +295,7 @@ html:has(.overlay-root) body {
   top: 0;
   height: 100%;
   width: 0;
-  background: var(--938c88);
+  background: var(--a29a96);
   transition: width 1s linear;
 }
 
@@ -320,7 +320,7 @@ html:has(.overlay-root) body {
   top: 0;
   width: 0;
   height: 100%;
-  background: var(--938c88);
+  background: var(--a29a96);
   transition: width 1s linear;
 }
 
@@ -336,7 +336,7 @@ html:has(.overlay-root) body {
 }
 
 .inverted {
-  color: var(--938c88);
+  color: var(--a29a96);
   mix-blend-mode: difference;
 }
 
@@ -373,7 +373,7 @@ html:has(.overlay-root) body {
 }
 
 .mode-btn.active {
-  background: var(--938c88);
+  background: var(--a29a96);
   color: #0a0a0a;
   border-color: transparent;
 }
@@ -496,7 +496,7 @@ html:has(.overlay-root) body {
   width: 1440px;
   height: 24px;
   background: transparent;
-  border: 1px solid rgba(147, 140, 136, 0.12);
+  border: 1px solid rgba(162, 154, 150, 0.12);
   border-radius: 0;
 }
 
