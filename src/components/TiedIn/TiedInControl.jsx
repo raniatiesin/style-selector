@@ -151,7 +151,11 @@ export default function TiedInControl() {
           logout();
           return;
         }
-        throw new Error(`Server returned ${res.status}`);
+        
+        let errData;
+        try { errData = await res.json(); } catch(e) {}
+        
+        throw new Error(`Server returned ${res.status}: ${errData?.error || ''} ${errData?.details || ''}`);
       }
       
       addLog("State update synced.");
