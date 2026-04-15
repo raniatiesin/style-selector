@@ -135,7 +135,7 @@ export default function TiedInControl() {
     
     try {
       addLog(`Pushing state update...`);
-      const res = await fetch('/api/stream/metrics', {
+      const res = await fetch('https://tiesin.me/api/stream/metrics', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -144,11 +144,14 @@ export default function TiedInControl() {
         body: JSON.stringify(newState)
       });
 
-      if (res.status === 401) {
-        addLog("Sync Error: Unauthorized! Wrong STREAM_ADMIN_KEY.");
-        alert("Unauthorized! Your STREAM_ADMIN_KEY is wrong.");
-        logout();
-        return;
+      if (!res.ok) {
+        if (res.status === 401) {
+          addLog("Sync Error: Unauthorized! Wrong STREAM_ADMIN_KEY.");
+          alert("Unauthorized! Your STREAM_ADMIN_KEY is wrong.");
+          logout();
+          return;
+        }
+        throw new Error(`Server returned ${res.status}`);
       }
       
       addLog("State update synced.");
