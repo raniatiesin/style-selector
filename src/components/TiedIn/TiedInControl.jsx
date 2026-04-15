@@ -196,21 +196,53 @@ export default function TiedInControl() {
              <span className="session-label" style={{ letterSpacing: 2 }}>AUTHENTICATION REQUIRED</span>
           </div>
           
-          <input 
-            type="password"
-            placeholder="Vercel Webhook Secret"
-            value={inputKey}
-            onChange={e => setInputKey(e.target.value)}
-            style={{ width: '100%', height: 48, padding: '0 20px', marginBottom: 12, background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', textAlign: 'center', fontFamily: 'var(--font)', fontSize: 16, outline: 'none' }}
-          />
+          <div style={{ position: 'relative', width: '100%', marginBottom: 12 }}>
+            <input 
+              type="password"
+              placeholder="Vercel Webhook Secret"
+              value={inputKey}
+              onChange={e => setInputKey(e.target.value)}
+              style={{ width: '100%', height: 48, padding: '0 80px', background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', textAlign: 'center', fontFamily: 'var(--font)', fontSize: 16, outline: 'none' }}
+            />
+            <button 
+              type="button" 
+              onClick={async () => {
+                try {
+                  const text = await navigator.clipboard.readText();
+                  if (text) setInputKey(text);
+                } catch(err) {
+                  console.error("Paste failed", err);
+                }
+              }}
+              style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', height: 32, padding: '0 12px', fontSize: 12, background: 'transparent', color: 'var(--white-70)', border: '1px solid var(--white-25)', cursor: 'pointer', fontFamily: 'var(--font)' }}
+            >
+              PASTE
+            </button>
+          </div>
 
-          <input 
-            type="password"
-            placeholder="OBS WebSocket Password (Optional)"
-            value={inputObs}
-            onChange={e => setInputObs(e.target.value)}
-            style={{ width: '100%', height: 48, padding: '0 20px', marginBottom: 20, background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', textAlign: 'center', fontFamily: 'var(--font)', fontSize: 16, outline: 'none' }}
-          />
+          <div style={{ position: 'relative', width: '100%', marginBottom: 20 }}>
+            <input 
+              type="password"
+              placeholder="OBS WebSocket Password (Optional)"
+              value={inputObs}
+              onChange={e => setInputObs(e.target.value)}
+              style={{ width: '100%', height: 48, padding: '0 80px', background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', textAlign: 'center', fontFamily: 'var(--font)', fontSize: 16, outline: 'none' }}
+            />
+            <button 
+              type="button" 
+              onClick={async () => {
+                try {
+                  const text = await navigator.clipboard.readText();
+                  if (text) setInputObs(text);
+                } catch(err) {
+                  console.error("Paste failed", err);
+                }
+              }}
+              style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', height: 32, padding: '0 12px', fontSize: 12, background: 'transparent', color: 'var(--white-70)', border: '1px solid var(--white-25)', cursor: 'pointer', fontFamily: 'var(--font)' }}
+            >
+              PASTE
+            </button>
+          </div>
 
           <button type="submit" className="mode-btn inverted active" style={{ width: '100%', height: 48, fontSize: 16, border: 'none', cursor: 'pointer' }}>
             UNLOCK PANEL
