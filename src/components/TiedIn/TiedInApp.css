@@ -99,6 +99,7 @@ html:has(.overlay-root) body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 10px;
 }
 
