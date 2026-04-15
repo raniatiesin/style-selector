@@ -1,6 +1,5 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import './styles/global.css'; // Reuse existing styles
 import TiedInApp from './components/TiedIn/TiedInApp';
 import TiedInControl from './components/TiedIn/TiedInControl';
 
