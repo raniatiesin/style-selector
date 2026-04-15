@@ -190,24 +190,17 @@ export default function TiedInApp({ displayMode }) {
         }).catch(() => {});
       }
     }
-        const stateData = await response.json();
-                let newStateProps = {};
+  }, [state]);
 
-        // Sync global metrics from the new `/control` panel
-        if (stateData?.metrics) {
-           newStateProps.contactedCount = Number(stateData.metrics.contactedCount) || 0;
-           newStateProps.convertedCount = Number(stateData.metrics.convertedCount) || 0;
-           
-           if (stateData.metrics.mode) {
-              const fetchedMode = stateData.metrics.mode;
-              // If Vercel tells us we changed mode, update everything right here!
-              // (OBS handles its side via webhooks if OBS wants to switch scenes itself eventually, 
-              // but we are driving OBS scenes via the Control Panel currently)
-              newStateProps.mode = fetchedMode;
-           }
-        }
-        if (stateData?.tasks && Array.isArray(stateData.tasks)) {
-          setState(prev => {
+  // --- Vercel Polling ---
+  useEffect(() => {
+    let pollingInterval;
+
+    async function fetchKanbanState() {
+      try {
+        const response = await fetch("https://tiesin.me/api/stream/state");
+        if (!response.ok) return;
+
             let tasks = [...prev.tasks];
             let currentTaskId = prev.currentTaskId;
             let changed = false;
