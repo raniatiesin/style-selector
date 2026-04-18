@@ -114,7 +114,7 @@ function getInitialState() {
   }
 
   const storedMode = localStorage.getItem(KEYS.mode);
-  const mode = ["work", "explain", "break"].includes(storedMode) ? storedMode : "work";
+  const mode = ["work", "explain", "break", "standby"].includes(storedMode) ? storedMode : "standby";
 
   return {
     mode,
@@ -150,7 +150,7 @@ export default function TiedInApp({ displayMode }) {
           localStorage.setItem(KEYS.todayDate, dateKey);
         }
         
-        if (mode !== "break") {
+        if (mode !== "break" && mode !== "standby") {
           sessionSeconds++;
           todayWorkSeconds++;
           accumulatedTotalSeconds++;
@@ -209,11 +209,18 @@ export default function TiedInApp({ displayMode }) {
            newStateProps.contactedCount = Number(stateData.metrics.contactedCount) || 0;
            newStateProps.convertedCount = Number(stateData.metrics.convertedCount) || 0;
 
-           if (stateData.metrics.mode) {
-              const fetchedMode = stateData.metrics.mode;
-              newStateProps.mode = fetchedMode;
-           }
-        }
+             if (stateData.metrics.todayWorkSeconds !== undefined) {
+                // If it was forcibly reset to 0 from the dashboard
+                if (stateData.metrics.mode === 'standby' && stateData.metrics.todayWorkSeconds === 0) {
+                    newStateProps.forceResetTime = true;
+                }
+             }
+             if (stateData.metrics.mode) {
+                const fetchedMode = stateData.metrics.mode;
+                newStateProps.mode = fetchedMode;
+             }
+          }
+
 
         if (stateData?.tasks && Array.isArray(stateData.tasks)) {
           setState(prev => {
@@ -290,6 +297,17 @@ export default function TiedInApp({ displayMode }) {
                 merged.sessionSeconds = (prev.mode === "break" && newStateProps.mode !== "break") ? 0 : prev.sessionSeconds;
                 changed = true; 
               }
+                if (newStateProps.forceResetTime && prev.todayWorkSeconds > 2) {
+                  merged.todayWorkSeconds = 0;
+                  merged.sessionSeconds = 0;
+                  merged.contactedCount = 0;
+                  merged.convertedCount = 0;
+                  localStorage.setItem(KEYS.todaySeconds, "0");
+                  localStorage.setItem(KEYS.sessionSeconds, "0");
+                  localStorage.setItem(KEYS.contacted, "0");
+                  localStorage.setItem(KEYS.converted, "0");
+                  changed = true;
+                }
             }
 
             return changed ? { ...merged, tasks, currentTaskId } : prev;      

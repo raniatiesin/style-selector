@@ -187,6 +187,12 @@ export default function TiedInControl() {
     pushUpdate({ ...state, mode });
   };
 
+  const resetDay = () => {
+    if (window.confirm("Reset entire day overlay clock back to zero and pause the screen?")) {
+      pushUpdate({ ...state, mode: "standby", todayWorkSeconds: 0, accumulatedTotalSeconds: 0, contactedCount: 0, convertedCount: 0 });
+    }
+  };
+
   if (isLocked) {
     return (
       <div className={`overlay-root mode-${state.mode}`} style={{ width: '100vw', height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
@@ -255,17 +261,22 @@ export default function TiedInControl() {
                )}
             </div>
             
-            <button onClick={logout} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-55)', fontFamily: 'var(--font)', textTransform: 'uppercase', cursor: 'pointer', borderRadius: 4 }}>
-               LOCK DASHBOARD
-            </button>
+            <div style={{ display: 'flex', gap: 12 }}>
+               <button onClick={resetDay} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid #ff4444', color: '#ff4444', fontFamily: 'var(--font)', textTransform: 'uppercase', cursor: 'pointer', borderRadius: 4 }}>
+                  RESET OVERLAY TIMER
+               </button>
+               <button onClick={logout} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-55)', fontFamily: 'var(--font)', textTransform: 'uppercase', cursor: 'pointer', borderRadius: 4 }}>
+                  LOCK DASHBOARD
+               </button>
+            </div>
          </div>
 
          <div className="mode-buttons" style={{ marginBottom: 80, justifyContent: 'space-between', width: '100%' }}>
             <button className={`mode-btn inverted ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')}>WORK</button>
             <button className={`mode-btn inverted ${state.mode === 'explain' ? 'active' : ''}`} onClick={() => setMode('explain')}>EXPLAIN</button>
             <button className={`mode-btn inverted ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')}>BREAK</button>
+            <button className={`mode-btn inverted ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ color: '#ffaa00', borderColor: '#ffaa00', background: state.mode === 'standby' ? '#ffaa00' : 'transparent', color: state.mode === 'standby' ? '#0a0a0a' : '#ffaa00' }}>STANDBY</button>
          </div>
-
          <div className="controls-row inverted" style={{ gap: 60 }}>
             <div className="counter" style={{ background: 'var(--panel-bg)', display: 'flex', alignItems: 'stretch' }}>
               <div className="counter-label" style={{ fontSize: 24, padding: '0 32px', display: 'flex', alignItems: 'center' }}>Contacted</div>
