@@ -188,8 +188,8 @@ export default function TiedInControl() {
   };
 
   const resetDay = () => {
-    if (window.confirm("Reset entire day overlay clock back to zero and pause the screen?")) {
-      pushUpdate({ ...state, mode: "standby", todayWorkSeconds: 0, accumulatedTotalSeconds: 0, contactedCount: 0, convertedCount: 0 });
+    if (window.confirm("Reset entire day overlay clock back to zero and pause the screen? (Accumulated total will NOT be reset)")) {
+      pushUpdate({ ...state, mode: "standby", todayWorkSeconds: 0, contactedCount: 0, convertedCount: 0 });
     }
   };
 

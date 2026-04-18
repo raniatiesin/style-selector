@@ -7,7 +7,7 @@ const SCENE_WORK = "Work";
 const SCENE_EXPLAIN = "Explain";
 const SCENE_BREAK = "Break";
 const HOURS_TARGET = 2000;
-const CHALLENGE_START = "2026-04-10";
+const CHALLENGE_START = "2026-04-18"; // Reset day counter to start today
 const CHALLENGE_TOTAL_DAYS = 265;
 const CANVAS_WIDTH = 1440;
 const CONTEXT_WIDTH = 1075.33;
@@ -115,6 +115,18 @@ function getInitialState() {
 
   const storedMode = localStorage.getItem(KEYS.mode);
   const mode = ["work", "explain", "break", "standby"].includes(storedMode) ? storedMode : "standby";
+
+  // ONE-TIME RESET FOR APRIL 18 (WIPE OVERLAY COUNTERS TO MATCH SUPABASE ZERO)
+  if (!localStorage.getItem('did_sync_april18_reset')) {
+    localStorage.setItem(KEYS.accumulatedSeconds, "0");
+    localStorage.setItem(KEYS.todaySeconds, "0");
+    localStorage.setItem(KEYS.sessionSeconds, "0");
+    localStorage.setItem(KEYS.contacted, "0");
+    localStorage.setItem(KEYS.converted, "0");
+    localStorage.setItem('did_sync_april18_reset', 'true');
+    todayWorkSeconds = 0;
+    sessionSeconds = 0;
+  }
 
   return {
     mode,
