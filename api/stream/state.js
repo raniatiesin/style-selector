@@ -62,6 +62,8 @@ const today = new Date().toISOString().split('T')[0];
        // Combine the arrays for the frontend logic if needed
        tasks = [
          ...(data.in_progress_tasks || []),
+         ...(data.in_review_tasks || []),
+         ...(data.up_next_tasks || []),
          ...(data.done_tasks || [])
        ];
     }
