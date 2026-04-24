@@ -223,6 +223,12 @@ export default function TiedInControl() {
     });
   };
 
+  const resetDay = () => {
+    if (window.confirm("Reset entire day overlay clock back to zero and pause the screen? (Accumulated total will NOT be reset)")) {
+      pushUpdate({ ...state, mode: "standby", todayWorkSeconds: 0, contactedCount: 0, convertedCount: 0 });
+    }
+  };
+
   const setMode = (mode) => {
     if (state.mode === mode) return;
 
@@ -237,9 +243,6 @@ export default function TiedInControl() {
     }
 
       addYtMarker(mode === 'work' ? 'Work' : mode === 'explain' ? 'Explain' : mode === 'break' ? 'Break' : 'Standby');
-    if (window.confirm("Reset entire day overlay clock back to zero and pause the screen? (Accumulated total will NOT be reset)")) {
-      pushUpdate({ ...state, mode: "standby", todayWorkSeconds: 0, contactedCount: 0, convertedCount: 0 });
-    }
   };
 
   if (isLocked) {
