@@ -46,6 +46,10 @@ const today = new Date().toISOString().split('T')[0];
       throw error;
     }
 
+    const { count, error: countErr } = await supabase
+      .from('stream_metrics')
+      .select('*', { count: 'exact', head: true });
+
     let globalMetrics = null;
     let tasks = [];
     let webhookLogs = [];
@@ -57,6 +61,7 @@ const today = new Date().toISOString().split('T')[0];
           convertedCount: data.converted_count,
           accumulatedTotalSeconds: data.accumulated_seconds,
           todayWorkSeconds: data.today_seconds,
+          totalDays: count || 1
        };
        webhookLogs = data.webhook_logs || [];
        // Combine the arrays for the frontend logic if needed
@@ -73,7 +78,7 @@ const today = new Date().toISOString().split('T')[0];
       timestamp: Date.now(),
       tasks: tasks,
       webhookLogs: webhookLogs,
-      metrics: globalMetrics || { mode: 'work', contactedCount: 0, convertedCount: 0 }
+      metrics: globalMetrics || { mode: 'work', contactedCount: 0, convertedCount: 0, totalDays: count ? count + 1 : 1 }
     });
 
   } catch (error) {

@@ -46,12 +46,7 @@ function toLongDate(date) {
   return date.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric" });
 }
 function todayKey(date) { return date.toISOString().slice(0, 10); }
-function getDayNumber(date) {
-  const start = new Date(CHALLENGE_START + "T00:00:00");
-  const current = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const diffDays = Math.floor((current - start) / 86400000) + 1;
-  return Math.max(1, diffDays);
-}
+
 function formatHours(totalSeconds) { return (Math.max(0, totalSeconds) / 3600).toFixed(1); }
 function relativeTime(timestamp) {
   const diff = Math.max(0, Date.now() - Number(timestamp || Date.now()));
@@ -219,8 +214,9 @@ export default function TiedInApp({ displayMode }) {
         // Sync global metrics from the new `/control` panel
         if (stateData?.metrics) {
            newStateProps.contactedCount = Number(stateData.metrics.contactedCount) || 0;
-           newStateProps.convertedCount = Number(stateData.metrics.convertedCount) || 0;
-
+           newStateProps.convertedCount = Number(stateData.metrics.convertedCount) || 0;             if (stateData.metrics.totalDays !== undefined) {
+               newStateProps.totalDays = Number(stateData.metrics.totalDays) || 1;
+             }
              if (stateData.metrics.todayWorkSeconds !== undefined) {
                 // If it was forcibly reset to 0 from the dashboard
                 if (stateData.metrics.mode === 'standby' && stateData.metrics.todayWorkSeconds === 0) {
@@ -302,6 +298,7 @@ export default function TiedInApp({ displayMode }) {
             if (hasNewProps) {
               if (newStateProps.contactedCount !== prev.contactedCount) { merged.contactedCount = newStateProps.contactedCount; changed = true; }
               if (newStateProps.convertedCount !== prev.convertedCount) { merged.convertedCount = newStateProps.convertedCount; changed = true; }
+              if (newStateProps.totalDays !== undefined && newStateProps.totalDays !== prev.totalDays) { merged.totalDays = newStateProps.totalDays; changed = true; }
               if (newStateProps.mode && newStateProps.mode !== prev.mode) { 
                 merged.mode = newStateProps.mode; 
                 // We should also adjust break/session start times if mode changed
@@ -337,7 +334,7 @@ export default function TiedInApp({ displayMode }) {
 
   // --- Render Mappings ---
   const progress = clamp(state.todayWorkSeconds / (7 * 3600), 0, 1);
-  const dayNumber = getDayNumber(now);
+  const dayNumber = state.totalDays || 1;
   const hours = formatHours(state.accumulatedTotalSeconds);
   const breakSeconds = state.mode === "break" && state.breakStartTime
           ? Math.max(0, Math.floor((Date.now() - state.breakStartTime) / 1000))
