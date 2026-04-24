@@ -13,6 +13,8 @@
     "perf:probe": "node scripts/perf-probe.mjs"
   },
   "dependencies": {
+    "@mdx-js/react": "^3.1.1",
+    "@mdx-js/rollup": "^3.1.1",
     "@supabase/supabase-js": "^2.98.0",
     "gsap": "^3.14.2",
     "obs-websocket-js": "^5.0.8",

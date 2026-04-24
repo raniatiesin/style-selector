@@ -1,8 +1,20 @@
 {
   "rewrites": [
     {
-      "source": "/tiedin/(.*)",
+      "source": "/tiedin/controls",
       "destination": "/tiedin/index.html"
+    },
+    {
+      "source": "/tiedin/overlays/(.*)",
+      "destination": "/tiedin/index.html"
+    },
+    {
+      "source": "/tiedin",
+      "destination": "/documentation/index.html"
+    },
+    {
+      "source": "/tiedin/(.*)",
+      "destination": "/documentation/index.html"
     },
     {
       "source": "/(.*)",
