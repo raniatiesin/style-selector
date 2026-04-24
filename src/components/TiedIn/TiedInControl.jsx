@@ -28,6 +28,46 @@ export default function TiedInControl() {
   const [webhookLogs, setWebhookLogs] = useState([]);
   const obsRef = useRef(null);
 
+  // --- YouTube Markers ---
+  const [ytMarkers, setYtMarkers] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('YT_MARKERS')) || []; }
+    catch { return []; }
+  });
+  const [streamStart, setStreamStart] = useState(() => Number(localStorage.getItem('YT_STREAM_START')) || null);
+  const activeTaskRef = useRef("INITIAL_LOAD_FLAG");
+
+  const formatYTTime = (startMillis) => {
+     if (!startMillis) return "00:00";
+     const diffSec = Math.max(0, Math.floor((Date.now() - startMillis) / 1000));
+     const h = Math.floor(diffSec / 3600);
+     const m = Math.floor((diffSec % 3600) / 60);
+     const s = diffSec % 60;
+     if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const addYtMarker = (text) => {
+     setYtMarkers(prev => {
+        const currentStart = Number(localStorage.getItem('YT_STREAM_START')); 
+        const m = `${formatYTTime(currentStart)} - ${text}`;
+        if (prev.length > 0 && prev[prev.length - 1].endsWith(`- ${text}`)) return prev;
+        const next = [...prev, m];
+        localStorage.setItem('YT_MARKERS', JSON.stringify(next));
+        return next;
+     });
+  };
+
+  const resetMarkers = () => {
+    if (window.confirm("Start/Reset stream recording timeline from 00:00?")) {
+       const now = Date.now();
+       setStreamStart(now);
+       localStorage.setItem('YT_STREAM_START', String(now));
+       const initial = ["00:00 - Intro"];
+       setYtMarkers(initial);
+       localStorage.setItem('YT_MARKERS', JSON.stringify(initial));
+    }
+  };
+
   const addLog = (msg) => setLogs(l => [...l, `[${new Date().toLocaleTimeString()}] ${msg}`].slice(-20));
 
   useEffect(() => {
@@ -45,6 +85,19 @@ export default function TiedInControl() {
         if (data?.metrics && isFirst) {
            setState(s => ({ ...s, ...data.metrics }));
            isFirst = false;
+        }
+
+        if (data?.tasks && Array.isArray(data.tasks)) {
+           const activeTask = data.tasks.find(t => t.status === 'in_progress' || t.status === 'in progress');
+           const taskName = activeTask ? activeTask.name : null;
+           if (taskName && activeTaskRef.current !== taskName) {
+              if (activeTaskRef.current !== "INITIAL_LOAD_FLAG") { addYtMarker(taskName); }
+              activeTaskRef.current = taskName;
+           } else if (!taskName && activeTaskRef.current !== null) {
+              if (activeTaskRef.current === "INITIAL_LOAD_FLAG") {
+                 activeTaskRef.current = null;
+              }
+           }
         }
       } catch (e) {}
     }
@@ -76,8 +129,7 @@ export default function TiedInControl() {
              setState(s => {
                if (s.mode !== mapped) {
                  addLog(`Syncing new mode to Vercel: ${mapped}`);
-                 pushUpdate({ ...s, mode: mapped }, true);
-                 return { ...s, mode: mapped };
+                 pushUpdate({ ...s, mode: mapped }, true);                  addYtMarker(mapped === 'work' ? 'Work' : mapped === 'explain' ? 'Explain' : mapped === 'break' ? 'Break' : 'Standby');                 return { ...s, mode: mapped };
                }
                return s;
              });
@@ -184,10 +236,7 @@ export default function TiedInControl() {
       addLog(`Cannot control OBS. Connection is down.`);
     }
 
-    pushUpdate({ ...state, mode });
-  };
-
-  const resetDay = () => {
+      addYtMarker(mode === 'work' ? 'Work' : mode === 'explain' ? 'Explain' : mode === 'break' ? 'Break' : 'Standby');
     if (window.confirm("Reset entire day overlay clock back to zero and pause the screen? (Accumulated total will NOT be reset)")) {
       pushUpdate({ ...state, mode: "standby", todayWorkSeconds: 0, contactedCount: 0, convertedCount: 0 });
     }
@@ -305,8 +354,22 @@ export default function TiedInControl() {
             </div>
          </div>
 
-         {/* Webhook Stream Logs Panel */}
-         <div className="logs-panel" style={{ marginTop: 60, height: 200, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
+           {/* YouTube Chapter Markers Panel */}
+           <div className="logs-panel" style={{ marginTop: 60, height: 200, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, color: 'var(--white-92)', borderBottom: '1px solid var(--white-12)', paddingBottom: 8 }}>
+                 <span>YOUTUBE CHAPTER MARKERS</span>
+                 <div style={{ display: 'flex', gap: 8 }}>
+                   <button onClick={resetMarkers} style={{ background: 'transparent', border: '1px solid #ffaa00', color: '#ffaa00', padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}>START TIMELINE (00:00)</button>
+                   <button onClick={() => navigator.clipboard.writeText(ytMarkers.join('\n')).then(() => alert('Markers copied!'))} style={{ background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}>COPY MARKERS</button>
+                 </div>
+              </div>
+              {ytMarkers.length === 0 ? <div style={{ color: 'var(--white-45)' }}>Waiting for activity...</div> : ytMarkers.slice().reverse().map((log, i) => (
+                <div key={i} style={{ marginBottom: 4, color: '#00ff88' }}>{log}</div>
+              ))}
+           </div>
+
+           {/* Webhook Stream Logs Panel */}
+           <div className="logs-panel" style={{ marginTop: 20, height: 200, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, color: 'var(--white-92)', borderBottom: '1px solid var(--white-12)', paddingBottom: 8 }}>
                <span>WEBHOOK ACTIVITY (SUPABASE)</span>
                <button onClick={() => navigator.clipboard.writeText(webhookLogs.join('\n')).then(() => alert('Webhook Logs copied!'))} style={{ background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}>COPY WEBHOOKS</button>
