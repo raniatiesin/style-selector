@@ -352,7 +352,7 @@ export default function TiedInControl() {
             <button className={`mode-btn inverted ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')}>WORK</button>
             <button className={`mode-btn inverted ${state.mode === 'explain' ? 'active' : ''}`} onClick={() => setMode('explain')}>EXPLAIN</button>
             <button className={`mode-btn inverted ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')}>BREAK</button>
-             <button className={`mode-btn inverted ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ borderColor: '#ffaa00', background: state.mode === 'standby' ? '#ffaa00' : 'transparent', color: state.mode === 'standby' ? '#212529' : '#ffaa00' }}>STANDBY</button>
+             <button className={`mode-btn inverted ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ borderColor: '#ffaa00', background: state.mode === 'standby' ? '#ffaa00' : 'transparent', color: state.mode === 'standby' ? '#0a0a0a' : '#ffaa00' }}>STANDBY</button>
          </div>
          <div className="controls-row inverted" style={{ gap: 60 }}>
             <div className="counter" style={{ background: 'var(--panel-bg)', display: 'flex', alignItems: 'stretch' }}>
@@ -383,7 +383,7 @@ export default function TiedInControl() {
          </div>
 
            {/* YouTube Chapter Markers Panel */}
-           <div className="logs-panel" style={{ marginTop: 60, height: 200, background: 'rgba(33,37,41,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
+           <div className="logs-panel" style={{ marginTop: 60, height: 200, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, color: 'var(--white-92)', borderBottom: '1px solid var(--white-12)', paddingBottom: 8 }}>
                  <span>YOUTUBE CHAPTER MARKERS</span>
                  <div style={{ display: 'flex', gap: 8 }}>
@@ -397,7 +397,7 @@ export default function TiedInControl() {
            </div>
 
            {/* Webhook Stream Logs Panel */}
-           <div className="logs-panel" style={{ marginTop: 20, height: 200, background: 'rgba(33,37,41,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
+           <div className="logs-panel" style={{ marginTop: 20, height: 200, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, color: 'var(--white-92)', borderBottom: '1px solid var(--white-12)', paddingBottom: 8 }}>
                <span>WEBHOOK ACTIVITY (SUPABASE)</span>
                <button onClick={() => navigator.clipboard.writeText(webhookLogs.join('\n')).then(() => alert('Webhook Logs copied!'))} style={{ background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}>COPY WEBHOOKS</button>
@@ -408,7 +408,7 @@ export default function TiedInControl() {
          </div>
 
          {/* Diagnostics Log Panel */}
-         <div className="logs-panel" style={{ marginTop: 20, height: 200, background: 'rgba(33,37,41,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
+         <div className="logs-panel" style={{ marginTop: 20, height: 200, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--white-12)', padding: 16, overflowY: 'auto', fontFamily: 'monospace', fontSize: 13, color: 'var(--white-70)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, color: 'var(--white-92)', borderBottom: '1px solid var(--white-12)', paddingBottom: 8 }}>
                <span>LOCAL DIAGNOSTIC LOGS</span>
                <button onClick={() => navigator.clipboard.writeText(logs.join('\n')).then(() => alert('Logs copied!'))} style={{ background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-92)', padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}>COPY LOGS</button>
