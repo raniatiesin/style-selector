@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   // CORS Security
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type'); 
 
   if (req.method === 'OPTIONS') {
@@ -22,12 +22,18 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized access blocked." });     
   }
 
-  if (req.method !== 'POST') {
+  if (req.method !== 'POST' && req.method !== 'DELETE') {
     return res.status(405).json({ error: 'Method Not Allowed.' });
   }
 
   try {
-    const { id, task, status, time, action, inProgressTasks, doneTasks } = req.body;
+    // Determine payload between body and query (for DELETE requests)
+    const payload = req.method === 'DELETE' ? (Object.keys(req.body || {}).length ? req.body : req.query) : req.body;
+    let { id, task, status, time, action, inProgressTasks, doneTasks, due_date, dueDate, due } = payload || {};
+
+    // Fallback to headers if n8n forces you to send them there for DELETE requests
+    id = id || req.headers['id'] || req.headers['x-task-id'];
+    action = action || req.headers['action'] || req.headers['x-action'];
 
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
@@ -74,35 +80,49 @@ export default async function handler(req, res) {
     if (action === 'sync') {
        inProgress = inProgressTasks || inProgress;
        done = doneTasks || done;
-    } else if (['in progress', 'in_progress', 'up next', 'up_next', 'upnext', 'in review', 'in_review', 'waiting'].includes(rawStatus)) {
-       let normalizedStatus = 'waiting';
-       if (rawStatus.includes('progress')) normalizedStatus = 'in_progress';
-       else if (rawStatus.includes('next')) normalizedStatus = 'up_next';
-       else if (rawStatus.includes('review')) normalizedStatus = 'in_review';
-
-       const newTask = {
-         id: taskId,
-         name: String(task || "Untitled Task"),
-         status: normalizedStatus,
-         createdAt: time ? new Date(time).getTime() : Date.now(),
-         completedAt: null
-       };
-
-       if (normalizedStatus === 'in_progress') inProgress.push(newTask);
-       else if (normalizedStatus === 'in_review') inReview.push(newTask);
-       else if (normalizedStatus === 'up_next') upNext.push(newTask);
-       else upNext.push(newTask); // Fallback waiting to upNext so it's not totally lost if sent exactly as "waiting"
-       
-    } else if (rawStatus === 'done' || rawStatus === 'completed') {
-       done.unshift({
-         id: taskId,
-         name: String(task || "Completed Task"),
-         status: "done",
-         createdAt: Date.now(), // Fallback if it didn't exist before
-         completedAt: time ? new Date(time).getTime() : Date.now()
-       });
+    } else if (action === 'delete' || req.method === 'DELETE' || rawStatus === 'delete' || rawStatus === 'deleted') {
+       // Just deleting, do nothing to add it back
     } else {
-       // Ignore unrecognized statuses instead of crashing
+       // Filter tasks that aren't due today
+       const passedDate = due_date || dueDate || due;
+       let isDueToday = true;
+       if (passedDate) {
+         try {
+           const parsedDue = new Date(passedDate).toISOString().split('T')[0];
+           if (parsedDue !== today) isDueToday = false;
+         } catch(e) {}
+       }
+
+       if (isDueToday) {
+         if (['in progress', 'in_progress', 'up next', 'up_next', 'upnext', 'in review', 'in_review', 'waiting'].includes(rawStatus)) {
+            let normalizedStatus = 'waiting';
+            if (rawStatus.includes('progress')) normalizedStatus = 'in_progress';
+            else if (rawStatus.includes('next')) normalizedStatus = 'up_next';
+            else if (rawStatus.includes('review')) normalizedStatus = 'in_review';
+     
+            const newTask = {
+              id: taskId,
+              name: String(task || "Untitled Task"),
+              status: normalizedStatus,
+              createdAt: time ? new Date(time).getTime() : Date.now(),
+              completedAt: null
+            };
+     
+            if (normalizedStatus === 'in_progress') inProgress.push(newTask);
+            else if (normalizedStatus === 'in_review') inReview.push(newTask);
+            else if (normalizedStatus === 'up_next') upNext.push(newTask);
+            else upNext.push(newTask); 
+            
+         } else if (rawStatus === 'done' || rawStatus === 'completed') {
+            done.unshift({
+              id: taskId,
+              name: String(task || "Completed Task"),
+              status: "done",
+              createdAt: Date.now(), 
+              completedAt: time ? new Date(time).getTime() : Date.now()
+            });
+         }
+       }
     }
 
     // Save the modified arrays back to Supabase

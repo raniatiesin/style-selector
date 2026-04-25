@@ -46,6 +46,8 @@ export default async function handler(req, res) {
     if (Object.hasOwn(payload, 'todayWorkSeconds')) updateData.today_seconds = payload.todayWorkSeconds;
     if (Object.hasOwn(payload, 'accumulatedTotalSeconds')) updateData.accumulated_seconds = payload.accumulatedTotalSeconds;
     if (Object.hasOwn(payload, 'inProgressTasks')) updateData.in_progress_tasks = payload.inProgressTasks;
+    if (Object.hasOwn(payload, 'inReviewTasks')) updateData.in_review_tasks = payload.inReviewTasks;
+    if (Object.hasOwn(payload, 'upNextTasks')) updateData.up_next_tasks = payload.upNextTasks;
     if (Object.hasOwn(payload, 'doneTasks')) updateData.done_tasks = payload.doneTasks;
 
     const { data, error } = await supabase

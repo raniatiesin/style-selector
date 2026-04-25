@@ -50,6 +50,17 @@ const today = new Date().toISOString().split('T')[0];
       .from('stream_metrics')
       .select('*', { count: 'exact', head: true });
 
+    // Calculate true accumulated time from PREVIOUS days (so today doesn't double count active ticking)
+    const { data: pastRows } = await supabase
+      .from('stream_metrics')
+      .select('today_seconds')
+      .neq('date', today);
+      
+    let pastDaysAcc = 0;
+    if (pastRows) {
+      pastDaysAcc = pastRows.reduce((acc, row) => acc + (row.today_seconds || 0), 0);
+    }
+
     let globalMetrics = null;
     let tasks = [];
     let webhookLogs = [];
@@ -59,7 +70,7 @@ const today = new Date().toISOString().split('T')[0];
           mode: data.mode,
           contactedCount: data.contacted_count,
           convertedCount: data.converted_count,
-          accumulatedTotalSeconds: data.accumulated_seconds,
+          previousDaysSeconds: pastDaysAcc,
           todayWorkSeconds: data.today_seconds,
           totalDays: count || 1
        };
@@ -71,6 +82,16 @@ const today = new Date().toISOString().split('T')[0];
          ...(data.up_next_tasks || []),
          ...(data.done_tasks || [])
        ];
+    } else {
+        // If no rows for today, still return the global accumulations
+        globalMetrics = {
+            mode: 'work',
+            contactedCount: 0,
+            convertedCount: 0,
+            previousDaysSeconds: pastDaysAcc,
+            todayWorkSeconds: 0,
+            totalDays: count ? count + 1 : 1
+        };
     }
 
     return res.status(200).json({
@@ -78,7 +99,7 @@ const today = new Date().toISOString().split('T')[0];
       timestamp: Date.now(),
       tasks: tasks,
       webhookLogs: webhookLogs,
-      metrics: globalMetrics || { mode: 'work', contactedCount: 0, convertedCount: 0, totalDays: count ? count + 1 : 1 }
+      metrics: globalMetrics
     });
 
   } catch (error) {

@@ -89,14 +89,7 @@ function getInitialState() {
   try {
     const rawTasks = localStorage.getItem(KEYS.tasks);
     let parsed = rawTasks ? JSON.parse(rawTasks) : [];
-    if (!rawTasks || parsed.length === 0) {
-       parsed = [
-         { id: "mock_1", name: "Create Env", status: "done", createdAt: Date.now() - 3600000 * 4, completedAt: Date.now() - 3600000 * 3 },
-         { id: "mock_2", name: "Refactor Main Grid Layout", status: "done", createdAt: Date.now() - 3600000 * 2, completedAt: Date.now() - 3600000 * 1 },
-         { id: "mock_3", name: "Deploy DB", status: "in_progress", createdAt: Date.now() - 3600000 * 0.8, completedAt: null }
-       ];
-       localStorage.setItem(KEYS.currentTaskId, "mock_3");
-    }
+    // Removed the mock task injection as we want to start from zero if no tasks exist
     tasks = parsed.map(t => ({
       id: String(t.id || ""),
       name: String(t.name || "Untitled task"),
@@ -127,7 +120,7 @@ function getInitialState() {
     mode,
     sessionSeconds,
     todayWorkSeconds,
-    accumulatedTotalSeconds: Number(localStorage.getItem(KEYS.accumulatedSeconds)) || 0,
+    previousDaysSeconds: 0,
     contactedCount: Number(localStorage.getItem(KEYS.contacted)) || 0,
     convertedCount: Number(localStorage.getItem(KEYS.converted)) || 0,
     tasks,
@@ -148,7 +141,7 @@ export default function TiedInApp({ displayMode }) {
       setNow(currentNow);
 
       setState(prev => {
-        let { mode, sessionSeconds, todayWorkSeconds, accumulatedTotalSeconds } = prev;
+        let { mode, sessionSeconds, todayWorkSeconds, previousDaysSeconds } = prev;
         
         const dateKey = todayKey(currentNow);
         if (localStorage.getItem(KEYS.todayDate) !== dateKey) {
@@ -160,9 +153,8 @@ export default function TiedInApp({ displayMode }) {
         if (mode !== "break" && mode !== "standby") {
           sessionSeconds++;
           todayWorkSeconds++;
-          accumulatedTotalSeconds++;
         }
-        return { ...prev, sessionSeconds, todayWorkSeconds, accumulatedTotalSeconds };
+        return { ...prev, sessionSeconds, todayWorkSeconds, previousDaysSeconds };
       });
     }, 1000);
     return () => clearInterval(interval);
@@ -173,7 +165,6 @@ export default function TiedInApp({ displayMode }) {
     localStorage.setItem(KEYS.mode, state.mode);
     localStorage.setItem(KEYS.sessionSeconds, String(state.sessionSeconds));
     localStorage.setItem(KEYS.todaySeconds, String(state.todayWorkSeconds));
-    localStorage.setItem(KEYS.accumulatedSeconds, String(state.accumulatedTotalSeconds));
     localStorage.setItem(KEYS.contacted, String(state.contactedCount));
     localStorage.setItem(KEYS.converted, String(state.convertedCount));
     localStorage.setItem(KEYS.currentTaskId, state.currentTaskId || "");
@@ -191,8 +182,7 @@ export default function TiedInApp({ displayMode }) {
             'Authorization': `Bearer ${adminKey}`
           },
           body: JSON.stringify({
-            todayWorkSeconds: state.todayWorkSeconds,
-            accumulatedTotalSeconds: state.accumulatedTotalSeconds
+            todayWorkSeconds: state.todayWorkSeconds
           })
         }).catch(() => {});
       }
@@ -226,6 +216,9 @@ export default function TiedInApp({ displayMode }) {
              if (stateData.metrics.mode) {
                 const fetchedMode = stateData.metrics.mode;
                 newStateProps.mode = fetchedMode;
+             }
+             if (stateData.metrics.previousDaysSeconds !== undefined) {
+                newStateProps.previousDaysSeconds = Number(stateData.metrics.previousDaysSeconds) || 0;
              }
           }
 
@@ -299,6 +292,7 @@ export default function TiedInApp({ displayMode }) {
               if (newStateProps.contactedCount !== prev.contactedCount) { merged.contactedCount = newStateProps.contactedCount; changed = true; }
               if (newStateProps.convertedCount !== prev.convertedCount) { merged.convertedCount = newStateProps.convertedCount; changed = true; }
               if (newStateProps.totalDays !== undefined && newStateProps.totalDays !== prev.totalDays) { merged.totalDays = newStateProps.totalDays; changed = true; }
+              if (newStateProps.previousDaysSeconds !== undefined && newStateProps.previousDaysSeconds !== prev.previousDaysSeconds) { merged.previousDaysSeconds = newStateProps.previousDaysSeconds; changed = true; }
               if (newStateProps.mode && newStateProps.mode !== prev.mode) { 
                 merged.mode = newStateProps.mode; 
                 // We should also adjust break/session start times if mode changed
@@ -335,7 +329,8 @@ export default function TiedInApp({ displayMode }) {
   // --- Render Mappings ---
   const progress = clamp(state.todayWorkSeconds / (7 * 3600), 0, 1);
   const dayNumber = state.totalDays || 1;
-  const hours = formatHours(state.accumulatedTotalSeconds);
+  const accumulatedTotalSeconds = state.previousDaysSeconds + state.todayWorkSeconds;
+  const hours = formatHours(accumulatedTotalSeconds);
   const breakSeconds = state.mode === "break" && state.breakStartTime
           ? Math.max(0, Math.floor((Date.now() - state.breakStartTime) / 1000))
           : 0;

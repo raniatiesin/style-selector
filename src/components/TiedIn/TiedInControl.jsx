@@ -229,6 +229,19 @@ export default function TiedInControl() {
     }
   };
 
+  const resetTasks = () => {
+    if (window.confirm("WARNING: Are you sure you want to wipe ALL tasks from the database for today? This cannot be undone.")) {
+      pushUpdate({ 
+         ...state, 
+         inProgressTasks: [], 
+         inReviewTasks: [], 
+         upNextTasks: [], 
+         doneTasks: [] 
+      });
+      // Vercel sync will pick this up on next tick empty string
+    }
+  };
+
   const setMode = (mode) => {
     if (state.mode === mode) return;
 
@@ -316,6 +329,9 @@ export default function TiedInControl() {
             <div style={{ display: 'flex', gap: 12 }}>
                <button onClick={resetDay} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid #ff4444', color: '#ff4444', fontFamily: 'var(--font)', textTransform: 'uppercase', cursor: 'pointer', borderRadius: 4 }}>
                   RESET OVERLAY TIMER
+               </button>
+               <button onClick={resetTasks} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid #ff1111', color: '#ff1111', fontFamily: 'var(--font)', textTransform: 'uppercase', cursor: 'pointer', borderRadius: 4 }}>
+                  WIPE ALL TASKS
                </button>
                <button onClick={logout} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-55)', fontFamily: 'var(--font)', textTransform: 'uppercase', cursor: 'pointer', borderRadius: 4 }}>
                   LOCK DASHBOARD

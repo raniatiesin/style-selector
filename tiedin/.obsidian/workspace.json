@@ -20,8 +20,65 @@
               "icon": "lucide-file",
               "title": "Everything There Is To Claude"
             }
+          },
+          {
+            "id": "46671d8815e74eb1",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Claude Questions.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Claude Questions"
+            }
+          },
+          {
+            "id": "fcbb4a44e676331c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Claude Code's Commands.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Claude Code's Commands"
+            }
+          },
+          {
+            "id": "cd66c8519495c468",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Claude Code's Skills.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Claude Code's Skills"
+            }
+          },
+          {
+            "id": "82f8a3b900b5742c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Claude Code's Memory.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Claude Code's Memory"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -78,8 +135,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "e4dbe6c9cf847700",
@@ -95,7 +151,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Everything There Is To Claude.md",
+                "file": "Claude Code's Memory.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -105,7 +161,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Everything There Is To Claude"
+              "title": "Backlinks for Claude Code's Memory"
             }
           },
           {
@@ -114,12 +170,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Everything There Is To Claude.md",
+                "file": "Claude Code's Memory.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from Everything There Is To Claude"
+              "title": "Outgoing links from Claude Code's Memory"
             }
           },
           {
@@ -157,13 +213,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Everything There Is To Claude.md",
+                "file": "Claude Code's Memory.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Everything There Is To Claude"
+              "title": "Outline of Claude Code's Memory"
             }
           }
         ]
@@ -185,8 +241,13 @@
       "obsidian-excalidraw-plugin:New drawing": false
     }
   },
-  "active": "9658bf1e45e062a0",
+  "active": "46671d8815e74eb1",
   "lastOpenFiles": [
-    "Everything There Is To Claude.md"
+    "Everything There Is To Claude.md",
+    "Claude Questions.md",
+    "Claude Code's Commands.md",
+    "Claude Code's Skills.md",
+    "Claude Code's Memory.md",
+    "desktop.ini"
   ]
 }
