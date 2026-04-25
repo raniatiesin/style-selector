@@ -91,12 +91,15 @@ export default function TiedInControl() {
            const activeTask = data.tasks.find(t => t.status === 'in_progress' || t.status === 'in progress');
            const taskName = activeTask ? activeTask.name : null;
            if (taskName && activeTaskRef.current !== taskName) {
-              if (activeTaskRef.current !== "INITIAL_LOAD_FLAG") { addYtMarker(taskName); }
+              if (activeTaskRef.current !== "INITIAL_LOAD_FLAG") {
+                 setState(s => {
+                    if (s.mode === 'work') addYtMarker(`work - ${taskName}`);
+                    return s;
+                 });
+              }
               activeTaskRef.current = taskName;
            } else if (!taskName && activeTaskRef.current !== null) {
-              if (activeTaskRef.current === "INITIAL_LOAD_FLAG") {
-                 activeTaskRef.current = null;
-              }
+              activeTaskRef.current = null;
            }
         }
       } catch (e) {}
@@ -129,7 +132,11 @@ export default function TiedInControl() {
              setState(s => {
                if (s.mode !== mapped) {
                  addLog(`Syncing new mode to Vercel: ${mapped}`);
-                 pushUpdate({ ...s, mode: mapped }, true);                  addYtMarker(mapped === 'work' ? 'Work' : mapped === 'explain' ? 'Explain' : mapped === 'break' ? 'Break' : 'Standby');                 return { ...s, mode: mapped };
+                 pushUpdate({ ...s, mode: mapped }, true);
+                 const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
+                 const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
+                 addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? 'explain' : mapped === 'break' ? 'break' : 'standby');
+                 return { ...s, mode: mapped };
                }
                return s;
              });
@@ -255,7 +262,9 @@ export default function TiedInControl() {
       addLog(`Cannot control OBS. Connection is down.`);
     }
 
-      addYtMarker(mode === 'work' ? 'Work' : mode === 'explain' ? 'Explain' : mode === 'break' ? 'Break' : 'Standby');
+    const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
+    const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
+    addYtMarker(mode === 'work' ? workText : mode === 'explain' ? 'explain' : mode === 'break' ? 'break' : 'standby');
   };
 
   if (isLocked) {
