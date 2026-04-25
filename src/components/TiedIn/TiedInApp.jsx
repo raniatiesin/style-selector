@@ -392,12 +392,18 @@ export default function TiedInApp({ displayMode }) {
                 if (task.status === "in_progress") timeStr = "started " + relativeTime(task.createdAt);
                 else if (task.status === "done" || task.status === "in_review") timeStr = "finished " + relativeTime(when);
                 else timeStr = "added " + relativeTime(task.createdAt);
+                
+                let dotColor = "#9113A4"; // waiting (purple)
+                if (task.status === "in_progress") dotColor = "#4DAA57"; // green
+                else if (task.status === "in_review") dotColor = "#FFBA08"; // yellow
+                else if (task.status === "up_next") dotColor = "#2F6690"; // blue
+                else if (task.status === "done") dotColor = "#F95738"; // orange
 
                 return (
                   <div key={task.id} className="tl-item">
                     <div className={pillClass}>
                       <div className="tl-title">{task.name}</div>
-                      <div className={metaClass}>&#9679;&nbsp;&nbsp;{statusStr} &middot; {timeStr}</div>
+                      <div className={metaClass}><span style={{ color: dotColor }}>&#9679;</span>&nbsp;&nbsp;{statusStr} &middot; {timeStr}</div>
                     </div>
                   </div>
                 )

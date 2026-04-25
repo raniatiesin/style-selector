@@ -11,27 +11,27 @@ html:has(.overlay-root) body {
   width: 1440px;
   height: 1080px;
   font-family: var(--font, "Space Grotesk", system-ui, -apple-system, sans-serif);
-  color: var(--white-92, rgba(162, 154, 150, 0.92));
+  color: var(--white-92, rgba(248, 249, 250, 0.92));
   user-select: none;
 
-  --bg: #0a0a0a;
+  --bg: #212529;
 
-  --white-100: rgba(162, 154, 150, 1.00);
-  --a29a96: #A29A96;
-  --white-92: rgba(162, 154, 150, 0.92);
-  --white-82: rgba(162, 154, 150, 0.82);
-  --white-70: rgba(162, 154, 150, 0.70);
-  --white-55: rgba(162, 154, 150, 0.55);
-  --white-45: rgba(162, 154, 150, 0.45);
-  --white-40: rgba(162, 154, 150, 0.40);
-  --white-35: rgba(162, 154, 150, 0.35);
-  --white-25: rgba(162, 154, 150, 0.25);
-  --white-12: rgba(162, 154, 150, 0.12);
-  --white-10: rgba(162, 154, 150, 0.10);
-  --white-07: rgba(162, 154, 150, 0.07);
-  --white-06: rgba(162, 154, 150, 0.06);
+  --white-100: rgba(248, 249, 250, 1.00);
+  --a29a96: #ADB5BD;
+  --white-92: rgba(248, 249, 250, 0.92);
+  --white-82: rgba(248, 249, 250, 0.82);
+  --white-70: rgba(248, 249, 250, 0.70);
+  --white-55: rgba(248, 249, 250, 0.55);
+  --white-45: rgba(248, 249, 250, 0.45);
+  --white-40: rgba(248, 249, 250, 0.40);
+  --white-35: rgba(248, 249, 250, 0.35);
+  --white-25: rgba(248, 249, 250, 0.25);
+  --white-12: rgba(248, 249, 250, 0.12);
+  --white-10: rgba(248, 249, 250, 0.10);
+  --white-07: rgba(248, 249, 250, 0.07);
+  --white-06: rgba(248, 249, 250, 0.06);
 
-  --panel-bg: rgba(10, 10, 10, 0.62);
+  --panel-bg: rgba(33, 37, 41, 0.62);
 
   --context-gap: 10px;
 }
@@ -55,7 +55,7 @@ html:has(.overlay-root) body {
 .overlay-root input,
 .overlay-root select {
   border: 1px solid var(--white-25);
-  background: rgba(10, 10, 10, 0.82);
+  background: rgba(33, 37, 41, 0.82);
   color: var(--white-92);
   font-family: inherit;
 }
@@ -63,7 +63,7 @@ html:has(.overlay-root) body {
 .overlay-root button:focus-visible,
 .overlay-root input:focus-visible,
 .overlay-root select:focus-visible {
-  outline: 1px solid rgba(162, 154, 150, 0.5);
+  outline: 1px solid var(--white-55);
   outline-offset: 2px;
 }
 
@@ -116,7 +116,7 @@ html:has(.overlay-root) body {
   justify-content: flex-start;
   font-family: inherit;
   font-size: 12px;
-  color: #3B3837;
+  color: var(--white-45);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -129,9 +129,9 @@ html:has(.overlay-root) body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  color: #3B3837;
-  background: rgba(10, 10, 10, 0.75);
-  border: 1px solid #3B3837;
+  color: var(--white-45);
+  background: rgba(33, 37, 41, 0.75);
+  border: 1px solid var(--white-25);
   padding: 10px 10px;
   border-radius: 0;
   width: 100%;
@@ -307,7 +307,7 @@ html:has(.overlay-root) body {
   height: 1080px;
   display: none;
   overflow: hidden;
-  background: #0a0a0a;
+  background: var(--bg);
 }
 
 .mode-break .break-screen {
@@ -374,7 +374,7 @@ html:has(.overlay-root) body {
 
 .mode-btn.active {
   background: var(--a29a96);
-  color: #0a0a0a;
+  color: var(--bg);
   border-color: transparent;
 }
 
