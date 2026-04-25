@@ -254,6 +254,17 @@ export default function TiedInControl() {
 
     if (obsRef.current && obsConnected) {
       addLog(`Telling OBS to switch scene to: ${mode}`);
+      
+      if (mode === "explain") {
+        obsRef.current.call("StartRecord")
+          .then(() => addLog("OBS record started"))
+          .catch(e => addLog(`StartRecord failed: ${e.message}`));
+      } else if (state.mode === "explain") {
+        obsRef.current.call("StopRecord")
+          .then(() => addLog("OBS record stopped"))
+          .catch(e => addLog(`StopRecord failed: ${e.message}`));
+      }
+
       const scene = mode === "work" ? SCENE_WORK : mode === "explain" ? SCENE_EXPLAIN : SCENE_BREAK;
       obsRef.current.call("SetCurrentProgramScene", { sceneName: scene })
         .then(() => addLog("OBS switch command succeeded"))
