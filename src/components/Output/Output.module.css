@@ -550,15 +550,15 @@
   }
 
   .confirmBtn {
-    background: #ffffff;
+    background: #ADB5BD;
     color: #0a0a0a;
-    border: 1px solid #ffffff;
+    border: 1px solid #ADB5BD;
   }
 
   .confirmBtn:hover {
-    background: #ffffff;
+    background: #ADB5BD;
     color: #000000;
-    border-color: #ffffff;
+    border-color: #ADB5BD;
   }
 }
 
