@@ -46,24 +46,24 @@ html:has(.overlay-root) body {
 
 .overlay-root button {
   cursor: pointer;
-  border: 1px solid var(--white-25);
+  border: 1px solid var(--a29a96);
   background: transparent;
-  color: var(--white-92);
+  color: var(--a29a96);
   font-family: inherit;
 }
 
 .overlay-root input,
 .overlay-root select {
-  border: 1px solid var(--white-25);
+  border: 1px solid var(--a29a96);
   background: rgba(33, 37, 41, 0.82);
-  color: var(--white-92);
+  color: var(--a29a96);
   font-family: inherit;
 }
 
 .overlay-root button:focus-visible,
 .overlay-root input:focus-visible,
 .overlay-root select:focus-visible {
-  outline: 1px solid var(--white-55);
+  outline: 1px solid var(--a29a96);
   outline-offset: 2px;
 }
 
@@ -100,7 +100,7 @@ html:has(.overlay-root) body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 10px;
 }
 
