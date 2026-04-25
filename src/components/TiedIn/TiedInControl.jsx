@@ -131,6 +131,16 @@ export default function TiedInControl() {
            if (mapped) {
              setState(s => {
                if (s.mode !== mapped) {
+                 if (mapped === "explain") {
+                   obsRef.current.call("StartRecord")
+                     .then(() => addLog("OBS record started"))
+                     .catch(e => addLog(`StartRecord failed: ${e.message}`));
+                 } else if (s.mode === "explain") {
+                   obsRef.current.call("StopRecord")
+                     .then(() => addLog("OBS record stopped"))
+                     .catch(e => addLog(`StopRecord failed: ${e.message}`));
+                 }
+
                  addLog(`Syncing new mode to Vercel: ${mapped}`);
                  pushUpdate({ ...s, mode: mapped }, true);
                  const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
@@ -255,22 +265,34 @@ export default function TiedInControl() {
     if (obsRef.current && obsConnected) {
       addLog(`Telling OBS to switch scene to: ${mode}`);
       
-      if (mode === "explain") {
-        obsRef.current.call("StartRecord")
-          .then(() => addLog("OBS record started"))
-          .catch(e => addLog(`StartRecord failed: ${e.message}`));
-      } else if (state.mode === "explain") {
+      // Standby doesn't have an OBS scene mapped, so it won't fire CurrentProgramSceneChanged
+      // We must manually stop recording if leaving explain for standby
+      if (mode === "standby" && state.mode === "explain") {
         obsRef.current.call("StopRecord")
-          .then(() => addLog("OBS record stopped"))
+          .then(() => addLog("OBS record stopped (standby)"))
           .catch(e => addLog(`StopRecord failed: ${e.message}`));
       }
 
-      const scene = mode === "work" ? SCENE_WORK : mode === "explain" ? SCENE_EXPLAIN : SCENE_BREAK;
-      obsRef.current.call("SetCurrentProgramScene", { sceneName: scene })
-        .then(() => addLog("OBS switch command succeeded"))
-        .catch((e) => addLog(`OBS switch command failed: ${e.message}`));
+      if (mode !== "standby") {
+        const scene = mode === "work" ? SCENE_WORK : mode === "explain" ? SCENE_EXPLAIN : SCENE_BREAK;
+        obsRef.current.call("SetCurrentProgramScene", { sceneName: scene })
+          .then(() => addLog("OBS switch command succeeded"))
+          .catch((e) => addLog(`OBS switch command failed: ${e.message}`));
+      }
+      
+      // Update state for standby natively since event won't fire
+      if (mode === "standby") {
+        setState(s => {
+          pushUpdate({ ...s, mode: "standby" }, true);
+          return { ...s, mode: "standby" };
+        });
+      }
     } else {
       addLog(`Cannot control OBS. Connection is down.`);
+      setState(s => {
+        pushUpdate({ ...s, mode: mode }, true);
+        return { ...s, mode: mode };
+      });
     }
 
     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
