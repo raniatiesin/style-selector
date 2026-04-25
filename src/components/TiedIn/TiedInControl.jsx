@@ -6,6 +6,7 @@ const OBS_WS_URL = "ws://localhost:4455";
 const SCENE_WORK = "work";
 const SCENE_EXPLAIN = "explain";
 const SCENE_BREAK = "break";
+const SCENE_STANDBY = "standby";
 
 export default function TiedInControl() {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem('STREAM_ADMIN_KEY') || '');
@@ -126,7 +127,7 @@ export default function TiedInControl() {
 
         obsRef.current.on("CurrentProgramSceneChanged", (event) => {
            addLog(`OBS Scene changed to: ${event.sceneName}`);
-           const map = { [SCENE_WORK]: "work", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break" };
+           const map = { [SCENE_WORK]: "work", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby" };
            const mapped = map[event.sceneName];
            if (mapped) {
              setState(s => {
@@ -275,14 +276,12 @@ export default function TiedInControl() {
           .catch(e => addLog(`StopRecord failed: ${e.message}`));
       }
 
-      if (mode !== "standby") {
-        const scene = mode === "work" ? SCENE_WORK : mode === "explain" ? SCENE_EXPLAIN : SCENE_BREAK;
-        obsRef.current.call("SetCurrentProgramScene", { sceneName: scene })
-          .then(() => addLog("OBS switch command succeeded"))
-          .catch((e) => addLog(`OBS switch command failed: ${e.message}`));
-      }
+      const scene = mode === "work" ? SCENE_WORK : mode === "explain" ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : SCENE_STANDBY;
+      obsRef.current.call("SetCurrentProgramScene", { sceneName: scene })
+        .then(() => addLog("OBS switch command succeeded"))
+        .catch((e) => addLog(`OBS switch command failed: ${e.message}`));
       
-      // Update state for standby natively since event won't fire
+      // Still push update natively just in case OBS doesn't respond or event isn't hooked yet
       if (mode === "standby") {
         setState(s => {
           pushUpdate({ ...s, mode: "standby" }, true);

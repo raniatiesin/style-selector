@@ -484,6 +484,26 @@ export default function TiedInApp({ displayMode }) {
 
         </div>
       </section>
+
+      <section className="standby-screen" id="standbyScreen" style={{ display: (displayMode || state.mode) === 'standby' ? 'flex' : 'none', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#000000', position: 'absolute', inset: 0, zIndex: 100 }}>
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '40px' }}>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0px' }}>
+              <div style={{ fontSize: '72px', fontWeight: 300, lineHeight: 1, letterSpacing: '0.2em', color: 'var(--a29a96)', whiteSpace: 'nowrap', opacity: 1.0, fontFamily: 'var(--font)' }}>
+                STANDBY
+              </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ fontSize: '32px', color: 'var(--white-75)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              {formatTime12(now)}
+            </div>
+            <div style={{ fontSize: '20px', color: 'var(--white-45)', letterSpacing: '0.02em' }}>
+              {toLongDate(now)}
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
