@@ -225,9 +225,19 @@ export default function TiedInApp({ displayMode }) {
 
         if (stateData?.tasks && Array.isArray(stateData.tasks)) {
           setState(prev => {
-            let tasks = [...prev.tasks];
             let currentTaskId = prev.currentTaskId;
             let changed = false;
+
+            // If the server returns fewer tasks than we currently have, we need to respect the deletion.
+            let validServerTaskIds = new Set(stateData.tasks.map(t => String(t.id)));
+            let tasks = prev.tasks.filter(t => {
+              if (!validServerTaskIds.has(t.id)) {
+                changed = true;
+                if (currentTaskId === t.id) currentTaskId = null;
+                return false;
+              }
+              return true;
+            });
 
             stateData.tasks.forEach(data => {
               if (!data.id || !data.name) return;
