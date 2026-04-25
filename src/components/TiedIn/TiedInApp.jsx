@@ -403,7 +403,7 @@ export default function TiedInApp({ displayMode }) {
                   <div key={task.id} className="tl-item">
                     <div className={pillClass}>
                       <div className="tl-title">{task.name}</div>
-                      <div className={metaClass}><span style={{ color: dotColor }}>&#9679;</span>&nbsp;&nbsp;{statusStr} &middot; {timeStr}</div>
+                      <div className={metaClass}><span className="status-dot" style={{ color: dotColor }}>&#9679;</span>&nbsp;&nbsp;{statusStr} &middot; {timeStr}</div>
                     </div>
                   </div>
                 )
@@ -444,7 +444,7 @@ export default function TiedInApp({ displayMode }) {
         <div className="progress-fill" style={{ width: `${(progress * CONTEXT_WIDTH).toFixed(2)}px` }}></div>
       </section>
 
-      <section className="break-screen" id="breakScreen" style={{ display: (displayMode || state.mode) === 'break' ? 'flex' : 'none', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0a0a', position: 'absolute', inset: 0, zIndex: 100 }}>
+      <section className="break-screen" id="breakScreen" style={{ display: (displayMode || state.mode) === 'break' ? 'flex' : 'none', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#212529', position: 'absolute', inset: 0, zIndex: 100 }}>
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '40px' }}>
           
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0px' }}>
