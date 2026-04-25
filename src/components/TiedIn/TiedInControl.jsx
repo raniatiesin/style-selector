@@ -133,11 +133,11 @@ export default function TiedInControl() {
                if (s.mode !== mapped) {
                  if (mapped === "explain") {
                    obsRef.current.call("StartRecord")
-                     .then(() => addLog("OBS record started"))
+                     .then(() => addLog("OBS record started (from scene)"))
                      .catch(e => addLog(`StartRecord failed: ${e.message}`));
-                 } else if (s.mode === "explain") {
+                 } else {
                    obsRef.current.call("StopRecord")
-                     .then(() => addLog("OBS record stopped"))
+                     .then(() => addLog("OBS record stopped (from scene)"))
                      .catch(e => addLog(`StopRecord failed: ${e.message}`));
                  }
 
@@ -265,11 +265,13 @@ export default function TiedInControl() {
     if (obsRef.current && obsConnected) {
       addLog(`Telling OBS to switch scene to: ${mode}`);
       
-      // Standby doesn't have an OBS scene mapped, so it won't fire CurrentProgramSceneChanged
-      // We must manually stop recording if leaving explain for standby
-      if (mode === "standby" && state.mode === "explain") {
+      if (mode === "explain") {
+        obsRef.current.call("StartRecord")
+          .then(() => addLog("OBS record started"))
+          .catch(e => addLog(`StartRecord failed: ${e.message}`));
+      } else {
         obsRef.current.call("StopRecord")
-          .then(() => addLog("OBS record stopped (standby)"))
+          .then(() => addLog("OBS record stopped"))
           .catch(e => addLog(`StopRecord failed: ${e.message}`));
       }
 
