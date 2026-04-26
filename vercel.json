@@ -17,7 +17,7 @@
       "destination": "/documentation/index.html"
     },
     {
-      "source": "/(?!api/)(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ],
