@@ -151,10 +151,13 @@ export default function TiedInApp({ displayMode }) {
           localStorage.setItem(KEYS.todayDate, dateKey);
         }
         
-        if (mode !== "break" && mode !== "standby") {
+        // work and explain modes tick BOTH timers
+        if (mode === "work" || mode === "explain") {
           sessionSeconds++;
           todayWorkSeconds++;
         }
+        // break mode stops todayWorkSeconds naturally because it's not work/explain
+        // standby mode stops both naturally because it's not work/explain
         return { ...prev, sessionSeconds, todayWorkSeconds, previousDaysSeconds };
       });
     }, 1000);
@@ -318,7 +321,7 @@ export default function TiedInApp({ displayMode }) {
                 // If we are ENTERING a break, or coming out of one, reset the session clock.
                 // Depending on requirements, we can reset session seconds on entering break or leaving it.
                 // Resetting it on entering break makes more sense if the user wants it at 0 right when break starts.
-                if (newStateProps.mode === "break" || prev.mode === "break") {
+                if (newStateProps.mode === "break" && prev.mode !== "break") {
                   merged.sessionSeconds = 0;
                 }
                 
