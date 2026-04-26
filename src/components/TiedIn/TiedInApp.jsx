@@ -192,6 +192,7 @@ export default function TiedInApp({ displayMode }) {
   // --- Vercel Polling ---
   useEffect(() => {
     let pollingInterval;
+    let lastSeenServerTodaySeconds = null;
 
     async function fetchKanbanState() {
       try {
@@ -331,14 +332,18 @@ export default function TiedInApp({ displayMode }) {
                   localStorage.setItem(KEYS.contacted, "0");
                   localStorage.setItem(KEYS.converted, "0");
                   changed = true;
-              } else if (
-                  newStateProps.serverTodayWorkSeconds !== undefined && 
-                  Math.abs(newStateProps.serverTodayWorkSeconds - prev.todayWorkSeconds) > 10
-              ) {
-                  // User manually edited Supabase (e.g. added hours), resync the clock
-                  merged.todayWorkSeconds = newStateProps.serverTodayWorkSeconds;
-                  localStorage.setItem(KEYS.todaySeconds, String(merged.todayWorkSeconds));
-                  changed = true;
+              } else if (newStateProps.serverTodayWorkSeconds !== undefined) {
+                  // Only sync the local clock to the server IF the server's value changed 
+                  // to a wildly different number behind our backs (meaning they manually edited Supabase).
+                  if (lastSeenServerTodaySeconds !== null && 
+                      Math.abs(newStateProps.serverTodayWorkSeconds - lastSeenServerTodaySeconds) > 60 && 
+                      Math.abs(newStateProps.serverTodayWorkSeconds - prev.todayWorkSeconds) > 60) {
+                      
+                      merged.todayWorkSeconds = newStateProps.serverTodayWorkSeconds;
+                      localStorage.setItem(KEYS.todaySeconds, String(merged.todayWorkSeconds));
+                      changed = true;
+                  }
+                  lastSeenServerTodaySeconds = newStateProps.serverTodayWorkSeconds;
               }
             }
 
