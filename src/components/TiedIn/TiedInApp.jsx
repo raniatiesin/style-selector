@@ -343,7 +343,9 @@ export default function TiedInApp({ displayMode }) {
                       localStorage.setItem(KEYS.todaySeconds, String(merged.todayWorkSeconds));
                       changed = true;
                   }
-                  lastSeenServerTodaySeconds = newStateProps.serverTodayWorkSeconds;
+                  if (lastSeenServerTodaySeconds === null || Math.abs(newStateProps.serverTodayWorkSeconds - lastSeenServerTodaySeconds) > 60) {
+                     lastSeenServerTodaySeconds = newStateProps.serverTodayWorkSeconds;
+                  }
               }
             }
 
