@@ -84,7 +84,12 @@ export default function TiedInControl() {
         const data = await res.json();
         if (data?.webhookLogs) setWebhookLogs(data.webhookLogs);
         if (data?.metrics && isFirst) {
-           setState(s => ({ ...s, ...data.metrics }));
+           setState(s => ({ 
+              ...s, 
+              contactedCount: data.metrics.contactedCount || 0,
+              convertedCount: data.metrics.convertedCount || 0,
+              mode: data.metrics.mode || 'work'
+           }));
            isFirst = false;
         }
 

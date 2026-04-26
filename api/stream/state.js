@@ -53,12 +53,24 @@ const today = new Date().toISOString().split('T')[0];
     // Calculate true accumulated time from PREVIOUS days (so today doesn't double count active ticking)
     const { data: pastRows } = await supabase
       .from('stream_metrics')
-      .select('today_seconds')
+      .select('today_seconds, accumulated_seconds')
       .neq('date', today);
       
     let pastDaysAcc = 0;
     if (pastRows) {
-      pastDaysAcc = pastRows.reduce((acc, row) => acc + (row.today_seconds || 0), 0);
+      const hasManualBase = pastRows.find(r => r.accumulated_seconds > 0);
+      if (hasManualBase) {
+         pastDaysAcc = Math.max(...pastRows.map(r => r.accumulated_seconds || 0));
+      } else {
+         pastDaysAcc = pastRows.reduce((acc, row) => acc + (row.today_seconds || 0), 0);
+      }
+    }
+
+    // Allow today's row to completely override previous days if explicitly manually set today
+    if (data && data.accumulated_seconds > 0) {
+        // Because the frontend calculates total as (previousDaysSeconds + todayWorkSeconds),
+        // we set pastDaysAcc = accumulated - today, so it adds up perfectly to the user's manual value.
+        pastDaysAcc = Math.max(0, data.accumulated_seconds - (data.today_seconds || 0));
     }
 
     let globalMetrics = null;

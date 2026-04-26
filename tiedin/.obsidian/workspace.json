@@ -11,14 +11,10 @@
             "id": "4a34cfc0adc80ad3",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Claude Dump.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "Claude Dump"
+              "title": "New tab"
             }
           }
         ]
@@ -78,8 +74,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "e4dbe6c9cf847700",
@@ -187,8 +182,8 @@
   },
   "active": "4a34cfc0adc80ad3",
   "lastOpenFiles": [
-    "{D9F8DDC4-F0F9-42B5-A56D-62637368078E}.png",
     "Claude Dump.md",
+    "{D9F8DDC4-F0F9-42B5-A56D-62637368078E}.png",
     "claudecommands.png",
     "Everything There Is To Claude.md",
     "Claude Questions.md",

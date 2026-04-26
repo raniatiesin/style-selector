@@ -170,9 +170,9 @@ export default function TiedInApp({ displayMode }) {
     localStorage.setItem(KEYS.currentTaskId, state.currentTaskId || "");
     localStorage.setItem(KEYS.tasks, JSON.stringify(state.tasks));
 
-    // If we transition into break mode, push the finalized time to the cloud    
+    // If we transition into break or standby mode, push the finalized time to the cloud    
     // so we don't drop accumulated time in the DB.
-    if (state.mode === 'break') {
+    if (state.mode === 'break' || state.mode === 'standby') {
       const adminKey = localStorage.getItem('STREAM_ADMIN_KEY');
       if (adminKey) {
         fetch('https://tiesin.me/api/stream/metrics', {
@@ -211,6 +211,9 @@ export default function TiedInApp({ displayMode }) {
                 // If it was forcibly reset to 0 from the dashboard
                 if (stateData.metrics.mode === 'standby' && stateData.metrics.todayWorkSeconds === 0) {
                     newStateProps.forceResetTime = true;
+                } else {
+                    // Sync from server if the user manually changed it in Supabase (give 10s leeway for local ticks)
+                    newStateProps.serverTodayWorkSeconds = Number(stateData.metrics.todayWorkSeconds);
                 }
              }
              if (stateData.metrics.mode) {
@@ -307,10 +310,18 @@ export default function TiedInApp({ displayMode }) {
                 merged.mode = newStateProps.mode; 
                 // We should also adjust break/session start times if mode changed
                 merged.breakStartTime = newStateProps.mode === "break" ? Date.now() : prev.breakStartTime;
-                merged.sessionSeconds = (prev.mode === "break" && newStateProps.mode !== "break") ? 0 : prev.sessionSeconds;
+                
+                // If we are ENTERING a break, or coming out of one, reset the session clock.
+                // Depending on requirements, we can reset session seconds on entering break or leaving it.
+                // Resetting it on entering break makes more sense if the user wants it at 0 right when break starts.
+                if (newStateProps.mode === "break" || prev.mode === "break") {
+                  merged.sessionSeconds = 0;
+                }
+                
                 changed = true; 
               }
-                if (newStateProps.forceResetTime && prev.todayWorkSeconds > 2) {
+              
+              if (newStateProps.forceResetTime && prev.todayWorkSeconds > 2) {
                   merged.todayWorkSeconds = 0;
                   merged.sessionSeconds = 0;
                   merged.contactedCount = 0;
@@ -320,7 +331,15 @@ export default function TiedInApp({ displayMode }) {
                   localStorage.setItem(KEYS.contacted, "0");
                   localStorage.setItem(KEYS.converted, "0");
                   changed = true;
-                }
+              } else if (
+                  newStateProps.serverTodayWorkSeconds !== undefined && 
+                  Math.abs(newStateProps.serverTodayWorkSeconds - prev.todayWorkSeconds) > 10
+              ) {
+                  // User manually edited Supabase (e.g. added hours), resync the clock
+                  merged.todayWorkSeconds = newStateProps.serverTodayWorkSeconds;
+                  localStorage.setItem(KEYS.todaySeconds, String(merged.todayWorkSeconds));
+                  changed = true;
+              }
             }
 
             return changed ? { ...merged, tasks, currentTaskId } : prev;      
