@@ -132,6 +132,7 @@ function getInitialState() {
 
 export default function TiedInApp({ displayMode }) {
   const [state, setState] = useState(getInitialState);
+  const prevModeRef = useRef(state.mode);
   const [now, setNow] = useState(new Date());
 
   // --- Core Timer ---
@@ -172,7 +173,8 @@ export default function TiedInApp({ displayMode }) {
 
     // If we transition into break or standby mode, push the finalized time to the cloud    
     // so we don't drop accumulated time in the DB.
-    if (state.mode === 'break' || state.mode === 'standby') {
+    // Do NOT push every single tick in these modes, only when mode FIRST changes!
+    if ((state.mode === 'break' || state.mode === 'standby') && state.mode !== prevModeRef.current) {
       const adminKey = localStorage.getItem('STREAM_ADMIN_KEY');
       if (adminKey) {
         fetch('https://tiesin.me/api/stream/metrics', {
@@ -187,6 +189,7 @@ export default function TiedInApp({ displayMode }) {
         }).catch(() => {});
       }
     }
+    prevModeRef.current = state.mode;
   }, [state]);
 
   // --- Vercel Polling ---
