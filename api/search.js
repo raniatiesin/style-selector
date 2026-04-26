@@ -49,9 +49,12 @@ export default async function handler(req, res) {
         ? handle.trim()
         : null;
 
+      // Ensure that if 'prospect' column doesn't exist yet, it doesn't fail.
+      const payload = normalizedHandle ? { prospect: normalizedHandle } : {};
+      
       const { data: session, error: insertErr } = await supabase
         .from('sessions')
-        .insert({ prospect: normalizedHandle })
+        .insert(payload)
         .select('id')
         .single();
 

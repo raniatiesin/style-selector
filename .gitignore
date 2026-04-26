@@ -38,3 +38,6 @@ segments/
 
 
 .vercel
+
+.vercel
+.env*.local
