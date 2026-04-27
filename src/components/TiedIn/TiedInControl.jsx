@@ -390,7 +390,8 @@ export default function TiedInControl() {
   const workText = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG" ? `work - ${activeTaskRef.current}` : 'work';
 
   return (
-    <main style={{ width: '100%', minHeight: '100dvh', background: '#0a0a0a', color: '#e5e5e5', display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '16px', gap: '16px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100dvh', background: '#000', display: 'flex', justifyContent: 'center' }}>
+      <main style={{ width: '100%', maxWidth: '450px', background: '#0a0a0a', color: '#e5e5e5', display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '16px', gap: '16px', fontFamily: 'system-ui, -apple-system, sans-serif', borderLeft: '1px solid #1c1c1c', borderRight: '1px solid #1c1c1c' }}>
 
        {/* Header Box */}
        <div style={{ padding: '16px', background: '#1c1c1c', borderRadius: '8px', border: '1px solid #2e2e2e' }}>
@@ -477,5 +478,4 @@ export default function TiedInControl() {
        </div>
 
     </main>
-  );
-}
+    </div>
