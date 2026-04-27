@@ -41,7 +41,9 @@ export default async function handler(req, res) {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const today = new Date().toISOString().split('T')[0];
+    // FIX: Align the database 'date' string format calculation with the state poll 
+    const todayStr = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+    const today = new Date(todayStr).toISOString().split('T')[0];
 
     // Fetch the current task arrays so we can dynamically modify them
     const { data, error: fetchError } = await supabase
@@ -71,11 +73,11 @@ export default async function handler(req, res) {
     const rawStatus = String(status || '').toLowerCase().trim();
     const taskId = String(id || Date.now());
 
-    // Clean up task from everywhere first to prevent duplicates
-    inProgress = inProgress.filter(t => t.id !== taskId);
-    inReview = inReview.filter(t => t.id !== taskId);
-    upNext = upNext.filter(t => t.id !== taskId);
-    done = done.filter(t => t.id !== taskId);
+    // Clean up task from everywhere first to prevent duplicates (using weak inequality in case DB has ints vs strings)
+    inProgress = inProgress.filter(t => String(t.id) !== taskId);
+    inReview = inReview.filter(t => String(t.id) !== taskId);
+    upNext = upNext.filter(t => String(t.id) !== taskId);
+    done = done.filter(t => String(t.id) !== taskId);
 
     if (action === 'sync') {
        inProgress = inProgressTasks || inProgress;
