@@ -213,7 +213,7 @@ export default function TiedInApp({ displayMode }) {
   return (
     <div className={`overlay-root mode-${activeMode}`}>
       <div className="obs-frame frame-display" aria-hidden="true"></div>
-      <div className="obs-frame frame-webcam" aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--white-45)', fontSize: 24, fontWeight: 500, letterSpacing: 1 }}>
+      <div className="obs-frame frame-webcam" aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--white-92)', fontSize: 36, fontWeight: 300, letterSpacing: '-0.006em' }}>
         No Webcam Available :(
       </div>
 
