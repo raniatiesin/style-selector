@@ -467,8 +467,7 @@ export default function TiedInControl() {
                     {ytMarkers.length === 0 ? <div style={{opacity: 0.4}}>No markers in this session.</div> : null}
                     <textarea 
                        readOnly
-                       value={ytMarkers.join('
-')}
+                       value={ytMarkers.join('\n')}
                        style={{ width: '100%', height: '100%', minHeight: 150, background: 'transparent', border: 'none', color: '#aaa', resize: 'none', outline: 'none' }}
                     />
                  </div>
