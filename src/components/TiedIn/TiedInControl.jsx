@@ -397,7 +397,7 @@ export default function TiedInControl() {
            .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
          `}
       </style>
-      <main className="overlay-root no-scrollbar" style={{ width: '100%', maxWidth: '640px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: 'var(--space-16, 16px)', gap: 'var(--space-16, 16px)', flex: 1 }}>
+      <main className="overlay-root no-scrollbar" style={{ width: '100%', maxWidth: '800px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: 'var(--space-16, 16px)', gap: 'var(--space-16, 16px)', flex: 1 }}>
 
        {/* Header Box */}
        <div className="context-pill stack">
@@ -412,12 +412,11 @@ export default function TiedInControl() {
 
        {/* Mode Panel */}
        <div className="context-pill stack">
-          <div className="side-line">Mode: {state.mode.toUpperCase()}</div>
-          <div className="mode-buttons controls-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)' }}>
-             <button className={`mode-btn ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')} style={{ width: '100%' }}>Work</button>
-             <button className={`mode-btn ${state.mode === 'explain' ? 'active' : ''}`} onClick={() => setMode('explain')} style={{ width: '100%' }}>Explain</button>
-             <button className={`mode-btn ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')} style={{ width: '100%' }}>Break</button>
-             <button className={`mode-btn ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ width: '100%' }}>Standby</button>
+          <div className="mode-buttons controls-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-16, 16px)' }}>
+             <button className={`mode-btn ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')} style={{ width: '100%', padding: 'var(--space-16, 16px)' }}>Work</button>
+             <button className={`mode-btn ${state.mode === 'explain' ? 'active' : ''}`} onClick={() => setMode('explain')} style={{ width: '100%', padding: 'var(--space-16, 16px)' }}>Explain</button>
+             <button className={`mode-btn ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')} style={{ width: '100%', padding: 'var(--space-16, 16px)' }}>Break</button>
+             <button className={`mode-btn ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ width: '100%', padding: 'var(--space-16, 16px)' }}>Standby</button>
           </div>
        </div>
 
@@ -440,7 +439,7 @@ export default function TiedInControl() {
        </div>
 
        {/* YouTube Markers Box */}
-       <div className="context-pill stack">
+       <div className="context-pill stack" style={{ flex: 1, minHeight: '350px' }}>
           <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
              <span>Timestamps</span>
              <div className="inline-form">
@@ -457,7 +456,7 @@ export default function TiedInControl() {
           <textarea 
              readOnly
              value={ytMarkers.join('\n')}
-             style={{ width: '100%', minHeight: 100, background: 'transparent', border: 'none', color: 'var(--white-70)', resize: 'none', outline: 'none', fontFamily: 'monospace' }}
+             style={{ flex: 1, width: '100%', minHeight: '280px', background: 'transparent', border: 'none', color: 'var(--white-70)', resize: 'vertical', outline: 'none', fontFamily: 'monospace' }}
           />
        </div>
 
