@@ -390,87 +390,87 @@ export default function TiedInControl() {
   const workText = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG" ? `work - ${activeTaskRef.current}` : 'work';
 
   return (
-    <main className="overlay-root stack" style={{ width: '100%', height: '100dvh', background: 'var(--bg)', color: 'var(--white-92)', display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: 'var(--space-24)', gap: 'var(--space-16)' }}>
+    <main style={{ width: '100%', minHeight: '100dvh', background: '#0a0a0a', color: '#e5e5e5', display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '16px', gap: '16px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
        {/* Header Box */}
-       <div className="context-pill stack" style={{ padding: 'var(--space-16)', background: 'var(--panel-bg)' }}>
-          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-             <span style={{ fontSize: '18px', fontWeight: 'var(--weight-light)' }}>TiedIn Control</span>
-             <span style={{ color: obsConnected ? '#4DAA57' : '#F95738', fontSize: '12px', display: 'flex', alignItems: 'center', gap: 'var(--space-8)' }}>
+       <div style={{ padding: '16px', background: '#1c1c1c', borderRadius: '8px', border: '1px solid #2e2e2e' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+             <span style={{ fontSize: '18px', fontWeight: '500', color: '#fff' }}>TiedIn Control</span>
+             <span style={{ color: obsConnected ? '#4DAA57' : '#F95738', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500' }}>
                 <span className="status-dot" style={{ animationDuration: '3s' }}>&#9679;</span> {obsConnected ? 'OBS Connected' : 'OBS Disconnected'}
              </span>
           </div>
        </div>
 
        {/* Mode Panel */}
-       <div className="context-pill stack" style={{ padding: 'var(--space-16)', background: 'var(--panel-bg)' }}>
-          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--white-45)', textTransform: 'uppercase', fontSize: '12px', tracking: '0.1em' }}>
+       <div style={{ padding: '16px', background: '#1c1c1c', borderRadius: '8px', border: '1px solid #2e2e2e' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#888', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.05em' }}>
              <span>Current Mode</span>
-             <span style={{ fontSize: '14px', fontWeight: 'var(--weight-regular)', color: 'var(--white-92)' }}>{state.mode.toUpperCase()}</span>
+             <span style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>{state.mode.toUpperCase()}</span>
           </div>
-          <div className="mode-buttons no-blur" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8)', marginTop: 'var(--space-12)' }}>
-             <button className={`mode-btn ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')} style={{ borderColor: state.mode === 'work' ? 'var(--white-92)' : 'var(--white-25)', background: state.mode === 'work' ? 'var(--white-92)' : 'transparent', color: state.mode === 'work' ? 'var(--bg)' : 'var(--white-92)', padding: 'var(--space-12) 0', borderRadius: 0, textTransform: 'uppercase' }}>Work</button>
-             <button className={`mode-btn ${state.mode === 'explain' ? 'active' : ''}`} onClick={() => setMode('explain')} style={{ borderColor: state.mode === 'explain' ? 'var(--white-92)' : 'var(--white-25)', background: state.mode === 'explain' ? 'var(--white-92)' : 'transparent', color: state.mode === 'explain' ? 'var(--bg)' : 'var(--white-92)', padding: 'var(--space-12) 0', borderRadius: 0, textTransform: 'uppercase' }}>Explain</button>
-             <button className={`mode-btn ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')} style={{ borderColor: state.mode === 'break' ? 'var(--white-55)' : 'var(--white-25)', background: state.mode === 'break' ? 'var(--white-55)' : 'transparent', color: state.mode === 'break' ? 'var(--bg)' : 'var(--white-92)', padding: 'var(--space-12) 0', borderRadius: 0, textTransform: 'uppercase' }}>Break</button>
-             <button className={`mode-btn ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ borderColor: state.mode === 'standby' ? 'var(--white-40)' : 'var(--white-25)', background: state.mode === 'standby' ? 'var(--white-40)' : 'transparent', color: state.mode === 'standby' ? 'var(--bg)' : 'var(--white-92)', padding: 'var(--space-12) 0', borderRadius: 0, textTransform: 'uppercase' }}>Standby</button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+             <button onClick={() => setMode('work')} style={{ cursor: 'pointer', border: `1px solid ${state.mode === 'work' ? '#4DAA57' : '#2e2e2e'}`, background: state.mode === 'work' ? '#4DAA57' : 'transparent', color: state.mode === 'work' ? '#000' : '#4DAA57', padding: '12px 0', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>Work</button>
+             <button onClick={() => setMode('explain')} style={{ cursor: 'pointer', border: `1px solid ${state.mode === 'explain' ? '#FFBA08' : '#2e2e2e'}`, background: state.mode === 'explain' ? '#FFBA08' : 'transparent', color: state.mode === 'explain' ? '#000' : '#FFBA08', padding: '12px 0', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>Explain</button>
+             <button onClick={() => setMode('break')} style={{ cursor: 'pointer', border: `1px solid ${state.mode === 'break' ? '#fff' : '#2e2e2e'}`, background: state.mode === 'break' ? '#fff' : 'transparent', color: state.mode === 'break' ? '#000' : '#fff', padding: '12px 0', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>Break</button>
+             <button onClick={() => setMode('standby')} style={{ cursor: 'pointer', border: `1px solid ${state.mode === 'standby' ? '#ffaa00' : '#2e2e2e'}`, background: state.mode === 'standby' ? '#ffaa00' : 'transparent', color: state.mode === 'standby' ? '#000' : '#ffaa00', padding: '12px 0', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>Standby</button>
           </div>
        </div>
 
        {/* Metrics Box */}
-       <div className="context-pill stack" style={{ padding: 'var(--space-16)', background: 'var(--panel-bg)' }}>
-          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-             <span style={{ color: 'var(--white-45)', textTransform: 'uppercase', fontSize: '12px' }}>Contacted</span>
-             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-12)' }}>
-                <button className="metric-btn dec" onClick={() => handleMetric('contactedCount', -1)} style={{ padding: 'var(--space-4) var(--space-12)', borderRadius: 0, background: 'var(--white-12)', border: 'none', color: 'var(--white-92)', fontSize: '16px' }}>-</button>
-                <span style={{ fontSize: '24px', width: 40, textAlign: 'center', fontVariantNumeric: 'tabular-nums', fontWeight: 'var(--weight-light)' }}>{state.contactedCount}</span>
-                <button className="metric-btn inc" onClick={() => handleMetric('contactedCount', 1)} style={{ padding: 'var(--space-4) var(--space-12)', borderRadius: 0, background: 'var(--white-12)', border: 'none', color: 'var(--white-92)', fontSize: '16px' }}>+</button>
+       <div style={{ padding: '16px', background: '#1c1c1c', borderRadius: '8px', border: '1px solid #2e2e2e' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+             <span style={{ color: '#888', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.05em' }}>Contacted</span>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <button onClick={() => handleMetric('contactedCount', -1)} style={{ cursor: 'pointer', padding: '4px 12px', borderRadius: '4px', background: '#2e2e2e', border: '1px solid #404040', color: '#fff', fontSize: '16px' }}>-</button>
+                <span style={{ fontSize: '24px', width: '40px', textAlign: 'center', fontVariantNumeric: 'tabular-nums', fontWeight: '300', color: '#fff' }}>{state.contactedCount}</span>
+                <button onClick={() => handleMetric('contactedCount', 1)} style={{ cursor: 'pointer', padding: '4px 12px', borderRadius: '4px', background: '#2e2e2e', border: '1px solid #404040', color: '#fff', fontSize: '16px' }}>+</button>
              </div>
           </div>
-          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-16)' }}>
-             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                <span style={{ color: 'var(--white-45)', textTransform: 'uppercase', fontSize: '12px' }}>Converted</span>
-                <span style={{ fontSize: '10px', background: 'var(--white-12)', color: 'var(--white-92)', padding: '1px var(--space-4)', width: 'fit-content' }}>+1% CVR</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span style={{ color: '#888', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.05em' }}>Converted</span>
+                <span style={{ fontSize: '10px', background: 'rgba(255, 186, 8, 0.1)', color: '#FFBA08', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}>+1% CVR</span>
              </div>
-             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-12)' }}>
-                <button className="metric-btn dec" onClick={() => handleMetric('convertedCount', -1)} style={{ padding: 'var(--space-4) var(--space-12)', borderRadius: 0, background: 'rgba(255, 186, 8, 0.1)', border: 'none', color: '#FFBA08', fontSize: '16px' }}>-</button>
-                <span style={{ fontSize: '24px', width: 40, textAlign: 'center', color: '#FFBA08', fontVariantNumeric: 'tabular-nums', fontWeight: 'var(--weight-light)' }}>{state.convertedCount}</span>
-                <button className="metric-btn inc" onClick={() => handleMetric('convertedCount', 1)} style={{ padding: 'var(--space-4) var(--space-12)', borderRadius: 0, background: 'rgba(255, 186, 8, 0.1)', border: 'none', color: '#FFBA08', fontSize: '16px' }}>+</button>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <button onClick={() => handleMetric('convertedCount', -1)} style={{ cursor: 'pointer', padding: '4px 12px', borderRadius: '4px', background: 'rgba(255, 186, 8, 0.1)', border: '1px solid rgba(255, 186, 8, 0.3)', color: '#FFBA08', fontSize: '16px' }}>-</button>
+                <span style={{ fontSize: '24px', width: '40px', textAlign: 'center', color: '#FFBA08', fontVariantNumeric: 'tabular-nums', fontWeight: '300' }}>{state.convertedCount}</span>
+                <button onClick={() => handleMetric('convertedCount', 1)} style={{ cursor: 'pointer', padding: '4px 12px', borderRadius: '4px', background: 'rgba(255, 186, 8, 0.1)', border: '1px solid rgba(255, 186, 8, 0.3)', color: '#FFBA08', fontSize: '16px' }}>+</button>
              </div>
           </div>
        </div>
 
        {/* YouTube Markers Box */}
-       <div className="context-pill stack" style={{ flex: 1, minHeight: 200, display: 'flex', flexDirection: 'column', padding: 'var(--space-16)', background: 'var(--panel-bg)' }}>
-          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-12)' }}>
-             <span style={{ color: 'var(--white-45)', textTransform: 'uppercase', fontSize: '12px' }}>Timestamps</span>
-             <div style={{ display: 'flex', gap: 'var(--space-8)' }}>
-                <button onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode === 'explain' ? 'explain' : state.mode === 'break' ? 'break' : 'standby')} style={{ padding: 'var(--space-4) var(--space-12)', fontSize: '11px', background: 'var(--white-92)', border: 'none', color: 'var(--bg)', textTransform: 'uppercase' }}>+ Marker</button>
-                <button onClick={resetMarkers} style={{ padding: 'var(--space-4) var(--space-12)', fontSize: '11px', background: 'transparent', border: '1px solid var(--white-45)', color: 'var(--white-92)', textTransform: 'uppercase' }}>Reset</button>
+       <div style={{ flex: 1, minHeight: 200, display: 'flex', flexDirection: 'column', padding: '16px', background: '#1c1c1c', borderRadius: '8px', border: '1px solid #2e2e2e' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+             <span style={{ color: '#888', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.05em' }}>Timestamps</span>
+             <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode === 'explain' ? 'explain' : state.mode === 'break' ? 'break' : 'standby')} style={{ cursor: 'pointer', padding: '4px 12px', fontSize: '11px', background: '#fff', border: 'none', color: '#000', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>+ Marker</button>
+                <button onClick={resetMarkers} style={{ cursor: 'pointer', padding: '4px 12px', fontSize: '11px', background: 'transparent', border: '1px solid #666', color: '#aaa', borderRadius: '4px', textTransform: 'uppercase' }}>Reset</button>
              </div>
           </div>
           {streamStart && (
-             <div className="side-line" style={{ marginBottom: 'var(--space-12)', color: '#4DAA57', fontSize: '12px' }}>
+             <div style={{ marginBottom: '12px', color: '#4DAA57', fontSize: '12px', fontWeight: '500' }}>
                 Live: {formatYTTime(streamStart)}
              </div>
           )}
-          {ytMarkers.length === 0 ? <div className="side-line" style={{ color: 'var(--white-35)' }}>No markers yet...</div> : null}
+          {ytMarkers.length === 0 ? <div style={{ color: '#555', fontSize: '12px' }}>No markers yet...</div> : null}
           <textarea 
              readOnly
              value={ytMarkers.join('\n')}
-             style={{ flex: 1, width: '100%', minHeight: 120, background: 'transparent', border: 'none', color: 'var(--white-70)', resize: 'none', outline: 'none', fontSize: '12px', fontFamily: 'monospace' }}
+             style={{ flex: 1, width: '100%', minHeight: 120, background: 'transparent', border: 'none', color: '#aaa', resize: 'none', outline: 'none', fontSize: '12px', fontFamily: 'monospace', lineHeight: '1.5' }}
           />
        </div>
 
        {/* Action Buttons Box */}
-       <div className="context-pill stack" style={{ gap: 'var(--space-12)', padding: 'var(--space-16)', background: 'var(--panel-bg)' }}>
-          <button onClick={resetDay} style={{ width: '100%', padding: 'var(--space-12)', background: 'transparent', border: '1px solid rgba(249, 87, 56, 0.5)', color: '#F95738', textTransform: 'uppercase', fontSize: '12px', tracking: '0.05em' }}>Reset Overlay Clocks</button>
-          <button onClick={logout} style={{ width: '100%', padding: 'var(--space-12)', background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-55)', textTransform: 'uppercase', fontSize: '12px', tracking: '0.05em' }}>Disconnect & Lock</button>
+       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', background: '#1c1c1c', borderRadius: '8px', border: '1px solid #2e2e2e' }}>
+          <button onClick={resetDay} style={{ cursor: 'pointer', width: '100%', padding: '12px', background: 'transparent', border: '1px solid rgba(249, 87, 56, 0.5)', color: '#F95738', borderRadius: '4px', textTransform: 'uppercase', fontSize: '12px', fontWeight: 'bold', letterSpacing: '0.05em' }}>Reset Overlay Clocks</button>
+          <button onClick={logout} style={{ cursor: 'pointer', width: '100%', padding: '12px', background: 'transparent', border: '1px solid #404040', color: '#888', borderRadius: '4px', textTransform: 'uppercase', fontSize: '12px', fontWeight: 'bold', letterSpacing: '0.05em' }}>Disconnect & Lock</button>
        </div>
 
        {/* Floating Logs */}
-       <div className="floating-logs" style={{ position: 'fixed', bottom: 'var(--space-20)', right: 'var(--space-20)', width: 300, pointerEvents: 'none' }}>
+       <div style={{ position: 'fixed', bottom: '20px', right: '20px', width: '300px', pointerEvents: 'none' }}>
            {logs.map((l, i) => (
-              <div key={i} style={{ background: 'var(--panel-bg)', color: 'var(--white-92)', fontSize: '11px', fontFamily: 'monospace', padding: '6px var(--space-12)', borderLeft: '2px solid var(--white-45)', marginBottom: 'var(--space-4)', backdropFilter: 'blur(10px)' }}>
+              <div key={i} style={{ background: '#0a0a0a', color: '#e5e5e5', fontSize: '11px', fontFamily: 'monospace', padding: '8px 12px', borderLeft: '2px solid #666', borderTop: '1px solid #2e2e2e', borderRight: '1px solid #2e2e2e', borderBottom: '1px solid #2e2e2e', marginBottom: '4px', borderRadius: '0 4px 4px 0' }}>
                  {l}
               </div>
            ))}
