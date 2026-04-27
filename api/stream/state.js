@@ -33,7 +33,9 @@ export default async function handler(req, res) {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-const today = new Date().toISOString().split('T')[0];
+    // Use local timezone string to fetch correctly
+    const todayStr = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+    const today = new Date(todayStr).toISOString().split('T')[0];
     
     // Fetch today's metrics
     const { data, error } = await supabase
@@ -78,12 +80,27 @@ const today = new Date().toISOString().split('T')[0];
     let webhookLogs = [];
 
     if (data) {
+       // If currently in an active ticking mode, explicitly calculate the un-pushed elapsed time.
+       // This guarantees data isn't lost if the stream crashes before a break causes an accumulated log.
+       let activeOffset = 0;
+       if (data.mode === 'work' || data.mode === 'explain') {
+           const timestamp = data.mode_timestamp || Date.now();
+           activeOffset = Math.floor((Date.now() - timestamp) / 1000);
+           // Fallback to avoid negative values
+           if (activeOffset < 0) activeOffset = 0;
+       }
+
        globalMetrics = {
           mode: data.mode,
           contactedCount: data.contacted_count,
           convertedCount: data.converted_count,
           previousDaysSeconds: pastDaysAcc,
-          todayWorkSeconds: data.today_seconds,
+          todayWorkSeconds: (data.accumulated_today_seconds || 0) + activeOffset,
+          
+          // Pure timestamp states back to frontend
+          accumulatedTodaySeconds: data.accumulated_today_seconds || 0,
+          modeTimestamp: data.mode_timestamp,
+
           totalDays: count || 1
        };
        webhookLogs = data.webhook_logs || [];
@@ -102,6 +119,8 @@ const today = new Date().toISOString().split('T')[0];
             convertedCount: 0,
             previousDaysSeconds: pastDaysAcc,
             todayWorkSeconds: 0,
+            accumulatedTodaySeconds: 0,
+            modeTimestamp: Date.now(),
             totalDays: count ? count + 1 : 1
         };
     }

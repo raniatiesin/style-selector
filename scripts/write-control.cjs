@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+const fs = require('fs');
+
+const code = `import { useState, useEffect, useRef } from 'react';
 import OBSWebSocket from 'obs-websocket-js';
 import './TiedInApp.css';
 
@@ -45,15 +47,15 @@ export default function TiedInControl() {
      const h = Math.floor(diffSec / 3600);
      const m = Math.floor((diffSec % 3600) / 60);
      const s = diffSec % 60;
-     if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+     if (h > 0) return \`\${h}:\${m.toString().padStart(2, '0')}:\${s.toString().padStart(2, '0')}\`;
+     return \`\${m.toString().padStart(2, '0')}:\${s.toString().padStart(2, '0')}\`;
   };
 
   const addYtMarker = (text) => {
      setYtMarkers(prev => {
         const currentStart = Number(localStorage.getItem('YT_STREAM_START')); 
-        const m = `${formatYTTime(currentStart)} - ${text}`;
-        if (prev.length > 0 && prev[prev.length - 1].endsWith(`- ${text}`)) return prev;
+        const m = \`\${formatYTTime(currentStart)} - \${text}\`;
+        if (prev.length > 0 && prev[prev.length - 1].endsWith(\`- \${text}\`)) return prev;
         const next = [...prev, m];
         localStorage.setItem('YT_MARKERS', JSON.stringify(next));
         return next;
@@ -71,7 +73,7 @@ export default function TiedInControl() {
     }
   };
 
-  const addLog = (msg) => setLogs(l => [...l, `[${new Date().toLocaleTimeString()}] ${msg}`].slice(-20));
+  const addLog = (msg) => setLogs(l => [...l, \`[\${new Date().toLocaleTimeString()}] \${msg}\`].slice(-20));
 
   useEffect(() => {
     if (isLocked) return;
@@ -79,7 +81,7 @@ export default function TiedInControl() {
     let intervalId;
     async function loadMetrics() {
       try {
-        const res = await fetch(`https://tiesin.me/api/stream/state`);
+        const res = await fetch(\`https://tiesin.me/api/stream/state\`);
         if (!res.ok) return;
         const data = await res.json();
         
@@ -104,7 +106,7 @@ export default function TiedInControl() {
            if (taskName && activeTaskRef.current !== taskName) {
               if (activeTaskRef.current !== "INITIAL_LOAD_FLAG") {
                  setState(s => {
-                    if (s.mode === 'work') addYtMarker(`work - ${taskName}`);
+                    if (s.mode === 'work') addYtMarker(\`work - \${taskName}\`);
                     return s;
                  });
               }
@@ -126,52 +128,38 @@ export default function TiedInControl() {
 
     let keepConnecting = true;
     let fallbackConnectTimer;
-    
-    // Create OBS instance scoped to this effect run to avoid overlapping connection attempts
-    const obs = new OBSWebSocket();
-    obsRef.current = obs;
+    obsRef.current = new OBSWebSocket();
 
     async function connect() {
       if (!keepConnecting) return;
       try {
-        addLog(`Attempting OBS WS connection to ${OBS_WS_URL}...`);
-        await obs.connect(OBS_WS_URL, obsPassword);
-        if (!keepConnecting) {
-           obs.disconnect();
-           return;
-        }
+        addLog(\`Attempting OBS WS connection to \${OBS_WS_URL}...\`);
+        await obsRef.current.connect(OBS_WS_URL, obsPassword);
         addLog("OBS Connected successfully!");
         setObsConnected(true);
 
-        obs.on("CurrentProgramSceneChanged", (event) => {
-           addLog(`OBS Scene changed to: ${event.sceneName}`);
+        obsRef.current.on("CurrentProgramSceneChanged", (event) => {
+           addLog(\`OBS Scene changed to: \${event.sceneName}\`);
            const map = { [SCENE_WORK]: "work", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby" };
            const mapped = map[event.sceneName];
            if (mapped) {
              setState(s => {
                if (s.mode !== mapped) {
                  if (mapped === "explain") {
-                   obs.call("StartRecord")
+                   obsRef.current.call("StartRecord")
                      .then(() => addLog("OBS record started (from scene)"))
-                     .catch(e => addLog(`StartRecord failed: ${e.message}`));
+                     .catch(e => addLog(\`StartRecord failed: \${e.message}\`));
                  } else {
-                   obs.call("StopRecord")
+                   obsRef.current.call("StopRecord")
                      .then(() => addLog("OBS record stopped (from scene)"))
-                     .catch(e => addLog(`StopRecord failed: ${e.message}`));
+                     .catch(e => addLog(\`StopRecord failed: \${e.message}\`));
                  }
 
-                 addLog(`Syncing new mode to Vercel: ${mapped}`);
+                 addLog(\`Syncing new mode to Vercel: \${mapped}\`);
                  
+                 // When the OBS scene changes organically (like clicking naturally in OBS), snapshot timer state:
                  let nextAccumulated = s.accumulatedTodaySeconds || 0;
-                 let nextTimestamp = Date.now();
-                 
-                 const isWorkToExplain = (s.mode === 'work' && mapped === 'explain');
-                 const isExplainToWork = (s.mode === 'explain' && mapped === 'work');
-
-                 if (isWorkToExplain || isExplainToWork) {
-                    nextAccumulated = s.accumulatedTodaySeconds || 0;
-                    nextTimestamp = s.modeTimestamp || Date.now();
-                 } else if (s.mode === 'work' || s.mode === 'explain') {
+                 if (s.mode === 'work' || s.mode === 'explain') {
                     if (s.modeTimestamp) {
                        const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
                        nextAccumulated += elapsed;
@@ -182,13 +170,12 @@ export default function TiedInControl() {
                     ...s, 
                     mode: mapped,
                     accumulatedTodaySeconds: nextAccumulated,
-                    modeTimestamp: nextTimestamp,
-                    _skipPushCalc: true
+                    modeTimestamp: Date.now()
                  };
 
                  pushUpdate(newState, true);
                  const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
-                 const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
+                 const workText = hasTask ? \`work - \${activeTaskRef.current}\` : 'work';
                  addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? 'explain' : mapped === 'break' ? 'break' : 'standby');
                  return newState;
                }
@@ -197,16 +184,14 @@ export default function TiedInControl() {
            }
         });
 
-        obs.on("ConnectionClosed", () => {
-          if (!keepConnecting) return;
+        obsRef.current.on("ConnectionClosed", () => {
           addLog("OBS Connection Closed. Retrying in 5s...");
           setObsConnected(false);
           fallbackConnectTimer = setTimeout(connect, 5000);
         });
 
       } catch (err) {
-        if (!keepConnecting) return;
-        addLog(`OBS Connection Error: ${err.message || err.code || err}`);
+        addLog(\`OBS Connection Error: \${err.message || err.code || err}\`);
         setObsConnected(false);
         fallbackConnectTimer = setTimeout(connect, 5000);
       }
@@ -216,7 +201,6 @@ export default function TiedInControl() {
     return () => { 
         keepConnecting = false; 
         clearTimeout(fallbackConnectTimer);
-        obs.disconnect().catch(() => {});
     };
   }, [isLocked, obsPassword]);
 
@@ -247,26 +231,15 @@ export default function TiedInControl() {
     if (!adminKey) return;
     if (!silent) setIsSyncing(true);
     
-    let payload = { ...newState };
-
-    if (payload.accumulatedTodaySeconds === -1 || payload.todayWorkSeconds === -1) {
-       payload.accumulatedTodaySeconds = 0;
-       payload.modeTimestamp = Date.now();
-       payload.mode = "standby";
-       payload.todayWorkSeconds = -1; // Keep for backend trigger just in case
-    }
-    
-    delete payload._skipPushCalc;
-
     try {
-      addLog(`Pushing state update...`);
+      addLog(\`Pushing state update...\`);
       const res = await fetch('https://tiesin.me/api/stream/metrics', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminKey}`
+          'Authorization': \`Bearer \${adminKey}\`
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(newState)
       });
 
       if (!res.ok) {
@@ -278,13 +251,13 @@ export default function TiedInControl() {
         }
         let errData;
         try { errData = await res.json(); } catch(e) {}
-        throw new Error(`Server returned ${res.status}: ${errData?.error || ''} ${errData?.details || ''}`);
+        throw new Error(\`Server returned \${res.status}: \${errData?.error || ''} \${errData?.details || ''}\`);
       }
       
       addLog("State update synced.");
-      if (!silent) setState(payload);
+      if (!silent) setState(newState);
     } catch (e) {
-      addLog(`Sync error: ${e.message}`);
+      addLog(\`Sync error: \${e.message}\`);
       console.error("Failed to sync:", e);
     } finally {
       if (!silent) setIsSyncing(false);
@@ -304,7 +277,7 @@ export default function TiedInControl() {
          ...state, 
          mode: "standby", 
          todayWorkSeconds: -1, // Backend uses this as the dedicated flush flag
-         accumulatedTodaySeconds: -1, // Triggers reset in pushUpdate
+         accumulatedTodaySeconds: 0,
          modeTimestamp: Date.now(),
          contactedCount: 0, 
          convertedCount: 0 
@@ -316,15 +289,7 @@ export default function TiedInControl() {
     if (state.mode === mode) return;
 
     let nextAccumulated = state.accumulatedTodaySeconds || 0;
-    let nextTimestamp = Date.now();
-    
-    const isWorkToExplain = (state.mode === 'work' && mode === 'explain');
-    const isExplainToWork = (state.mode === 'explain' && mode === 'work');
-    
-    if (isWorkToExplain || isExplainToWork) {
-       nextAccumulated = state.accumulatedTodaySeconds || 0;
-       nextTimestamp = state.modeTimestamp || Date.now();
-    } else if (state.mode === 'work' || state.mode === 'explain') {
+    if (state.mode === 'work' || state.mode === 'explain') {
        if (state.modeTimestamp) {
           const elapsed = Math.max(0, Math.floor((Date.now() - state.modeTimestamp) / 1000));
           nextAccumulated += elapsed;
@@ -335,21 +300,20 @@ export default function TiedInControl() {
       ...state,
       mode,
       accumulatedTodaySeconds: nextAccumulated,
-      modeTimestamp: nextTimestamp,
-      _skipPushCalc: true
+      modeTimestamp: Date.now()
     };
 
     if (obsRef.current && obsConnected) {
-      addLog(`Telling OBS to switch scene to: ${mode}`);
+      addLog(\`Telling OBS to switch scene to: \${mode}\`);
       const scene = mode === "work" ? SCENE_WORK : mode === "explain" ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : SCENE_STANDBY;
       obsRef.current.call("SetCurrentProgramScene", { sceneName: scene }).catch(e => {
-         addLog(`OBS Scene Change Error: ${e.message}`);
+         addLog(\`OBS Scene Change Error: \${e.message}\`);
       });
 
       if (mode === "explain") {
-        obsRef.current.call("StartRecord").catch(e => addLog(`obs err: ${e.message}`));
+        obsRef.current.call("StartRecord").catch(e => addLog(\`obs err: \${e.message}\`));
       } else if (mode === "standby") {
-        obsRef.current.call("StopRecord").catch(e => addLog(`obs err: ${e.message}`));
+        obsRef.current.call("StopRecord").catch(e => addLog(\`obs err: \${e.message}\`));
       }
     }
     
@@ -357,7 +321,7 @@ export default function TiedInControl() {
     setState(newState);
     
     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
-    const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
+    const workText = hasTask ? \`work - \${activeTaskRef.current}\` : 'work';
     addYtMarker(mode === 'work' ? workText : mode === 'explain' ? 'explain' : mode === 'break' ? 'break' : 'standby');
   };
 
@@ -387,7 +351,7 @@ export default function TiedInControl() {
     );
   }
 
-  const workText = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG" ? `work - ${activeTaskRef.current}` : 'work';
+  const workText = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG" ? \`work - \${activeTaskRef.current}\` : 'work';
 
   return (
     <main className="dashboard-root" style={{ background: '#111', minHeight: '100dvh', color: '#fff', display: 'flex' }}>
@@ -441,10 +405,10 @@ export default function TiedInControl() {
           <div>
              <h3 style={{ fontSize: 13, textTransform: 'uppercase', opacity: 0.5, marginBottom: 16 }}>OBS Overlay Controls</h3>
              <div className="mode-buttons context-pill no-blur" style={{ padding: 8, background: '#1a1a1a', display: 'flex', gap: 8, borderRadius: 12 }}>
-                <button className={`mode-btn inverted ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')} style={{ flex: 1, borderColor: '#4DAA57', background: state.mode === 'work' ? '#4DAA57' : 'transparent', color: state.mode === 'work' ? '#000000' : '#4DAA57' }}>WORK</button>
-                <button className={`mode-btn inverted ${state.mode === 'explain' ? 'active' : ''}`} onClick={() => setMode('explain')} style={{ flex: 1, borderColor: '#FFBA08', background: state.mode === 'explain' ? '#FFBA08' : 'transparent', color: state.mode === 'explain' ? '#000000' : '#FFBA08' }}>EXPLAIN</button>
-                <button className={`mode-btn inverted ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')} style={{ flex: 1, borderColor: '#fff', background: state.mode === 'break' ? '#fff' : 'transparent', color: state.mode === 'break' ? '#000' : '#fff' }}>BREAK</button>
-                <button className={`mode-btn inverted ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ flex: 1, borderColor: '#ffaa00', background: state.mode === 'standby' ? '#ffaa00' : 'transparent', color: state.mode === 'standby' ? '#000000' : '#ffaa00' }}>STANDBY</button>
+                <button className={\`mode-btn inverted \${state.mode === 'work' ? 'active' : ''}\`} onClick={() => setMode('work')} style={{ flex: 1, borderColor: '#4DAA57', background: state.mode === 'work' ? '#4DAA57' : 'transparent', color: state.mode === 'work' ? '#000000' : '#4DAA57' }}>WORK</button>
+                <button className={\`mode-btn inverted \${state.mode === 'explain' ? 'active' : ''}\`} onClick={() => setMode('explain')} style={{ flex: 1, borderColor: '#FFBA08', background: state.mode === 'explain' ? '#FFBA08' : 'transparent', color: state.mode === 'explain' ? '#000000' : '#FFBA08' }}>EXPLAIN</button>
+                <button className={\`mode-btn inverted \${state.mode === 'break' ? 'active' : ''}\`} onClick={() => setMode('break')} style={{ flex: 1, borderColor: '#fff', background: state.mode === 'break' ? '#fff' : 'transparent', color: state.mode === 'break' ? '#000' : '#fff' }}>BREAK</button>
+                <button className={\`mode-btn inverted \${state.mode === 'standby' ? 'active' : ''}\`} onClick={() => setMode('standby')} style={{ flex: 1, borderColor: '#ffaa00', background: state.mode === 'standby' ? '#ffaa00' : 'transparent', color: state.mode === 'standby' ? '#000000' : '#ffaa00' }}>STANDBY</button>
              </div>
           </div>
 
@@ -467,8 +431,7 @@ export default function TiedInControl() {
                     {ytMarkers.length === 0 ? <div style={{opacity: 0.4}}>No markers in this session.</div> : null}
                     <textarea 
                        readOnly
-                       value={ytMarkers.join('
-')}
+                       value={ytMarkers.join('\n')}
                        style={{ width: '100%', height: '100%', minHeight: 150, background: 'transparent', border: 'none', color: '#aaa', resize: 'none', outline: 'none' }}
                     />
                  </div>
@@ -501,3 +464,6 @@ export default function TiedInControl() {
     </main>
   );
 }
+`
+
+fs.writeFileSync('c:/Website/src/components/TiedIn/TiedInControl.jsx', code);

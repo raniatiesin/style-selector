@@ -35,15 +35,21 @@ export default async function handler(req, res) {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Upsert into the new stream_metrics table
-    const today = new Date().toISOString().split('T')[0];
+    // Use local timezone (e.g. 'America/New_York' or browser-passed UTC offset) for day bounds
+    // to strictly prevent 8PM UTC roll-overs
+    const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })).toISOString().split('T')[0];
     
     // We only update the fields that the client sends to us.
     const updateData = { date: today, updated_at: new Date().toISOString() };
     if (Object.hasOwn(payload, 'mode')) updateData.mode = payload.mode;
     if (Object.hasOwn(payload, 'contactedCount')) updateData.contacted_count = payload.contactedCount;
     if (Object.hasOwn(payload, 'convertedCount')) updateData.converted_count = payload.convertedCount;
+    
+    // NEW: Timestamp logic to fix timer drift and stale UI overwrites
     if (Object.hasOwn(payload, 'todayWorkSeconds')) updateData.today_seconds = payload.todayWorkSeconds;
+    if (Object.hasOwn(payload, 'accumulatedTodaySeconds')) updateData.accumulated_today_seconds = payload.accumulatedTodaySeconds;
+    if (Object.hasOwn(payload, 'modeTimestamp')) updateData.mode_timestamp = payload.modeTimestamp;
+    
     if (Object.hasOwn(payload, 'accumulatedTotalSeconds')) updateData.accumulated_seconds = payload.accumulatedTotalSeconds;
     if (Object.hasOwn(payload, 'inProgressTasks')) updateData.in_progress_tasks = payload.inProgressTasks;
     if (Object.hasOwn(payload, 'inReviewTasks')) updateData.in_review_tasks = payload.inReviewTasks;
