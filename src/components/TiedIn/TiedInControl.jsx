@@ -390,7 +390,7 @@ export default function TiedInControl() {
   const workText = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG" ? `work - ${activeTaskRef.current}` : 'work';
 
   return (
-    <div style={{ minHeight: '100dvh', width: '100%', background: 'var(--bg, #0a0a0a)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+    <div style={{ minHeight: '100dvh', width: '100%', background: 'var(--bg, #0a0a0a)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <style>
          {`
            .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -425,23 +425,28 @@ export default function TiedInControl() {
 
        {/* Metrics Box */}
        <div className="context-pill stack" style={{ padding: 'var(--space-16, 16px)', background: 'var(--panel-bg)' }}>
-          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-             <span style={{ color: 'var(--white-45)', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.05em' }}>Contacted</span>
-             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-12, 12px)' }}>
-                <button className="metric-btn dec" onClick={() => handleMetric('contactedCount', -1)} style={{ padding: 'var(--space-4, 4px) var(--space-12, 12px)', borderRadius: '4px', background: 'var(--white-12)', border: 'none', color: 'var(--white-92)', fontSize: '16px' }}>-</button>
-                <span style={{ fontSize: '24px', width: '40px', textAlign: 'center', fontVariantNumeric: 'tabular-nums', fontWeight: 'var(--weight-light, 300)', color: 'var(--white-92)' }}>{state.contactedCount}</span>
-                <button className="metric-btn inc" onClick={() => handleMetric('contactedCount', 1)} style={{ padding: 'var(--space-4, 4px) var(--space-12, 12px)', borderRadius: '4px', background: 'var(--white-12)', border: 'none', color: 'var(--white-92)', fontSize: '16px' }}>+</button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'var(--space-16, 16px)' }}>
+             {/* Contacted Column */}
+             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-12, 12px)', padding: 'var(--space-8, 8px)', borderRadius: '8px', background: 'var(--white-05)' }}>
+                <span style={{ color: 'var(--white-45)', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.05em' }}>Contacted</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-12, 12px)' }}>
+                   <button className="metric-btn dec" onClick={() => handleMetric('contactedCount', -1)} style={{ padding: 'var(--space-4, 4px) var(--space-12, 12px)', borderRadius: '4px', background: 'var(--white-12)', border: 'none', color: 'var(--white-92)', fontSize: '16px' }}>-</button>
+                   <span style={{ fontSize: '24px', width: '40px', textAlign: 'center', fontVariantNumeric: 'tabular-nums', fontWeight: 'var(--weight-light, 300)', color: 'var(--white-92)' }}>{state.contactedCount}</span>
+                   <button className="metric-btn inc" onClick={() => handleMetric('contactedCount', 1)} style={{ padding: 'var(--space-4, 4px) var(--space-12, 12px)', borderRadius: '4px', background: 'var(--white-12)', border: 'none', color: 'var(--white-92)', fontSize: '16px' }}>+</button>
+                </div>
              </div>
-          </div>
-          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-16, 16px)' }}>
-             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4, 4px)' }}>
-                <span style={{ color: 'var(--white-45)', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.05em' }}>Converted</span>
-                <span style={{ fontSize: '10px', background: 'var(--white-12)', color: 'var(--white-92)', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}>+1% CVR</span>
-             </div>
-             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-12, 12px)' }}>
-                <button className="metric-btn dec" onClick={() => handleMetric('convertedCount', -1)} style={{ padding: 'var(--space-4, 4px) var(--space-12, 12px)', borderRadius: '4px', background: 'rgba(255, 186, 8, 0.1)', border: '1px solid rgba(255, 186, 8, 0.3)', color: '#FFBA08', fontSize: '16px' }}>-</button>
-                <span style={{ fontSize: '24px', width: '40px', textAlign: 'center', color: '#FFBA08', fontVariantNumeric: 'tabular-nums', fontWeight: 'var(--weight-light, 300)' }}>{state.convertedCount}</span>
-                <button className="metric-btn inc" onClick={() => handleMetric('convertedCount', 1)} style={{ padding: 'var(--space-4, 4px) var(--space-12, 12px)', borderRadius: '4px', background: 'rgba(255, 186, 8, 0.1)', border: '1px solid rgba(255, 186, 8, 0.3)', color: '#FFBA08', fontSize: '16px' }}>+</button>
+
+             {/* Converted Column */}
+             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-12, 12px)', padding: 'var(--space-8, 8px)', borderRadius: '8px', background: 'var(--white-05)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-4, 4px)' }}>
+                   <span style={{ color: 'var(--white-45)', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.05em' }}>Converted</span>
+                   <span style={{ fontSize: '10px', background: 'var(--white-12)', color: 'var(--white-92)', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}>+1% CVR</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-12, 12px)' }}>
+                   <button className="metric-btn dec" onClick={() => handleMetric('convertedCount', -1)} style={{ padding: 'var(--space-4, 4px) var(--space-12, 12px)', borderRadius: '4px', background: 'rgba(255, 186, 8, 0.1)', border: '1px solid rgba(255, 186, 8, 0.3)', color: '#FFBA08', fontSize: '16px' }}>-</button>
+                   <span style={{ fontSize: '24px', width: '40px', textAlign: 'center', color: '#FFBA08', fontVariantNumeric: 'tabular-nums', fontWeight: 'var(--weight-light, 300)' }}>{state.convertedCount}</span>
+                   <button className="metric-btn inc" onClick={() => handleMetric('convertedCount', 1)} style={{ padding: 'var(--space-4, 4px) var(--space-12, 12px)', borderRadius: '4px', background: 'rgba(255, 186, 8, 0.1)', border: '1px solid rgba(255, 186, 8, 0.3)', color: '#FFBA08', fontSize: '16px' }}>+</button>
+                </div>
              </div>
           </div>
        </div>
