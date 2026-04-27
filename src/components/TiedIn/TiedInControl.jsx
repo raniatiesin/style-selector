@@ -390,11 +390,11 @@ export default function TiedInControl() {
   const workText = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG" ? `work - ${activeTaskRef.current}` : 'work';
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#000', display: 'flex', justifyContent: 'center' }}>
-      <main style={{ width: '100%', maxWidth: '450px', background: '#0a0a0a', color: '#e5e5e5', display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '16px', gap: '16px', fontFamily: 'system-ui, -apple-system, sans-serif', borderLeft: '1px solid #1c1c1c', borderRight: '1px solid #1c1c1c' }}>
+    <div style={{ minHeight: '100dvh', width: '100%', background: '#000', display: 'flex', justifyContent: 'center' }}>
+      <main style={{ width: '100%', maxWidth: '450px', boxSizing: 'border-box', background: '#0a0a0a', color: '#e5e5e5', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: '16px', gap: '16px', fontFamily: 'system-ui, -apple-system, sans-serif', borderLeft: '1px solid #1c1c1c', borderRight: '1px solid #1c1c1c' }}>
 
        {/* Header Box */}
-       <div style={{ padding: '16px', background: '#1c1c1c', borderRadius: '8px', border: '1px solid #2e2e2e' }}>
+       <div style={{ padding: '16px', background: '#1c1c1c', borderRadius: '8px', border: '1px solid #2e2e2e', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
              <span style={{ fontSize: '18px', fontWeight: '500', color: '#fff' }}>TiedIn Control</span>
              <span style={{ color: obsConnected ? '#4DAA57' : '#F95738', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500' }}>
@@ -404,7 +404,7 @@ export default function TiedInControl() {
        </div>
 
        {/* Mode Panel */}
-       <div style={{ padding: '16px', background: '#1c1c1c', borderRadius: '8px', border: '1px solid #2e2e2e' }}>
+       <div style={{ padding: '16px', background: '#1c1c1c', borderRadius: '8px', border: '1px solid #2e2e2e', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#888', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.05em' }}>
              <span>Current Mode</span>
              <span style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>{state.mode.toUpperCase()}</span>
@@ -479,3 +479,5 @@ export default function TiedInControl() {
 
     </main>
     </div>
+  );
+}
