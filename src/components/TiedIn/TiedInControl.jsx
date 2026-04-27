@@ -397,10 +397,10 @@ export default function TiedInControl() {
            .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
          `}
       </style>
-      <main className="overlay-root no-scrollbar" style={{ width: '100%', maxWidth: '1000px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: 'var(--context-gap, 10px)', gap: 'var(--context-gap, 10px)', flex: 1 }}>
+      <main className="overlay-root no-scrollbar" style={{ width: '100%', maxWidth: '800px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: 'var(--context-gap, 10px)', gap: 'var(--context-gap, 10px)', flex: 1, margin: '0 auto' }}>
 
        {/* Header Box */}
-       <div className="context-pill stack" style={{ width: '100%' }}>
+       <div className="context-pill stack">
           <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
              <span>TiedIn Control</span>
              <span style={{ color: obsConnected ? '#4DAA57' : '#F95738', display: 'flex', alignItems: 'center', gap: 'var(--context-gap, 10px)' }}>
@@ -411,7 +411,7 @@ export default function TiedInControl() {
        </div>
 
        {/* Mode Panel */}
-       <div className="context-pill stack" style={{ width: '100%' }}>
+       <div className="context-pill stack">
           <div className="mode-buttons controls-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)', width: '100%' }}>
              <button className={`mode-btn ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')} style={{ width: '100%' }}>Work</button>
              <button className={`mode-btn ${state.mode === 'explain' ? 'active' : ''}`} onClick={() => setMode('explain')} style={{ width: '100%' }}>Explain</button>
@@ -421,7 +421,7 @@ export default function TiedInControl() {
        </div>
 
        {/* Metrics Box */}
-       <div className="context-pill stack" style={{ width: '100%' }}>
+       <div className="context-pill stack">
           <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
              <span>Contacted: {state.contactedCount}</span>
              <div className="inline-form" style={{ gap: 'var(--context-gap, 10px)' }}>
@@ -439,7 +439,7 @@ export default function TiedInControl() {
        </div>
 
        {/* YouTube Markers Box */}
-       <div className="context-pill stack" style={{ flex: 1, minHeight: '350px', width: '100%' }}>
+       <div className="context-pill stack" style={{ flex: 1, minHeight: '350px' }}>
           <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
              <span>Timestamps</span>
              <div className="inline-form" style={{ gap: 'var(--context-gap, 10px)' }}>
@@ -461,8 +461,7 @@ export default function TiedInControl() {
        </div>
 
        {/* Action Buttons Box */}
-       <div className="context-pill stack" style={{ width: '100%' }}>
-          <div className="side-line">Actions</div>
+       <div className="context-pill stack">
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 'var(--context-gap, 10px)', width: '100%' }}>
              <button onClick={resetDay} className="mode-btn" style={{ width: '100%', borderColor: 'rgba(249, 87, 56, 0.5)', color: '#F95738' }}>Reset Overlay Clocks</button>
              <button onClick={logout} className="mode-btn" style={{ width: '100%' }}>Disconnect & Lock</button>
