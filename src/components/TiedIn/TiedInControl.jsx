@@ -390,8 +390,8 @@ export default function TiedInControl() {
   const workText = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG" ? `work - ${activeTaskRef.current}` : 'work';
 
   return (
-    <div style={{ minHeight: '100dvh', width: '100%', background: '#000', display: 'flex', justifyContent: 'center' }}>
-      <main style={{ width: '100%', maxWidth: '450px', boxSizing: 'border-box', background: '#0a0a0a', color: '#e5e5e5', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: '16px', gap: '16px', fontFamily: 'system-ui, -apple-system, sans-serif', borderLeft: '1px solid #1c1c1c', borderRight: '1px solid #1c1c1c' }}>
+    <div style={{ minHeight: '100dvh', width: '100%', background: '#0a0a0a', display: 'flex', justifyContent: 'center' }}>
+      <main style={{ width: '100%', maxWidth: '450px', boxSizing: 'border-box', background: '#0a0a0a', color: '#e5e5e5', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: '16px', gap: '16px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
        {/* Header Box */}
        <div style={{ padding: '16px', background: '#1c1c1c', borderRadius: '8px', border: '1px solid #2e2e2e', boxSizing: 'border-box' }}>
