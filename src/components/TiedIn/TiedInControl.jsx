@@ -400,11 +400,12 @@ export default function TiedInControl() {
       <main className="overlay-root no-scrollbar" style={{ width: '100%', maxWidth: '640px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: 'var(--space-16, 16px)', gap: 'var(--space-16, 16px)', flex: 1 }}>
 
        {/* Header Box */}
-       <div className="context-pill stack" style={{ padding: 'var(--space-16, 16px)', background: 'var(--panel-bg, rgba(10,10,10,0.62))' }}>
-          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-             <span style={{ fontSize: '18px', fontWeight: 'var(--weight-regular, 400)', color: 'var(--white-92)' }}>TiedIn Control</span>
-             <span style={{ color: obsConnected ? '#4DAA57' : '#F95738', fontSize: '12px', display: 'flex', alignItems: 'center', gap: 'var(--space-8, 8px)' }}>
-                <span className="status-dot" style={{ animationDuration: '3s' }}>&#9679;</span> {obsConnected ? 'OBS Connected' : 'OBS Disconnected'}
+       <div className="context-pill stack">
+          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+             <span>TiedIn Control</span>
+             <span style={{ color: obsConnected ? '#4DAA57' : '#F95738', display: 'flex', alignItems: 'center', gap: 'var(--space-8, 8px)' }}>
+                <span className="status-dot">●</span> 
+                {obsConnected ? 'Connected' : 'Disconnected'}
              </span>
           </div>
        </div>
@@ -439,31 +440,34 @@ export default function TiedInControl() {
        </div>
 
        {/* YouTube Markers Box */}
-       <div className="context-pill stack" style={{ flex: 1, minHeight: 200, display: 'flex', flexDirection: 'column', padding: 'var(--space-16, 16px)', background: 'var(--panel-bg)', borderRadius: '8px' }}>
-          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-12, 12px)' }}>
-             <span style={{ color: 'var(--white-45)', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.05em' }}>Timestamps</span>
-             <div style={{ display: 'flex', gap: 'var(--space-8, 8px)' }}>
-                <button onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode === 'explain' ? 'explain' : state.mode === 'break' ? 'break' : 'standby')} style={{ padding: 'var(--space-4, 4px) var(--space-12, 12px)', fontSize: '11px', background: 'var(--white-92)', border: 'none', color: 'var(--bg, #000)', borderRadius: '4px', textTransform: 'uppercase' }}>+ Marker</button>
-                <button onClick={resetMarkers} style={{ padding: 'var(--space-4, 4px) var(--space-12, 12px)', fontSize: '11px', background: 'transparent', border: '1px solid var(--white-45)', color: 'var(--white-70)', borderRadius: '4px', textTransform: 'uppercase' }}>Reset</button>
+       <div className="context-pill stack">
+          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+             <span>Timestamps</span>
+             <div className="inline-form">
+                <button className="mode-btn" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode === 'explain' ? 'explain' : state.mode === 'break' ? 'break' : 'standby')} style={{ width: '80px', fontSize: '10px' }}>MARK</button>
+                <button className="mode-btn" onClick={resetMarkers} style={{ width: '80px', fontSize: '10px' }}>CLEAR</button>
              </div>
           </div>
           {streamStart && (
-             <div className="side-line" style={{ marginBottom: 'var(--space-12, 12px)', color: '#4DAA57', fontSize: '12px' }}>
+             <div className="side-line" style={{ color: '#4DAA57', fontSize: '14px' }}>
                 Live: {formatYTTime(streamStart)}
              </div>
           )}
-          {ytMarkers.length === 0 ? <div className="side-line" style={{ color: 'var(--white-35)', fontSize: '12px' }}>No markers yet...</div> : null}
+          {ytMarkers.length === 0 ? <div className="side-line" style={{ color: 'var(--white-35)', fontSize: '14px' }}>No markers yet</div> : null}
           <textarea 
              readOnly
              value={ytMarkers.join('\n')}
-             style={{ flex: 1, width: '100%', minHeight: 120, background: 'transparent', border: 'none', color: 'var(--white-70)', resize: 'none', outline: 'none', fontSize: '12px', fontFamily: 'monospace', lineHeight: '1.5' }}
+             style={{ width: '100%', minHeight: 100, background: 'transparent', border: 'none', color: 'var(--white-70)', resize: 'none', outline: 'none', fontFamily: 'monospace' }}
           />
        </div>
 
        {/* Action Buttons Box */}
-       <div className="context-pill stack" style={{ gap: 'var(--space-12, 12px)', padding: 'var(--space-16, 16px)', background: 'var(--panel-bg)' }}>
-          <button onClick={resetDay} style={{ width: '100%', padding: 'var(--space-12, 12px)', background: 'transparent', border: '1px solid rgba(249, 87, 56, 0.5)', color: '#F95738', borderRadius: '4px', textTransform: 'uppercase', fontSize: '12px', tracking: '0.05em' }}>Reset Overlay Clocks</button>
-          <button onClick={logout} style={{ width: '100%', padding: 'var(--space-12, 12px)', background: 'transparent', border: '1px solid var(--white-25)', color: 'var(--white-55)', borderRadius: '4px', textTransform: 'uppercase', fontSize: '12px', tracking: '0.05em' }}>Disconnect & Lock</button>
+       <div className="context-pill stack">
+          <div className="side-line">Actions</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 'var(--context-gap, 10px)', width: '100%' }}>
+             <button onClick={resetDay} className="mode-btn" style={{ width: '100%', borderColor: 'rgba(249, 87, 56, 0.5)', color: '#F95738' }}>Reset Overlay Clocks</button>
+             <button onClick={logout} className="mode-btn" style={{ width: '100%' }}>Disconnect & Lock</button>
+          </div>
        </div>
 
        {/* Floating Logs */}
