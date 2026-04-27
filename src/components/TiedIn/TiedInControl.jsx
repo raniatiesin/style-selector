@@ -390,7 +390,7 @@ export default function TiedInControl() {
   const workText = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG" ? `work - ${activeTaskRef.current}` : 'work';
 
   return (
-    <div style={{ minHeight: '100dvh', width: '100%', background: '#0a0a0a', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div style={{ minHeight: '100dvh', width: '100%', background: '#0a0a0a', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
       <style>
          {`
            .no-scrollbar::-webkit-scrollbar { display: none; }
