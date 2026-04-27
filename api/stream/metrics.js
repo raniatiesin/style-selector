@@ -48,6 +48,8 @@ export default async function handler(req, res) {
     // NEW: Timestamp logic to fix timer drift and stale UI overwrites
     if (Object.hasOwn(payload, 'todayWorkSeconds')) updateData.today_seconds = payload.todayWorkSeconds;
     if (Object.hasOwn(payload, 'accumulatedTodaySeconds')) updateData.accumulated_today_seconds = payload.accumulatedTodaySeconds;
+    else if (Object.hasOwn(payload, 'todayWorkSeconds')) updateData.accumulated_today_seconds = payload.todayWorkSeconds; // Fallback for older UI
+
     if (Object.hasOwn(payload, 'modeTimestamp')) updateData.mode_timestamp = payload.modeTimestamp;
     
     if (Object.hasOwn(payload, 'accumulatedTotalSeconds')) updateData.accumulated_seconds = payload.accumulatedTotalSeconds;

@@ -11,10 +11,14 @@
             "id": "4a34cfc0adc80ad3",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Though Funneling In Excalidraw.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "Though Funneling In Excalidraw"
             }
           }
         ]
@@ -74,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "e4dbe6c9cf847700",
@@ -182,6 +187,7 @@
   },
   "active": "4a34cfc0adc80ad3",
   "lastOpenFiles": [
+    "Though Funneling In Excalidraw.md",
     "Claude Dump.md",
     "{D9F8DDC4-F0F9-42B5-A56D-62637368078E}.png",
     "claudecommands.png",
