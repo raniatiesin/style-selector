@@ -95,10 +95,10 @@ export default async function handler(req, res) {
           contactedCount: data.contacted_count,
           convertedCount: data.converted_count,
           previousDaysSeconds: pastDaysAcc,
-          todayWorkSeconds: (data.accumulated_today_seconds ?? data.today_seconds ?? 0) + activeOffset,
+          todayWorkSeconds: (data.today_seconds ?? 0) + activeOffset,
           
           // Pure timestamp states back to frontend
-          accumulatedTodaySeconds: data.accumulated_today_seconds ?? data.today_seconds ?? 0,
+          accumulatedTodaySeconds: data.today_seconds ?? 0,
           modeTimestamp: data.mode_timestamp,
 
           totalDays: count || 1
