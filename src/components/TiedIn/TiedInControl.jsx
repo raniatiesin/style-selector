@@ -397,7 +397,7 @@ export default function TiedInControl() {
            .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
          `}
       </style>
-      <main className="overlay-root no-scrollbar" style={{ width: '100%', maxWidth: '800px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: 'var(--context-gap, 10px)', gap: 'var(--context-gap, 10px)', flex: 1, margin: '0 auto' }}>
+      <main className="overlay-root no-scrollbar" style={{ width: '100%', maxWidth: '800px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: 'var(--context-gap, 10px)', gap: 'var(--context-gap, 10px)', flex: 1 }}>
 
        {/* Header Box */}
        <div className="context-pill stack">
