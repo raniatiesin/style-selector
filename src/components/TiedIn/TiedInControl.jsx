@@ -397,7 +397,7 @@ export default function TiedInControl() {
            .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
          `}
       </style>
-      <main className="overlay-root no-scrollbar" style={{ width: '100%', maxWidth: '480px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: 'var(--space-16, 16px)', gap: 'var(--space-16, 16px)', flex: 1 }}>
+      <main className="overlay-root no-scrollbar" style={{ width: '100%', maxWidth: '640px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: 'var(--space-16, 16px)', gap: 'var(--space-16, 16px)', flex: 1 }}>
 
        {/* Header Box */}
        <div className="context-pill stack" style={{ padding: 'var(--space-16, 16px)', background: 'var(--panel-bg, rgba(10,10,10,0.62))' }}>
@@ -415,10 +415,10 @@ export default function TiedInControl() {
              <span>Current Mode</span>
              <span style={{ fontSize: '14px', fontWeight: 'var(--weight-regular, 400)', color: 'var(--white-92)' }}>{state.mode.toUpperCase()}</span>
           </div>
-          <div className="mode-buttons no-blur" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8, 8px)', marginTop: 'var(--space-12, 12px)' }}>
+          <div className="mode-buttons no-blur" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'var(--space-8, 8px)', marginTop: 'var(--space-12, 12px)' }}>
              <button className={`mode-btn ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')} style={{ borderColor: state.mode === 'work' ? 'var(--white-92)' : 'var(--white-25)', background: state.mode === 'work' ? 'var(--white-92)' : 'transparent', color: state.mode === 'work' ? 'var(--bg, #000)' : 'var(--white-92)', padding: 'var(--space-12, 12px) 0', borderRadius: '4px', textTransform: 'uppercase' }}>Work</button>
-             <button className={`mode-btn ${state.mode === 'explain' ? 'active' : ''}`} onClick={() => setMode('explain')} style={{ borderColor: state.mode === 'explain' ? 'var(--white-92)' : 'var(--white-25)', background: state.mode === 'explain' ? 'var(--white-92)' : 'transparent', color: state.mode === 'explain' ? 'var(--bg, #000)' : 'var(--white-92)', padding: 'var(--space-12, 12px) 0', borderRadius: '4px', textTransform: 'uppercase' }}>Explain</button>
              <button className={`mode-btn ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')} style={{ borderColor: state.mode === 'break' ? 'var(--white-55)' : 'var(--white-25)', background: state.mode === 'break' ? 'var(--white-55)' : 'transparent', color: state.mode === 'break' ? 'var(--bg, #000)' : 'var(--white-92)', padding: 'var(--space-12, 12px) 0', borderRadius: '4px', textTransform: 'uppercase' }}>Break</button>
+             <button className={`mode-btn ${state.mode === 'explain' ? 'active' : ''}`} onClick={() => setMode('explain')} style={{ borderColor: state.mode === 'explain' ? 'var(--white-92)' : 'var(--white-25)', background: state.mode === 'explain' ? 'var(--white-92)' : 'transparent', color: state.mode === 'explain' ? 'var(--bg, #000)' : 'var(--white-92)', padding: 'var(--space-12, 12px) 0', borderRadius: '4px', textTransform: 'uppercase' }}>Explain</button>
              <button className={`mode-btn ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ borderColor: state.mode === 'standby' ? 'var(--white-40)' : 'var(--white-25)', background: state.mode === 'standby' ? 'var(--white-40)' : 'transparent', color: state.mode === 'standby' ? 'var(--bg, #000)' : 'var(--white-92)', padding: 'var(--space-12, 12px) 0', borderRadius: '4px', textTransform: 'uppercase' }}>Standby</button>
           </div>
        </div>
