@@ -17,13 +17,19 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Missing Secret" });
   }
 
-  const authHeader = req.headers.authorization;
-  if (!authHeader || authHeader !== `Bearer ${WEBHOOK_SECRET}`) {
-    return res.status(401).json({ error: "Unauthorized access blocked." });     
+  const authHeader = req.headers.authorization || req.headers['x-api-key'] || '';
+  
+  let isValidAuth = false;
+  if (authHeader.includes(WEBHOOK_SECRET)) isValidAuth = true;
+  if (req.method !== 'GET' && req.body && req.body.secret === WEBHOOK_SECRET) isValidAuth = true;
+  if (req.query && req.query.secret === WEBHOOK_SECRET) isValidAuth = true;
+
+  if (!isValidAuth) {
+    return res.status(401).json({ error: "Unauthorized access blocked. Secret mismatch or missing." });     
   }
 
-  if (req.method !== 'POST' && req.method !== 'DELETE') {
-    return res.status(405).json({ error: 'Method Not Allowed.' });
+  if (req.method !== 'POST' && req.method !== 'DELETE' && req.method !== 'PUT' && req.method !== 'PATCH') {
+    return res.status(405).json({ error: `Method Not Allowed. Passed method: ${req.method}` });
   }
 
   try {
