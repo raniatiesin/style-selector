@@ -390,8 +390,18 @@ export default function TiedInControl() {
   const workText = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG" ? `work - ${activeTaskRef.current}` : 'work';
 
   return (
-    <div style={{ minHeight: '100dvh', width: '100%', background: '#0a0a0a', display: 'flex', justifyContent: 'center' }}>
-      <main style={{ width: '100%', maxWidth: '450px', boxSizing: 'border-box', background: '#0a0a0a', color: '#e5e5e5', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: '16px', gap: '16px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100dvh', width: '100%', background: '#0a0a0a', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <style>
+         {`
+           .no-scrollbar::-webkit-scrollbar { display: none; }
+           .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+           .tiedin-panel-btn { transition: all 0.15s ease; }
+           .tiedin-panel-btn:hover { filter: brightness(1.1); transform: scale(0.99); }
+           .tiedin-panel-btn:active { filter: brightness(0.9); transform: scale(0.98); }
+         `}
+      </style>
+      <main className="no-scrollbar" style={{ width: '100%', maxWidth: '400px', boxSizing: 'border-box', background: '#0a0a0a', color: '#e5e5e5', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: '16px', gap: '16px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+
 
        {/* Header Box */}
        <div style={{ padding: '16px', background: '#1c1c1c', borderRadius: '8px', border: '1px solid #2e2e2e', boxSizing: 'border-box' }}>
@@ -469,9 +479,9 @@ export default function TiedInControl() {
        </div>
 
        {/* Floating Logs */}
-       <div style={{ position: 'fixed', bottom: '20px', right: '20px', width: '300px', pointerEvents: 'none' }}>
+       <div style={{ position: 'fixed', bottom: '20px', right: '5%', width: '90%', maxWidth: '300px', pointerEvents: 'none', zIndex: 999 }}>
            {logs.map((l, i) => (
-              <div key={i} style={{ background: '#0a0a0a', color: '#e5e5e5', fontSize: '11px', fontFamily: 'monospace', padding: '8px 12px', borderLeft: '2px solid #666', borderTop: '1px solid #2e2e2e', borderRight: '1px solid #2e2e2e', borderBottom: '1px solid #2e2e2e', marginBottom: '4px', borderRadius: '0 4px 4px 0' }}>
+              <div key={i} style={{ background: '#0a0a0a', color: '#e5e5e5', fontSize: '11px', fontFamily: 'monospace', padding: '8px 12px', borderLeft: '2px solid #666', borderTop: '1px solid #2e2e2e', borderRight: '1px solid #2e2e2e', borderBottom: '1px solid #2e2e2e', marginBottom: '4px', borderRadius: '0 4px 4px 0', wordBreak: 'break-word' }}>
                  {l}
               </div>
            ))}
