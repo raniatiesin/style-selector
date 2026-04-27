@@ -397,13 +397,13 @@ export default function TiedInControl() {
            .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
          `}
       </style>
-      <main className="overlay-root no-scrollbar" style={{ width: '100%', maxWidth: '800px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: 'var(--space-16, 16px)', gap: 'var(--space-16, 16px)', flex: 1 }}>
+      <main className="overlay-root no-scrollbar" style={{ width: '100%', maxWidth: '1000px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: 'var(--context-gap, 10px)', gap: 'var(--context-gap, 10px)', flex: 1 }}>
 
        {/* Header Box */}
-       <div className="context-pill stack">
+       <div className="context-pill stack" style={{ width: '100%' }}>
           <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
              <span>TiedIn Control</span>
-             <span style={{ color: obsConnected ? '#4DAA57' : '#F95738', display: 'flex', alignItems: 'center', gap: 'var(--space-8, 8px)' }}>
+             <span style={{ color: obsConnected ? '#4DAA57' : '#F95738', display: 'flex', alignItems: 'center', gap: 'var(--context-gap, 10px)' }}>
                 <span className="status-dot">●</span> 
                 {obsConnected ? 'Connected' : 'Disconnected'}
              </span>
@@ -411,27 +411,27 @@ export default function TiedInControl() {
        </div>
 
        {/* Mode Panel */}
-       <div className="context-pill stack">
-          <div className="mode-buttons controls-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-16, 16px)' }}>
-             <button className={`mode-btn ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')} style={{ width: '100%', padding: 'var(--space-16, 16px)' }}>Work</button>
-             <button className={`mode-btn ${state.mode === 'explain' ? 'active' : ''}`} onClick={() => setMode('explain')} style={{ width: '100%', padding: 'var(--space-16, 16px)' }}>Explain</button>
-             <button className={`mode-btn ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')} style={{ width: '100%', padding: 'var(--space-16, 16px)' }}>Break</button>
-             <button className={`mode-btn ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ width: '100%', padding: 'var(--space-16, 16px)' }}>Standby</button>
+       <div className="context-pill stack" style={{ width: '100%' }}>
+          <div className="mode-buttons controls-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)', width: '100%' }}>
+             <button className={`mode-btn ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')} style={{ width: '100%' }}>Work</button>
+             <button className={`mode-btn ${state.mode === 'explain' ? 'active' : ''}`} onClick={() => setMode('explain')} style={{ width: '100%' }}>Explain</button>
+             <button className={`mode-btn ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')} style={{ width: '100%' }}>Break</button>
+             <button className={`mode-btn ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ width: '100%' }}>Standby</button>
           </div>
        </div>
 
        {/* Metrics Box */}
-       <div className="context-pill stack">
+       <div className="context-pill stack" style={{ width: '100%' }}>
           <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
              <span>Contacted: {state.contactedCount}</span>
-             <div className="inline-form">
+             <div className="inline-form" style={{ gap: 'var(--context-gap, 10px)' }}>
                 <button className="mode-btn" onClick={() => handleMetric('contactedCount', -1)} style={{ width: '60px' }}>-</button>
                 <button className="mode-btn" onClick={() => handleMetric('contactedCount', 1)} style={{ width: '60px' }}>+</button>
              </div>
           </div>
           <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
              <span>Converted: {state.convertedCount}</span>
-             <div className="inline-form">
+             <div className="inline-form" style={{ gap: 'var(--context-gap, 10px)' }}>
                 <button className="mode-btn" onClick={() => handleMetric('convertedCount', -1)} style={{ width: '60px' }}>-</button>
                 <button className="mode-btn" onClick={() => handleMetric('convertedCount', 1)} style={{ width: '60px' }}>+</button>
              </div>
@@ -439,10 +439,10 @@ export default function TiedInControl() {
        </div>
 
        {/* YouTube Markers Box */}
-       <div className="context-pill stack" style={{ flex: 1, minHeight: '350px' }}>
+       <div className="context-pill stack" style={{ flex: 1, minHeight: '350px', width: '100%' }}>
           <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
              <span>Timestamps</span>
-             <div className="inline-form">
+             <div className="inline-form" style={{ gap: 'var(--context-gap, 10px)' }}>
                 <button className="mode-btn" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode === 'explain' ? 'explain' : state.mode === 'break' ? 'break' : 'standby')} style={{ width: '80px', fontSize: '10px' }}>MARK</button>
                 <button className="mode-btn" onClick={resetMarkers} style={{ width: '80px', fontSize: '10px' }}>CLEAR</button>
              </div>
@@ -461,7 +461,7 @@ export default function TiedInControl() {
        </div>
 
        {/* Action Buttons Box */}
-       <div className="context-pill stack">
+       <div className="context-pill stack" style={{ width: '100%' }}>
           <div className="side-line">Actions</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 'var(--context-gap, 10px)', width: '100%' }}>
              <button onClick={resetDay} className="mode-btn" style={{ width: '100%', borderColor: 'rgba(249, 87, 56, 0.5)', color: '#F95738' }}>Reset Overlay Clocks</button>
@@ -470,9 +470,9 @@ export default function TiedInControl() {
        </div>
 
        {/* Floating Logs */}
-       <div className="floating-logs" style={{ position: 'fixed', bottom: 'var(--space-20, 20px)', right: '5%', width: '90%', maxWidth: '300px', pointerEvents: 'none', zIndex: 999 }}>
+       <div className="floating-logs" style={{ position: 'fixed', bottom: 'var(--context-gap, 10px)', right: '5%', width: '90%', maxWidth: '300px', pointerEvents: 'none', zIndex: 999 }}>
            {logs.map((l, i) => (
-              <div key={i} style={{ background: 'var(--panel-bg)', color: 'var(--white-92)', fontSize: '11px', fontFamily: 'monospace', padding: '6px var(--space-12, 12px)', borderLeft: '2px solid var(--white-45)', marginBottom: 'var(--space-4, 4px)', backdropFilter: 'blur(10px)', wordBreak: 'break-word' }}>
+              <div key={i} style={{ background: 'var(--panel-bg)', color: 'var(--white-92)', fontSize: '11px', fontFamily: 'monospace', padding: 'var(--context-gap, 10px)', borderLeft: '2px solid var(--white-45)', marginBottom: 'var(--context-gap, 10px)', backdropFilter: 'blur(10px)', wordBreak: 'break-word' }}>
                  {l}
               </div>
            ))}
