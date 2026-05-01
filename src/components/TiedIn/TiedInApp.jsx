@@ -76,7 +76,7 @@ export default function TiedInApp({ displayMode }) {
       const d = new Date(nowMs);
       const ls = liveStateRef.current;
       
-      const isWorking = ls.mode === 'work' || ls.mode === 'explain';
+      const isWorking = ls.mode === 'work';
       const isBreak = ls.mode === 'break';
       
       let todaySecs = ls.accumulatedTodaySeconds || 0;
@@ -272,7 +272,7 @@ export default function TiedInApp({ displayMode }) {
               <div className="side-line" ref={timerRefs.nowDateMain}>--/--/----</div>
               <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
             </div>
-            <div className="context-pill stack">
+            <div className="context-pill stack side-line-counts">
               <div className="side-line">Contacted: {counts.contacted}</div>
               <div className="side-line">Converted: {counts.converted}</div>
             </div>

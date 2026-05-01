@@ -172,7 +172,7 @@ export default function TiedInControl() {
                  if (isWorkToExplain || isExplainToWork) {
                     nextAccumulated = s.accumulatedTodaySeconds || 0;
                     nextTimestamp = s.modeTimestamp || Date.now();
-                 } else if (s.mode === 'work' || s.mode === 'explain') {
+                 } else if (s.mode === 'work') {
                     if (s.modeTimestamp) {
                        const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
                        nextAccumulated += elapsed;
@@ -358,7 +358,7 @@ export default function TiedInControl() {
     if (isWorkToExplain || isExplainToWork) {
        nextAccumulated = state.accumulatedTodaySeconds || 0;
        nextTimestamp = state.modeTimestamp || Date.now();
-    } else if (state.mode === 'work' || state.mode === 'explain') {
+    } else if (state.mode === 'work') {
        if (state.modeTimestamp) {
           const elapsed = Math.max(0, Math.floor((Date.now() - state.modeTimestamp) / 1000));
           nextAccumulated += elapsed;

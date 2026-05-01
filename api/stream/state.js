@@ -82,7 +82,7 @@ export default async function handler(req, res) {
        // If currently in an active ticking mode, explicitly calculate the un-pushed elapsed time.
        // This guarantees data isn't lost if the stream crashes before a break causes an accumulated log.
        let activeOffset = 0;
-       if (data.mode === 'work' || data.mode === 'explain') {
+       if (data.mode === 'work') {
            const timestamp = data.mode_timestamp || Date.now();
            activeOffset = Math.floor((Date.now() - timestamp) / 1000);
            // Fallback to avoid negative values

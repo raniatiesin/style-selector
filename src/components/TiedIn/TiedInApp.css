@@ -90,7 +90,7 @@ html:has(.overlay-root) body {
 .mode-work .timeline {
   display: block;
 }
-.mode-explain .timeline { display: block; } 
+.mode-explain .timeline { display: none; } 
 .mode-break .timeline {
   display: none; 
 }
@@ -183,6 +183,25 @@ html:has(.overlay-root) body {
 .mode-explain .context-shell {
   display: block;
 }
+
+.mode-explain .hero-timer-pill,
+.mode-explain .side-line-counts,
+.mode-explain .progress-strip {
+  display: none !important;
+}
+
+.mode-explain .side-col {
+  grid-column: 1; /* Move the date/time box to the left */
+}
+
+/* Bigger webcam for explain mode */
+.mode-explain .frame-webcam {
+  left: 350px;
+  top: 50px;
+  width: 740px;
+  height: 555px; /* maintain 4:3 or whatever the aspect ratio was initially */
+}
+/* For work mode, webcam is: width: 334.67px; height: 251px; -> roughly 4:3 */
 
 .context-panel {
   width: 100%;
@@ -285,7 +304,10 @@ html:has(.overlay-root) body {
   text-overflow: ellipsis;
 }
 
-.progress-strip {
+.mode-explain .progress-strip,
+.mode-break .progress-strip {
+  display: none !important;
+}
   position: absolute;
   left: 10px;
   top: 1049px;
@@ -298,8 +320,8 @@ html:has(.overlay-root) body {
   display: block;
 }
 
-.mode-break .progress-strip {
-  display: none;
+.mode-explain .progress-strip {
+  display: none !important;
 }
 
 .progress-fill {
@@ -541,5 +563,12 @@ html:has(.overlay-root) body {
   top: 819px;
   width: 334.67px;
   height: 251px;
+}
+
+.mode-explain .frame-webcam {
+  left: 310px; /* Centered in 1440 */
+  top: 90px;
+  width: 820px;
+  height: 615px;
 }
 /* Force Vercel CSS Redeployment */
