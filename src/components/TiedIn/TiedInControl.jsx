@@ -186,7 +186,7 @@ export default function TiedInControl() {
                     _skipPushCalc: true
                  };
 
-                 pushUpdate(newState, true);
+                 pushUpdate(newState);
                  const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
                  const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
                  addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? 'explain' : mapped === 'break' ? 'break' : 'standby');
@@ -245,7 +245,8 @@ export default function TiedInControl() {
 
   const pushUpdate = async (newState, silent = false) => {
     if (!adminKey) return;
-    if (!silent) setIsSyncing(true);
+    // Always set isSyncing to prevent loadMetrics from overwriting state during push
+    setIsSyncing(true);
     
     let payload = { ...newState };
 
@@ -282,12 +283,12 @@ export default function TiedInControl() {
       }
       
       addLog("State update synced.");
-      if (!silent) setState(payload);
+      setState(payload);
     } catch (e) {
       addLog(`Sync error: ${e.message}`);
       console.error("Failed to sync:", e);
     } finally {
-      if (!silent) setIsSyncing(false);
+      setIsSyncing(false);
     }
   };
 
@@ -353,8 +354,8 @@ export default function TiedInControl() {
       }
     }
     
-    pushUpdate(newState, true);
-    setState(newState);
+    // pushUpdate will now always update local state and set isSyncing
+    pushUpdate(newState);
     
     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
     const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';

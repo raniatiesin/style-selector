@@ -80,7 +80,7 @@ export default function TiedInControl() {
              setState(s => {
                if (s.mode !== mapped) {
                  addLog(`Syncing new mode to Vercel: ${mapped}`);
-                 pushUpdate({ ...s, mode: mapped }, true);
+                 pushUpdate({ ...s, mode: mapped });
                  return { ...s, mode: mapped };
                }
                return s;
