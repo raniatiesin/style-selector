@@ -183,7 +183,34 @@ export default function TiedInControl() {
              });
            }
         });
+        obs.on("StreamStateChanged", (event) => {
+          if (event.outputActive) {
+            addLog("OBS Stream Started! Resetting setup...");
+            
+            const now = Date.now();
+            setStreamStart(now);
+            localStorage.setItem('YT_STREAM_START', String(now));
+            const initial = ["00:00 - Stream Started"];
+            setYtMarkers(initial);
+            localStorage.setItem('YT_MARKERS', JSON.stringify(initial));
 
+            obsRef.current.call("SetCurrentProgramScene", { sceneName: SCENE_STANDBY }).catch(e => addLog(\`Scene err: \${e.message}\`));
+
+            setState(s => {
+               const resetPayload = { 
+                  ...s, 
+                  mode: "standby", 
+                  todayWorkSeconds: -1,
+                  accumulatedTodaySeconds: -1,
+                  modeTimestamp: now,
+                  contactedCount: 0, 
+                  convertedCount: 0 
+               };
+               pushUpdate(resetPayload);
+               return s;
+            });
+          }
+        });
         obsRef.current.on("ConnectionClosed", () => {
           addLog("OBS Connection Closed. Retrying in 5s...");
           setObsConnected(false);
