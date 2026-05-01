@@ -179,12 +179,9 @@ html:has(.overlay-root) body {
   padding: 0;
 }
 
-.mode-work .context-shell {
-  display: block;
-}
-
+.mode-work .context-shell,
 .mode-explain .context-shell {
-  display: none !important;
+  display: block;
 }
 
 .mode-explain .explain-banner {
@@ -201,7 +198,8 @@ html:has(.overlay-root) body {
   position: absolute;
   top: 10px;
   left: 10px;
-  right: 17px;
+  width: 1420px;
+  height: 65px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -356,6 +354,8 @@ html:has(.overlay-root) body {
 .mode-break .progress-strip {
   display: none !important;
 }
+
+.progress-strip {
   position: absolute;
   left: 10px;
   top: 1049px;
