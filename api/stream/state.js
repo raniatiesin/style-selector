@@ -14,9 +14,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // High-Quality Cache Control: Tells Vercel edge networks not to cache this read
-  // We want the absolute freshest data from the database every time OBS polls.
-  res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+  // Prevent edge caching to avoid race conditions with control panel updates
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
 
   try {
     // IMPORTANT: Since Vercel Serverless has no "memory" (it destroys itself after every request),

@@ -25,6 +25,7 @@ export default function TiedInControl() {
     modeTimestamp: Date.now()
   });
 
+  const isSyncingRef = useRef(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [obsConnected, setObsConnected] = useState(false);
   const [logs, setLogs] = useState([]);
@@ -87,7 +88,7 @@ export default function TiedInControl() {
         
         // Continuously hydrate state from API to avoid stale UI overrides,
         // but temporarily block syncing updates exactly when a manual push is happening
-        if (data?.metrics && !isSyncing) {
+        if (data?.metrics && !isSyncingRef.current) {
            setState(s => ({ 
               ...s, 
               contactedCount: data.metrics.contactedCount ?? s.contactedCount,
@@ -118,7 +119,7 @@ export default function TiedInControl() {
     loadMetrics();
     intervalId = setInterval(loadMetrics, 2000);
     return () => clearInterval(intervalId);
-  }, [isLocked, isSyncing]);
+  }, [isLocked]); // Removed isSyncing to prevent interval reset on push
 
   // Connect to OBS when unlocked
   useEffect(() => {
@@ -246,6 +247,7 @@ export default function TiedInControl() {
   const pushUpdate = async (newState, silent = false) => {
     if (!adminKey) return;
     // Always set isSyncing to prevent loadMetrics from overwriting state during push
+    isSyncingRef.current = true;
     setIsSyncing(true);
     
     let payload = { ...newState };
@@ -288,6 +290,7 @@ export default function TiedInControl() {
       addLog(`Sync error: ${e.message}`);
       console.error("Failed to sync:", e);
     } finally {
+      isSyncingRef.current = false;
       setIsSyncing(false);
     }
   };
