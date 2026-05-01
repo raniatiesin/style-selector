@@ -56,7 +56,9 @@ export default function TiedInApp({ displayMode }) {
     nowTimeBreak: useRef(null),
     nowDateBreak: useRef(null),
     nowTimeStandby: useRef(null),
-    nowDateStandby: useRef(null)
+    nowDateStandby: useRef(null),
+    explainDate: useRef(null),
+    explainTime: useRef(null)
   };
 
   // Mutable source of truth for the animation loop
@@ -109,6 +111,9 @@ export default function TiedInApp({ displayMode }) {
       
       if (timerRefs.nowTimeStandby.current) timerRefs.nowTimeStandby.current.innerText = time12;
       if (timerRefs.nowDateStandby.current) timerRefs.nowDateStandby.current.innerText = ldate;
+
+      if (timerRefs.explainDate.current) timerRefs.explainDate.current.innerText = shortDate;
+      if (timerRefs.explainTime.current) timerRefs.explainTime.current.innerText = sideDate;
 
       const progressVal = clamp(todaySecs / (7 * 3600), 0, 1);
       if (timerRefs.progressFill.current) {
@@ -212,6 +217,13 @@ export default function TiedInApp({ displayMode }) {
 
   return (
     <div className={`overlay-root mode-${activeMode}`}>
+      
+      {/* Top Banner specific for Explain Mode */}
+      <div className="explain-banner">
+        <div className="explain-banner-date" ref={timerRefs.explainDate}>--/--/----</div>
+        <div className="explain-banner-time" ref={timerRefs.explainTime}>--- - --:-- --</div>
+      </div>
+
       <div className="obs-frame frame-display" aria-hidden="true"></div>
       <div className="obs-frame frame-webcam" aria-hidden="true"></div>
 

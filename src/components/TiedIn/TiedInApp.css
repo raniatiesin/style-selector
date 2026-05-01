@@ -179,10 +179,65 @@ html:has(.overlay-root) body {
   padding: 0;
 }
 
-.mode-work .context-shell,
-.mode-explain .context-shell {
+.mode-work .context-shell {
   display: block;
 }
+
+.mode-explain .context-shell {
+  display: none !important;
+}
+
+.mode-explain .explain-banner {
+  display: flex !important;
+}
+
+.mode-work .explain-banner,
+.mode-standby .explain-banner,
+.mode-break .explain-banner {
+  display: none !important;
+}
+
+.explain-banner {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 17px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 22px;
+  background: transparent;
+  border: 1px solid var(--white-45);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white-92);
+  z-index: 100;
+}
+
+.explain-banner-date {
+  font-size: 36px;
+  line-height: 1.04;
+  letter-spacing: -0.006em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.explain-banner-time {
+  font-size: 36px;
+  line-height: 1.04;
+  letter-spacing: -0.006em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.explain-display-gap {
+  top: 75px !important;
+}
+
 
 .mode-explain .hero-timer-pill,
 .mode-explain .side-line-counts,
@@ -191,17 +246,10 @@ html:has(.overlay-root) body {
 }
 
 .mode-explain .side-col {
-  grid-column: 1; /* Move the date/time box to the left */
+  display: none !important;
 }
 
-/* Bigger webcam for explain mode */
-.mode-explain .frame-webcam {
-  left: 350px;
-  top: 50px;
-  width: 740px;
-  height: 555px; /* maintain 4:3 or whatever the aspect ratio was initially */
-}
-/* For work mode, webcam is: width: 334.67px; height: 251px; -> roughly 4:3 */
+/* Webcam placement handles dynamically bottom right overlapping now */
 
 .context-panel {
   width: 100%;
@@ -566,9 +614,14 @@ html:has(.overlay-root) body {
 }
 
 .mode-explain .frame-webcam {
-  left: 310px; /* Centered in 1440 */
-  top: 90px;
+  left: unset;
+  right: 17px;
+  bottom: 0px;
+  top: unset;
   width: 820px;
   height: 615px;
+  z-index: 50; /* Bring above if needed */
 }
-/* Force Vercel CSS Redeployment */
+.mode-explain .frame-display {
+  top: 96px; /* same exact spacing for the brand: 10px from element above */
+}
