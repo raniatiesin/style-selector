@@ -615,13 +615,26 @@ html:has(.overlay-root) body {
 
 .mode-explain .frame-webcam {
   left: unset;
-  right: 17px;
-  bottom: 0px;
+  right: 40px;
+  bottom: 0;
   top: unset;
-  width: 820px;
-  height: 615px;
-  z-index: 50; /* Bring above if needed */
+  width: 680px;
+  height: 510px;
+  z-index: 50;
 }
+
+.mode-explain .hero-pill {
+  position: absolute;
+  left: 40px;
+  bottom: 40px;
+  font-size: 1.25rem;
+  letter-spacing: 0.1em;
+  color: var(--white-100);
+}
+
 .mode-explain .frame-display {
-  top: 96px; /* same exact spacing for the brand: 10px from element above */
+  top: 96px;
+  left: 40px;
+  width: 1360px;
+  height: 765px;
 }
