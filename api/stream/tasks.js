@@ -48,8 +48,7 @@ export default async function handler(req, res) {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // FIX: Align the database 'date' string format calculation with the state poll 
-    const todayStr = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
-    const today = new Date(todayStr).toISOString().split('T')[0];
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
 
     // Fetch the current task arrays so we can dynamically modify them
     const { data, error: fetchError } = await supabase
@@ -91,7 +90,7 @@ export default async function handler(req, res) {
     } else if (action === 'delete' || req.method === 'DELETE' || rawStatus === 'delete' || rawStatus === 'deleted') {
        // Just deleting, do nothing to add it back
     } else {
-       // Filter tasks that aren't due today
+       // Check if task is due today
        const passedDate = due_date || dueDate || due;
        let isDueToday = true;
        if (passedDate) {
@@ -101,35 +100,33 @@ export default async function handler(req, res) {
          } catch(e) {}
        }
 
-       if (isDueToday) {
-         if (['in progress', 'in_progress', 'up next', 'up_next', 'upnext', 'in review', 'in_review', 'waiting'].includes(rawStatus)) {
-            let normalizedStatus = 'waiting';
-            if (rawStatus.includes('progress')) normalizedStatus = 'in_progress';
-            else if (rawStatus.includes('next')) normalizedStatus = 'up_next';
-            else if (rawStatus.includes('review')) normalizedStatus = 'in_review';
-     
-            const newTask = {
-              id: taskId,
-              name: String(task || "Untitled Task"),
-              status: normalizedStatus,
-              createdAt: time ? new Date(time).getTime() : Date.now(),
-              completedAt: null
-            };
-     
-            if (normalizedStatus === 'in_progress') inProgress.push(newTask);
-            else if (normalizedStatus === 'in_review') inReview.push(newTask);
-            else if (normalizedStatus === 'up_next') upNext.push(newTask);
-            else upNext.push(newTask); 
-            
-         } else if (rawStatus === 'done' || rawStatus === 'completed') {
-            done.unshift({
-              id: taskId,
-              name: String(task || "Completed Task"),
-              status: "done",
-              createdAt: Date.now(), 
-              completedAt: time ? new Date(time).getTime() : Date.now()
-            });
-         }
+       if (['in progress', 'in_progress', 'up next', 'up_next', 'upnext', 'in review', 'in_review', 'waiting'].includes(rawStatus)) {
+          let normalizedStatus = 'waiting';
+          if (rawStatus.includes('progress')) normalizedStatus = 'in_progress';
+          else if (rawStatus.includes('next')) normalizedStatus = 'up_next';
+          else if (rawStatus.includes('review')) normalizedStatus = 'in_review';
+   
+          const newTask = {
+            id: taskId,
+            name: String(task || "Untitled Task"),
+            status: normalizedStatus,
+            createdAt: time ? new Date(time).getTime() : Date.now(),
+            completedAt: null
+          };
+   
+          if (normalizedStatus === 'in_progress') inProgress.push(newTask);
+          else if (normalizedStatus === 'in_review') inReview.push(newTask);
+          else if (normalizedStatus === 'up_next') upNext.push(newTask);
+          else upNext.push(newTask); 
+          
+       } else if ((rawStatus === 'done' || rawStatus === 'completed') && (isDueToday)) {
+          done.unshift({
+            id: taskId,
+            name: String(task || "Completed Task"),
+            status: "done",
+            createdAt: Date.now(), 
+            completedAt: time ? new Date(time).getTime() : Date.now()
+          });
        }
     }
 

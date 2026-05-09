@@ -33,8 +33,7 @@ export default async function handler(req, res) {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Use local timezone string to fetch correctly
-    const todayStr = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
-    const today = new Date(todayStr).toISOString().split('T')[0];
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
     
     // Fetch today's metrics
     const { data, error } = await supabase

@@ -35,9 +35,9 @@ export default async function handler(req, res) {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Use local timezone (e.g. 'America/New_York' or browser-passed UTC offset) for day bounds
+    // Use local timezone (e.g. 'America/New_York') for day bounds
     // to strictly prevent 8PM UTC roll-overs
-    const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })).toISOString().split('T')[0];
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
     
     // We only update the fields that the client sends to us.
     const updateData = { date: today, updated_at: new Date().toISOString() };
