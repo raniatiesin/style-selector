@@ -124,7 +124,13 @@ export default function TiedInApp({ displayMode }) {
 
       const accumulatedTotalSeconds = (ls.previousDaysSeconds || 0) + todaySecs;
       if (timerRefs.dayHoursTrack.current) {
-        timerRefs.dayHoursTrack.current.innerText = `Day ${ls.totalDays || 1} - ${formatHours(accumulatedTotalSeconds)}/${HOURS_TARGET} Hours Accumulated`;
+        const rawModeLocal = String(ls.mode || "");
+        if (rawModeLocal.startsWith('explain|')) {
+          const topic = rawModeLocal.split('|').slice(1).join('|') || 'Explain Topic';
+          timerRefs.dayHoursTrack.current.innerText = topic;
+        } else {
+          timerRefs.dayHoursTrack.current.innerText = `Day ${ls.totalDays || 1} - ${formatHours(accumulatedTotalSeconds)}/${HOURS_TARGET} Hours Accumulated`;
+        }
       }
 
       frame = requestAnimationFrame(tick);
@@ -202,7 +208,9 @@ export default function TiedInApp({ displayMode }) {
   }, []);
 
   // --- Render Mappings ---
-  const activeMode = displayMode || modeReact;
+  const rawMode = displayMode || modeReact;
+  const activeMode = rawMode.startsWith('explain') ? 'explain' : rawMode;
+  const explainTopicDisplay = rawMode.startsWith('explain|') ? rawMode.split('|').slice(1).join('|') : "";
   const inProgressIds = new Set(tasks.filter(t => t.status === "in_progress").map(t => t.id));
 
   const startOfToday = new Date();

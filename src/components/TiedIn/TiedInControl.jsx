@@ -14,6 +14,7 @@ export default function TiedInControl() {
   
   const [inputKey, setInputKey] = useState('');
   const [inputObs, setInputObs] = useState('');
+  const [explainTopic, setExplainTopic] = useState('');
   
   const [isLocked, setIsLocked] = useState(!adminKey);
 
@@ -347,13 +348,16 @@ export default function TiedInControl() {
   };
 
   const setMode = (mode) => {
+    const isExplainTarget = mode.startsWith('explain');
+    const isExplainCurrent = state.mode.startsWith('explain');
+    
     if (state.mode === mode) return;
 
     let nextAccumulated = state.accumulatedTodaySeconds || 0;
     let nextTimestamp = Date.now();
     
-    const isWorkToExplain = (state.mode === 'work' && mode === 'explain');
-    const isExplainToWork = (state.mode === 'explain' && mode === 'work');
+    const isWorkToExplain = (state.mode === 'work' && isExplainTarget);
+    const isExplainToWork = (isExplainCurrent && mode === 'work');
     
     if (isWorkToExplain || isExplainToWork) {
        nextAccumulated = state.accumulatedTodaySeconds || 0;
@@ -374,26 +378,25 @@ export default function TiedInControl() {
     };
 
     if (obsRef.current && obsConnected) {
-      addLog(`Telling OBS to switch scene to: ${mode}`);
-      const scene = mode === "work" ? SCENE_WORK : mode === "explain" ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : SCENE_STANDBY;
+      addLog(`Telling OBS to switch scene to: ${isExplainTarget ? 'explain' : mode}`);
+      const scene = mode === "work" ? SCENE_WORK : isExplainTarget ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : SCENE_STANDBY;
       obsRef.current.call("SetCurrentProgramScene", { sceneName: scene }).catch(e => {
          addLog(`OBS Scene Change Error: ${e.message}`);
       });
 
-      if (mode === "explain") {
+      if (isExplainTarget) {
         obsRef.current.call("StartRecord").catch(e => addLog(`obs err: ${e.message}`));
       } else if (mode === "standby") {
         obsRef.current.call("StopRecord").catch(e => addLog(`obs err: ${e.message}`));
       }
     }
-    
+
     // pushUpdate will now always update local state and set isSyncing
     pushUpdate(newState);
     
     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
     const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
-    addYtMarker(mode === 'work' ? workText : mode === 'explain' ? 'explain' : mode === 'break' ? 'break' : 'standby');
-  };
+    addYtMarker(mode === 'work' ? workText : isExplainTarget ? 'explain' : mode === 'break' ? 'break' : 'standby');
 
   if (isLocked) {
     return (
@@ -446,11 +449,14 @@ export default function TiedInControl() {
 
        {/* Mode Panel */}
        <div className="context-pill stack">
-          <div className="mode-buttons controls-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)', width: '100%' }}>
+          <div className="mode-buttons controls-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)', width: '100%', marginBottom: '10px' }}>
              <button className={`mode-btn ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')} style={{ width: '100%' }}>Work</button>
-             <button className={`mode-btn ${state.mode === 'explain' ? 'active' : ''}`} onClick={() => setMode('explain')} style={{ width: '100%' }}>Explain</button>
              <button className={`mode-btn ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')} style={{ width: '100%' }}>Break</button>
-             <button className={`mode-btn ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ width: '100%' }}>Standby</button>
+             <button className={`mode-btn ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ width: '100%', gridColumn: 'span 2' }}>Standby</button>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+             <input type="text" placeholder="Explain Topic..." value={explainTopic} onChange={e => setExplainTopic(e.target.value)} style={{ flex: 1, padding: '0 10px' }} />
+             <button className={`mode-btn ${state.mode.startsWith('explain') ? 'active' : ''}`} onClick={() => setMode('explain|' + explainTopic)} style={{ width: '100px' }}>Explain</button>
           </div>
        </div>
 
