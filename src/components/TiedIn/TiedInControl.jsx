@@ -190,8 +190,8 @@ export default function TiedInControl() {
 
                  pushUpdate(newState);
                  const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
-                 const markerWorkText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
-                 addYtMarker(mapped === 'work' ? markerWorkText : mapped === 'explain' ? 'explain' : mapped === 'break' ? 'break' : 'standby');
+                 const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
+                 addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? 'explain' : mapped === 'break' ? 'break' : 'standby');
                  return newState;
                }
                return s;
@@ -394,10 +394,9 @@ export default function TiedInControl() {
     // pushUpdate will now always update local state and set isSyncing
     pushUpdate(newState);
     
-   const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
-   const markerWorkText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
-   addYtMarker(mode === 'work' ? markerWorkText : isExplainTarget ? 'explain' : mode === 'break' ? 'break' : 'standby');
-  };
+    const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
+    const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
+    addYtMarker(mode === 'work' ? workText : isExplainTarget ? 'explain' : mode === 'break' ? 'break' : 'standby');
 
   if (isLocked) {
     return (
