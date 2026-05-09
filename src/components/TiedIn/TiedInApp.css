@@ -196,16 +196,16 @@ html:has(.overlay-root) body {
 
 .explain-banner {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 1440px;
-  height: 80px;
+  top: 10px;
+  left: 10px;
+  width: 1420px;
+  height: 75px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 40px;
   background: var(--panel-bg);
-  border-bottom: 1px solid var(--white-25);
+  border: 1px solid var(--white-25);
   font-family: inherit;
   font-size: 0.75rem;
   font-weight: 400;
@@ -615,26 +615,26 @@ html:has(.overlay-root) body {
 
 .mode-explain .frame-webcam {
   left: unset;
-  right: 40px;
-  bottom: 0;
+  right: 10px;
+  bottom: 10px;
   top: unset;
-  width: 680px;
-  height: 510px;
+  width: 660px;
+  height: 495px;
   z-index: 50;
 }
 
 .mode-explain .hero-pill {
   position: absolute;
-  left: 40px;
-  bottom: 40px;
+  left: 10px;
+  bottom: 10px;
   font-size: 1.25rem;
   letter-spacing: 0.1em;
   color: var(--white-100);
 }
 
 .mode-explain .frame-display {
-  top: 96px;
-  left: 40px;
-  width: 1360px;
-  height: 765px;
+  top: 95px;
+  left: 10px;
+  width: 1420px;
+  height: 799px;
 }
