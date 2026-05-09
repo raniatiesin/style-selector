@@ -196,16 +196,16 @@ html:has(.overlay-root) body {
 
 .explain-banner {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 1420px;
-  height: 65px;
+  top: 0;
+  left: 0;
+  width: 1440px;
+  height: 80px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 9px 22px;
-  background: transparent;
-  border: 1px solid var(--white-45);
+  padding: 0 40px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--white-25);
   font-family: inherit;
   font-size: 0.75rem;
   font-weight: 400;
@@ -614,18 +614,14 @@ html:has(.overlay-root) body {
 }
 
 .mode-explain .frame-webcam {
-  left: 86.25px;
-  right: unset;
-  bottom: unset;
-  top: 96px;
-  width: 1267.5px;
-  height: 713px;
+  left: unset;
+  right: 17px;
+  bottom: 0px;
+  top: unset;
+  width: 820px;
+  height: 615px;
   z-index: 50; /* Bring above if needed */
 }
 .mode-explain .frame-display {
-  left: 983.78px;
-  top: 819px; 
-  width: 446.22px;
-  height: 251px;
-  z-index: 50;
+  top: 96px; /* same exact spacing for the brand: 10px from element above */
 }

@@ -31,7 +31,6 @@ export default function TiedInControl() {
   const [logs, setLogs] = useState([]);
   const [webhookLogs, setWebhookLogs] = useState([]);
   const obsRef = useRef(null);
-  const expectedObsSceneRef = useRef(null);
 
   // --- YouTube Markers ---
   const [ytMarkers, setYtMarkers] = useState(() => {
@@ -350,16 +349,6 @@ export default function TiedInControl() {
   const setMode = (mode) => {
     if (state.mode === mode) return;
 
-    if (obsRef.current && obsConnected) {
-      addLog(`Telling OBS to switch scene to: ${mode} (Vercel sync deferred until scene changes)`);
-      const scene = mode === "work" ? SCENE_WORK : mode === "explain" ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : SCENE_STANDBY;
-      obsRef.current.call("SetCurrentProgramScene", { sceneName: scene }).catch(e => {
-         addLog(`OBS Scene Change Error: ${e.message}`);
-      });
-      return; // Let CurrentProgramSceneChanged handle state logic and Vercel push!
-    }
-
-    // --- FALLBACK: Immediate state update and push if OBS disconnected ---
     let nextAccumulated = state.accumulatedTodaySeconds || 0;
     let nextTimestamp = Date.now();
     
@@ -384,6 +373,20 @@ export default function TiedInControl() {
       _skipPushCalc: true
     };
 
+    if (obsRef.current && obsConnected) {
+      addLog(`Telling OBS to switch scene to: ${mode}`);
+      const scene = mode === "work" ? SCENE_WORK : mode === "explain" ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : SCENE_STANDBY;
+      obsRef.current.call("SetCurrentProgramScene", { sceneName: scene }).catch(e => {
+         addLog(`OBS Scene Change Error: ${e.message}`);
+      });
+
+      if (mode === "explain") {
+        obsRef.current.call("StartRecord").catch(e => addLog(`obs err: ${e.message}`));
+      } else if (mode === "standby") {
+        obsRef.current.call("StopRecord").catch(e => addLog(`obs err: ${e.message}`));
+      }
+    }
+    
     // pushUpdate will now always update local state and set isSyncing
     pushUpdate(newState);
     
