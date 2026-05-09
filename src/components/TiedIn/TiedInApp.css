@@ -184,14 +184,14 @@ html:has(.overlay-root) body {
   display: block;
 }
 
-.mode-explain .explain-banner {
-  display: flex !important;
+.overlay-root.mode-work .explain-banner,
+.overlay-root.mode-standby .explain-banner,
+.overlay-root.mode-break .explain-banner {
+  display: none !important;
 }
 
-.mode-work .explain-banner,
-.mode-standby .explain-banner,
-.mode-break .explain-banner {
-  display: none !important;
+.overlay-root.mode-explain .explain-banner {
+  display: flex !important;
 }
 
 .explain-banner {
