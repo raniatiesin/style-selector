@@ -224,6 +224,15 @@ html:has(.overlay-root) body {
   white-space: nowrap;
 }
 
+.explain-banner-day {
+  font-size: 36px;
+  line-height: 1.04;
+  letter-spacing: -0.006em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--white-100);
+}
+
 .explain-banner-time {
   font-size: 36px;
   line-height: 1.04;

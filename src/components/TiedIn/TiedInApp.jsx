@@ -58,6 +58,7 @@ export default function TiedInApp({ displayMode }) {
     nowTimeStandby: useRef(null),
     nowDateStandby: useRef(null),
     explainDate: useRef(null),
+    explainDay: useRef(null),
     explainTime: useRef(null)
   };
 
@@ -113,6 +114,7 @@ export default function TiedInApp({ displayMode }) {
       if (timerRefs.nowDateStandby.current) timerRefs.nowDateStandby.current.innerText = ldate;
 
       if (timerRefs.explainDate.current) timerRefs.explainDate.current.innerText = shortDate;
+      if (timerRefs.explainDay.current) timerRefs.explainDay.current.innerText = `Day ${ls.totalDays || 1}`;
       if (timerRefs.explainTime.current) timerRefs.explainTime.current.innerText = sideDate;
 
       const progressVal = clamp(todaySecs / (7 * 3600), 0, 1);
@@ -221,6 +223,7 @@ export default function TiedInApp({ displayMode }) {
       {/* Top Banner specific for Explain Mode */}
       <div className="explain-banner">
         <div className="explain-banner-date" ref={timerRefs.explainDate}>--/--/----</div>
+        <div className="explain-banner-day" ref={timerRefs.explainDay}>Day --</div>
         <div className="explain-banner-time" ref={timerRefs.explainTime}>--- - --:-- --</div>
       </div>
 
