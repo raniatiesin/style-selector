@@ -640,13 +640,25 @@ html:has(.overlay-root) body {
   width: 750px;
   height: 166px;
   display: flex !important;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: var(--context-gap);
   background: var(--panel-bg);
   border: 1px solid var(--white-45);
   font-size: 1.25rem;
   letter-spacing: 0.1em;
   color: var(--white-100);
+}
+
+.explain-hours {
+  display: none;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+}
+
+.mode-explain .explain-hours {
+  display: block;
 }
 
 .mode-explain .frame-display {

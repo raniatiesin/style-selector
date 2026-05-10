@@ -60,7 +60,8 @@ export default function TiedInApp({ displayMode }) {
     nowDateStandby: useRef(null),
     explainDate: useRef(null),
     explainDay: useRef(null),
-    explainTime: useRef(null)
+    explainTime: useRef(null),
+    explainHours: useRef(null)
   };
 
   // Mutable source of truth for the animation loop
@@ -149,6 +150,15 @@ export default function TiedInApp({ displayMode }) {
           timerRefs.dayHoursTrack.current.innerText = fallbackTopic;
         } else {
           timerRefs.dayHoursTrack.current.innerText = `Day ${ls.totalDays || 1} - ${formatHours(accumulatedTotalSeconds)}/${HOURS_TARGET} Hours Accumulated`;
+        }
+      }
+
+      if (timerRefs.explainHours.current) {
+        const rawModeLocal = String(ls.mode || "");
+        if (rawModeLocal.startsWith('explain')) {
+          timerRefs.explainHours.current.innerText = `Hours: ${formatHours(todaySecs)}`;
+        } else {
+          timerRefs.explainHours.current.innerText = "";
         }
       }
 
@@ -317,6 +327,7 @@ export default function TiedInApp({ displayMode }) {
             </div>
             <div className="context-pill hero-pill">
               <div className="side-line" ref={timerRefs.dayHoursTrack}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>
+              <div className="side-line explain-hours" ref={timerRefs.explainHours}></div>
             </div>
           </div>
           <div className="side-col">
