@@ -148,8 +148,6 @@ export default function TiedInApp({ displayMode }) {
           const fallbackTopic = ls.explainTopic || getStoredExplainTopic() || 'Explain Topic';
           ls.explainTopic = fallbackTopic;
           timerRefs.dayHoursTrack.current.innerText = fallbackTopic;
-        } else {
-          timerRefs.dayHoursTrack.current.innerText = `Day ${ls.totalDays || 1} - ${formatHours(accumulatedTotalSeconds)}/${HOURS_TARGET} Hours Accumulated`;
         }
       }
 
