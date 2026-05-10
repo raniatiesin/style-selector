@@ -86,14 +86,10 @@ export default function TiedInControl() {
 
   const addLog = (msg) => setLogs(l => [...l, `[${new Date().toLocaleTimeString()}] ${msg}`].slice(-20));
 
-   const pad2 = (value) => String(value).padStart(2, '0');
    const sanitizeFilenamePart = (value) => value.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
    const formatExplainRecordingName = (topic) => {
-      const now = new Date();
-      const date = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
-      const time = `${pad2(now.getHours())}${pad2(now.getMinutes())}`;
       const safeTopic = sanitizeFilenamePart(topic) || 'Explain';
-      return `${date} - ${time} - ${safeTopic}`;
+      return `%CCYY-%MM-%DD - %hh%mm - ${safeTopic}`;
    };
    const setExplainRecordingName = (topic) => {
       if (!obsRef.current || !obsConnected) return;
