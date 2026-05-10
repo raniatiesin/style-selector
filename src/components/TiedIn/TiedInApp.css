@@ -654,4 +654,15 @@ html:has(.overlay-root) body {
   left: 10px;
   width: 1420px;
   height: 799px;
+  border-bottom: 0;
+}
+
+.mode-explain .frame-display::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: calc(100% - 660px);
+  border-bottom: 1px solid var(--white-45);
+  pointer-events: none;
 }
