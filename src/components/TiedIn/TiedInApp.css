@@ -632,33 +632,26 @@ html:has(.overlay-root) body {
   z-index: 50;
 }
 
-.mode-explain .hero-pill {
+.explain-pill-stack {
   position: absolute;
   top: 95px;
-  bottom: unset;
   left: 10px;
   width: 750px;
-  height: 166px;
-  display: flex !important;
+  display: flex;
   flex-direction: column;
+  gap: var(--context-gap);
+}
+
+.explain-pill {
+  height: 78px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--context-gap);
   background: var(--panel-bg);
   border: 1px solid var(--white-45);
   font-size: 1.25rem;
   letter-spacing: 0.1em;
   color: var(--white-100);
-}
-
-.explain-hours {
-  display: none;
-  font-size: 1.05rem;
-  letter-spacing: 0.08em;
-}
-
-.mode-explain .explain-hours {
-  display: block;
 }
 
 .mode-explain .frame-display {
@@ -667,6 +660,7 @@ html:has(.overlay-root) body {
   width: 1420px;
   height: 799px;
   border-bottom: 0;
+  border-right: 0;
 }
 
 .mode-explain .frame-display::after {
@@ -676,5 +670,15 @@ html:has(.overlay-root) body {
   bottom: 0;
   width: calc(100% - 660px);
   border-bottom: 1px solid var(--white-45);
+  pointer-events: none;
+}
+
+.mode-explain .frame-display::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: calc(100% - 495px);
+  border-right: 1px solid var(--white-45);
   pointer-events: none;
 }
