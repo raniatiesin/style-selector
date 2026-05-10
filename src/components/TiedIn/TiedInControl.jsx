@@ -376,6 +376,10 @@ export default function TiedInControl() {
          return;
       }
 
+      if (isExplainTarget) {
+         try { localStorage.setItem('EXPLAIN_TOPIC', explainTopicTarget); } catch {}
+      }
+
       if (mode === 'standby' && !standbyNote.trim()) {
          alert('Please enter what you are doing before switching to Standby.');
          return;
@@ -481,16 +485,16 @@ export default function TiedInControl() {
 
        {/* Mode Panel */}
        <div className="context-pill stack">
-          <div className="mode-buttons controls-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)', width: '100%', marginBottom: '10px' }}>
+          <div className="mode-buttons controls-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)', width: '100%', marginBottom: 'var(--context-gap, 10px)' }}>
              <button className={`mode-btn ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')} style={{ width: '100%' }}>Work</button>
              <button className={`mode-btn ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')} style={{ width: '100%' }}>Break</button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%' }}>
-             <input type="text" placeholder="Explain Topic..." value={explainTopic} onChange={e => setExplainTopic(e.target.value)} style={{ width: '100%', padding: '0 10px' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)', width: '100%' }}>
+             <input type="text" placeholder="what are you explaining?" value={explainTopic} onChange={e => setExplainTopic(e.target.value)} style={{ width: '100%', padding: '0 var(--context-gap, 10px)' }} />
              <button className={`mode-btn ${state.mode.startsWith('explain') ? 'active' : ''}`} onClick={() => setMode('explain|' + explainTopic.trim())} style={{ width: '100%' }}>Explain</button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%', marginTop: '10px' }}>
-             <input type="text" placeholder="Standby: what are you doing?" value={standbyNote} onChange={e => setStandbyNote(e.target.value)} style={{ width: '100%', padding: '0 10px' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)', width: '100%', marginTop: 'var(--context-gap, 10px)' }}>
+             <input type="text" placeholder="what are you doing?" value={standbyNote} onChange={e => setStandbyNote(e.target.value)} style={{ width: '100%', padding: '0 var(--context-gap, 10px)' }} />
              <button className={`mode-btn ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ width: '100%' }}>Standby</button>
           </div>
        </div>

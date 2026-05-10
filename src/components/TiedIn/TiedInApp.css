@@ -467,7 +467,7 @@ html:has(.overlay-root) body {
 .mode-btn.active {
   background: var(--a29a96);
   color: var(--bg);
-  border-color: transparent;
+  border-color: var(--white-45);
 }
 
 .controls-row {

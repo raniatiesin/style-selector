@@ -3,6 +3,7 @@ import './TiedInApp.css';
 
 const HOURS_TARGET = 2000;
 const CONTEXT_WIDTH = 1075.33;
+const EXPLAIN_TOPIC_KEY = 'EXPLAIN_TOPIC';
 
 function clamp(number, min, max) { return Math.min(max, Math.max(min, number)); }
 function pad(value) { return String(value).padStart(2, "0"); }
@@ -68,8 +69,18 @@ export default function TiedInApp({ displayMode }) {
     accumulatedTodaySeconds: 0,
     modeTimestamp: Date.now(),
     previousDaysSeconds: 0,
-    totalDays: 1
+    totalDays: 1,
+    explainTopic: ""
   });
+
+  const getStoredExplainTopic = () => {
+    try { return localStorage.getItem(EXPLAIN_TOPIC_KEY) || ""; }
+    catch { return ""; }
+  };
+
+  const setStoredExplainTopic = (topic) => {
+    try { localStorage.setItem(EXPLAIN_TOPIC_KEY, topic); } catch {}
+  };
 
   // Animation Loop - Updates DOM directly
   useEffect(() => {
@@ -127,7 +138,15 @@ export default function TiedInApp({ displayMode }) {
         const rawModeLocal = String(ls.mode || "");
         if (rawModeLocal.startsWith('explain|')) {
           const topic = rawModeLocal.split('|').slice(1).join('|') || 'Explain Topic';
+          if (topic && topic !== ls.explainTopic) {
+            ls.explainTopic = topic;
+            setStoredExplainTopic(topic);
+          }
           timerRefs.dayHoursTrack.current.innerText = topic;
+        } else if (rawModeLocal.startsWith('explain')) {
+          const fallbackTopic = ls.explainTopic || getStoredExplainTopic() || 'Explain Topic';
+          ls.explainTopic = fallbackTopic;
+          timerRefs.dayHoursTrack.current.innerText = fallbackTopic;
         } else {
           timerRefs.dayHoursTrack.current.innerText = `Day ${ls.totalDays || 1} - ${formatHours(accumulatedTotalSeconds)}/${HOURS_TARGET} Hours Accumulated`;
         }
@@ -166,6 +185,16 @@ export default function TiedInApp({ displayMode }) {
           liveStateRef.current.accumulatedTodaySeconds = acc;
           liveStateRef.current.previousDaysSeconds = Number(m.previousDaysSeconds || 0);
           liveStateRef.current.totalDays = Number(m.totalDays || 1);
+          const rawMode = String(m.mode || "");
+          if (rawMode.startsWith('explain|')) {
+            const topic = rawMode.split('|').slice(1).join('|').trim();
+            if (topic) {
+              liveStateRef.current.explainTopic = topic;
+              setStoredExplainTopic(topic);
+            }
+          } else if (rawMode.startsWith('explain') && !liveStateRef.current.explainTopic) {
+            liveStateRef.current.explainTopic = getStoredExplainTopic();
+          }
 
           // Update React Mode state just for mapping CSS classes and hiding/showing screens
           setModeReact(m.mode || "standby");
