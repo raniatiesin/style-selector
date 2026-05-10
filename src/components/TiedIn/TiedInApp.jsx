@@ -128,7 +128,7 @@ export default function TiedInApp({ displayMode }) {
       if (timerRefs.explainDay.current) timerRefs.explainDay.current.innerText = `Day ${ls.totalDays || 1}`;
       if (timerRefs.explainTime.current) timerRefs.explainTime.current.innerText = sideDate;
 
-      const progressVal = clamp(todaySecs / (7 * 3600), 0, 1);
+      const progressVal = clamp(todaySecs / (10 * 3600), 0, 1);
       if (timerRefs.progressFill.current) {
         timerRefs.progressFill.current.style.width = `${(progressVal * CONTEXT_WIDTH).toFixed(2)}px`;
       }
