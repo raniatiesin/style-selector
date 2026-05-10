@@ -63,6 +63,16 @@ export default function TiedInControl() {
      });
   };
 
+   const getExplainMarkerText = (modeValue, fallbackTopic = '') => {
+      const raw = String(modeValue || '');
+      if (raw.startsWith('explain|')) {
+         const topic = raw.split('|').slice(1).join('|').trim();
+         return topic ? `explain - ${topic}` : 'explain';
+      }
+      const trimmed = String(fallbackTopic || '').trim();
+      return trimmed ? `explain - ${trimmed}` : 'explain';
+   };
+
   const resetMarkers = () => {
     if (window.confirm("Start/Reset stream recording timeline from 00:00?")) {
        const now = Date.now();
@@ -210,7 +220,8 @@ export default function TiedInControl() {
                  pushUpdate(newState);
                  const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
                  const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
-                 addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? 'explain' : mapped === 'break' ? 'break' : 'standby');
+                 const explainText = getExplainMarkerText(s.mode, explainTopic);
+                 addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'break' ? 'break' : 'standby');
                  return newState;
                }
                return s;
@@ -431,7 +442,8 @@ export default function TiedInControl() {
     
     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
     const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
-    addYtMarker(mode === 'work' ? workText : isExplainTarget ? 'explain' : mode === 'break' ? 'break' : 'standby');
+   const explainText = getExplainMarkerText(mode, explainTopicTarget);
+   addYtMarker(mode === 'work' ? workText : isExplainTarget ? explainText : mode === 'break' ? 'break' : 'standby');
    };
 
    if (isLocked) {
@@ -522,7 +534,7 @@ export default function TiedInControl() {
           <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
              <span>Timestamps</span>
              <div className="inline-form" style={{ gap: 'var(--context-gap, 10px)' }}>
-                <button className="mode-btn" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode === 'explain' ? 'explain' : state.mode === 'break' ? 'break' : 'standby')} style={{ width: '80px', fontSize: '10px' }}>MARK</button>
+                <button className="mode-btn" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode === 'break' ? 'break' : 'standby')} style={{ width: '80px', fontSize: '10px' }}>MARK</button>
                 <button className="mode-btn" onClick={resetMarkers} style={{ width: '80px', fontSize: '10px' }}>CLEAR</button>
              </div>
           </div>
