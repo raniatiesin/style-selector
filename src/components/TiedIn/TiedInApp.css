@@ -689,7 +689,7 @@ html:has(.overlay-root) body {
   position: absolute;
   right: 0;
   top: 0;
-  height: calc(100% - 495px - 10px);
+  height: calc(100% - 319px);
   border-right: 1px solid var(--white-45);
   pointer-events: none;
 }
@@ -699,7 +699,7 @@ html:has(.overlay-root) body {
   position: absolute;
   left: 0;
   bottom: 0;
-  width: calc(100% - 660px - 10px);
+  width: calc(100% - 660px);
   border-bottom: 1px solid var(--white-45);
   pointer-events: none;
 }
