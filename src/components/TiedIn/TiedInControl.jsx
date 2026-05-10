@@ -15,6 +15,7 @@ export default function TiedInControl() {
   const [inputKey, setInputKey] = useState('');
   const [inputObs, setInputObs] = useState('');
   const [explainTopic, setExplainTopic] = useState('');
+   const [standbyNote, setStandbyNote] = useState('');
   
   const [isLocked, setIsLocked] = useState(!adminKey);
 
@@ -74,6 +75,22 @@ export default function TiedInControl() {
   };
 
   const addLog = (msg) => setLogs(l => [...l, `[${new Date().toLocaleTimeString()}] ${msg}`].slice(-20));
+
+   const pad2 = (value) => String(value).padStart(2, '0');
+   const sanitizeFilenamePart = (value) => value.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
+   const formatExplainRecordingName = (topic) => {
+      const now = new Date();
+      const date = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+      const time = `${pad2(now.getHours())}${pad2(now.getMinutes())}`;
+      const safeTopic = sanitizeFilenamePart(topic) || 'Explain';
+      return `${date} - ${time} - ${safeTopic}`;
+   };
+   const setExplainRecordingName = (topic) => {
+      if (!obsRef.current || !obsConnected) return;
+      const filenameFormat = formatExplainRecordingName(topic);
+      obsRef.current.call("SetRecordFilenameFormat", { filenameFormat })
+         .catch(e => addLog(`SetRecordFilenameFormat failed: ${e.message}`));
+   };
 
   useEffect(() => {
     if (isLocked) return;
@@ -152,7 +169,9 @@ export default function TiedInControl() {
            if (mapped) {
              setState(s => {
                if (s.mode !== mapped) {
-                 if (mapped === "explain") {
+                         if (mapped === "explain") {
+                            const topic = (s.mode.startsWith('explain|') ? s.mode.split('|').slice(1).join('|') : explainTopic).trim();
+                            if (topic) setExplainRecordingName(topic);
                    obs.call("StartRecord")
                      .then(() => addLog("OBS record started (from scene)"))
                      .catch(e => addLog(`StartRecord failed: ${e.message}`));
@@ -350,6 +369,17 @@ export default function TiedInControl() {
   const setMode = (mode) => {
     const isExplainTarget = mode.startsWith('explain');
     const isExplainCurrent = state.mode.startsWith('explain');
+      const explainTopicTarget = isExplainTarget ? mode.split('|').slice(1).join('|').trim() : '';
+
+      if (isExplainTarget && !explainTopicTarget) {
+         alert('Please enter an explain topic before switching to Explain mode.');
+         return;
+      }
+
+      if (mode === 'standby' && !standbyNote.trim()) {
+         alert('Please enter what you are doing before switching to Standby.');
+         return;
+      }
     
     if (state.mode === mode) return;
 
@@ -384,7 +414,8 @@ export default function TiedInControl() {
          addLog(`OBS Scene Change Error: ${e.message}`);
       });
 
-      if (isExplainTarget) {
+         if (isExplainTarget) {
+            setExplainRecordingName(explainTopicTarget);
         obsRef.current.call("StartRecord").catch(e => addLog(`obs err: ${e.message}`));
       } else if (mode === "standby") {
         obsRef.current.call("StopRecord").catch(e => addLog(`obs err: ${e.message}`));
@@ -397,8 +428,9 @@ export default function TiedInControl() {
     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
     const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
     addYtMarker(mode === 'work' ? workText : isExplainTarget ? 'explain' : mode === 'break' ? 'break' : 'standby');
+   };
 
-  if (isLocked) {
+   if (isLocked) {
     return (
       <div className="dashboard-login">
          <div className="login-box overlay-root">
@@ -452,11 +484,14 @@ export default function TiedInControl() {
           <div className="mode-buttons controls-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)', width: '100%', marginBottom: '10px' }}>
              <button className={`mode-btn ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')} style={{ width: '100%' }}>Work</button>
              <button className={`mode-btn ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')} style={{ width: '100%' }}>Break</button>
-             <button className={`mode-btn ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ width: '100%', gridColumn: 'span 2' }}>Standby</button>
           </div>
-          <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-             <input type="text" placeholder="Explain Topic..." value={explainTopic} onChange={e => setExplainTopic(e.target.value)} style={{ flex: 1, padding: '0 10px' }} />
-             <button className={`mode-btn ${state.mode.startsWith('explain') ? 'active' : ''}`} onClick={() => setMode('explain|' + explainTopic)} style={{ width: '100px' }}>Explain</button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%' }}>
+             <input type="text" placeholder="Explain Topic..." value={explainTopic} onChange={e => setExplainTopic(e.target.value)} style={{ width: '100%', padding: '0 10px' }} />
+             <button className={`mode-btn ${state.mode.startsWith('explain') ? 'active' : ''}`} onClick={() => setMode('explain|' + explainTopic.trim())} style={{ width: '100%' }}>Explain</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%', marginTop: '10px' }}>
+             <input type="text" placeholder="Standby: what are you doing?" value={standbyNote} onChange={e => setStandbyNote(e.target.value)} style={{ width: '100%', padding: '0 10px' }} />
+             <button className={`mode-btn ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ width: '100%' }}>Standby</button>
           </div>
        </div>
 
