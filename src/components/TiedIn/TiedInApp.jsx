@@ -61,7 +61,7 @@ export default function TiedInApp({ displayMode }) {
     explainDate: useRef(null),
     explainDay: useRef(null),
     explainTime: useRef(null),
-    explainHours: useRef(null)
+    explainAccumulated: useRef(null)
   };
 
   // Mutable source of truth for the animation loop
@@ -153,12 +153,12 @@ export default function TiedInApp({ displayMode }) {
         }
       }
 
-      if (timerRefs.explainHours.current) {
+      if (timerRefs.explainAccumulated.current) {
         const rawModeLocal = String(ls.mode || "");
         if (rawModeLocal.startsWith('explain')) {
-          timerRefs.explainHours.current.innerText = `Hours: ${formatHours(todaySecs)}`;
+          timerRefs.explainAccumulated.current.innerText = `Day ${ls.totalDays || 1} - ${formatHours(accumulatedTotalSeconds)}/${HOURS_TARGET} Hours Accumulated`;
         } else {
-          timerRefs.explainHours.current.innerText = "";
+          timerRefs.explainAccumulated.current.innerText = "";
         }
       }
 
@@ -325,10 +325,20 @@ export default function TiedInApp({ displayMode }) {
                 <span ref={timerRefs.sessionTime}>00:00:00</span>
               </div>
             </div>
-            <div className="context-pill hero-pill">
-              <div className="side-line" ref={timerRefs.dayHoursTrack}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>
-              <div className="side-line explain-hours" ref={timerRefs.explainHours}></div>
-            </div>
+            {activeMode === 'explain' ? (
+              <div className="explain-pill-stack">
+                <div className="context-pill explain-pill">
+                  <div className="side-line" ref={timerRefs.dayHoursTrack}>Explain Topic</div>
+                </div>
+                <div className="context-pill explain-pill">
+                  <div className="side-line" ref={timerRefs.explainAccumulated}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>
+                </div>
+              </div>
+            ) : (
+              <div className="context-pill hero-pill">
+                <div className="side-line" ref={timerRefs.dayHoursTrack}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>
+              </div>
+            )}
           </div>
           <div className="side-col">
             <div className="context-pill stack">

@@ -651,14 +651,27 @@ html:has(.overlay-root) body {
   color: var(--white-100);
 }
 
-.explain-hours {
-  display: none;
-  font-size: 1.05rem;
-  letter-spacing: 0.08em;
+.explain-pill-stack {
+  position: absolute;
+  top: 95px;
+  left: 10px;
+  width: 750px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--context-gap);
+  z-index: 30;
 }
 
-.mode-explain .explain-hours {
-  display: block;
+.explain-pill {
+  height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-bg);
+  border: 1px solid var(--white-45);
+  font-size: 1.25rem;
+  letter-spacing: 0.1em;
+  color: var(--white-100);
 }
 
 .mode-explain .frame-display {
@@ -667,6 +680,18 @@ html:has(.overlay-root) body {
   width: 1420px;
   height: 799px;
   border-bottom: 0;
+  border-right: 0;
+  z-index: 10;
+}
+
+.mode-explain .frame-display::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: calc(100% - 495px - 10px);
+  border-right: 1px solid var(--white-45);
+  pointer-events: none;
 }
 
 .mode-explain .frame-display::after {
@@ -674,7 +699,7 @@ html:has(.overlay-root) body {
   position: absolute;
   left: 0;
   bottom: 0;
-  width: calc(100% - 660px);
+  width: calc(100% - 660px - 10px);
   border-bottom: 1px solid var(--white-45);
   pointer-events: none;
 }
