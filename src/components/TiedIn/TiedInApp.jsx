@@ -143,11 +143,6 @@ export default function TiedInApp({ displayMode }) {
         timerRefs.dayHoursTrack.current.innerText = hoursString;
       }
 
-      // Update the accumulated hours track for explain mode
-      if (timerRefs.explainAccumulated.current) {
-        timerRefs.explainAccumulated.current.innerText = hoursString;
-      }
-
       // Process and update the explain topic text
       const rawModeLocal = String(ls.mode || "");
       let currentTopicText = 'Explain Topic';
@@ -162,11 +157,22 @@ export default function TiedInApp({ displayMode }) {
       } else if (rawModeLocal.startsWith('explain')) {
         currentTopicText = ls.explainTopic || getStoredExplainTopic() || 'Explain Topic';
         ls.explainTopic = currentTopicText;
+      } else {
+        currentTopicText = "";
       }
 
       // Update the UI element specifically for the explain topic
       if (timerRefs.explainTopicText.current) {
         timerRefs.explainTopicText.current.innerText = currentTopicText;
+      }
+
+      // Update the accumulated hours track for explain mode
+      if (timerRefs.explainAccumulated.current) {
+        if (rawModeLocal.startsWith('explain')) {
+          timerRefs.explainAccumulated.current.innerText = hoursString;
+        } else {
+          timerRefs.explainAccumulated.current.innerText = "";
+        }
       }
 
       frame = requestAnimationFrame(tick);
