@@ -433,8 +433,12 @@ export default function TiedInControl() {
       }
     }
 
-    // pushUpdate will now always update local state and set isSyncing
-    pushUpdate(newState);
+   // pushUpdate will now always update local state and set isSyncing
+   // Ensure we don't accidentally carry reset sentinel flags (-1) from other flows
+   const sanitizedState = { ...newState };
+   if (sanitizedState.todayWorkSeconds === -1) delete sanitizedState.todayWorkSeconds;
+   if (sanitizedState.accumulatedTodaySeconds === -1) sanitizedState.accumulatedTodaySeconds = 0;
+   pushUpdate(sanitizedState);
     
     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
     const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';

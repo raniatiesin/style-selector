@@ -61,7 +61,8 @@ export default function TiedInApp({ displayMode }) {
     explainDate: useRef(null),
     explainDay: useRef(null),
     explainTime: useRef(null),
-    explainAccumulated: useRef(null)
+    explainAccumulated: useRef(null),
+    explainTopicText: useRef(null)
   };
 
   // Mutable source of truth for the animation loop
@@ -135,29 +136,37 @@ export default function TiedInApp({ displayMode }) {
       }
 
       const accumulatedTotalSeconds = (ls.previousDaysSeconds || 0) + todaySecs;
+      const hoursString = `Day ${ls.totalDays || 1} - ${formatHours(accumulatedTotalSeconds)}/${HOURS_TARGET} Hours Accumulated`;
+      
+      // Update the hours track for work/standby modes
       if (timerRefs.dayHoursTrack.current) {
-        const rawModeLocal = String(ls.mode || "");
-        if (rawModeLocal.startsWith('explain|')) {
-          const topic = rawModeLocal.split('|').slice(1).join('|') || 'Explain Topic';
-          if (topic && topic !== ls.explainTopic) {
-            ls.explainTopic = topic;
-            setStoredExplainTopic(topic);
-          }
-          timerRefs.dayHoursTrack.current.innerText = topic;
-        } else if (rawModeLocal.startsWith('explain')) {
-          const fallbackTopic = ls.explainTopic || getStoredExplainTopic() || 'Explain Topic';
-          ls.explainTopic = fallbackTopic;
-          timerRefs.dayHoursTrack.current.innerText = fallbackTopic;
-        }
+        timerRefs.dayHoursTrack.current.innerText = hoursString;
       }
 
+      // Update the accumulated hours track for explain mode
       if (timerRefs.explainAccumulated.current) {
-        const rawModeLocal = String(ls.mode || "");
-        if (rawModeLocal.startsWith('explain')) {
-          timerRefs.explainAccumulated.current.innerText = `Day ${ls.totalDays || 1} - ${formatHours(accumulatedTotalSeconds)}/${HOURS_TARGET} Hours Accumulated`;
-        } else {
-          timerRefs.explainAccumulated.current.innerText = "";
+        timerRefs.explainAccumulated.current.innerText = hoursString;
+      }
+
+      // Process and update the explain topic text
+      const rawModeLocal = String(ls.mode || "");
+      let currentTopicText = 'Explain Topic';
+      
+      if (rawModeLocal.startsWith('explain|')) {
+        const topic = rawModeLocal.split('|').slice(1).join('|') || 'Explain Topic';
+        if (topic && topic !== ls.explainTopic) {
+          ls.explainTopic = topic;
+          setStoredExplainTopic(topic);
         }
+        currentTopicText = topic;
+      } else if (rawModeLocal.startsWith('explain')) {
+        currentTopicText = ls.explainTopic || getStoredExplainTopic() || 'Explain Topic';
+        ls.explainTopic = currentTopicText;
+      }
+
+      // Update the UI element specifically for the explain topic
+      if (timerRefs.explainTopicText.current) {
+        timerRefs.explainTopicText.current.innerText = currentTopicText;
       }
 
       frame = requestAnimationFrame(tick);
@@ -326,7 +335,7 @@ export default function TiedInApp({ displayMode }) {
             {activeMode === 'explain' ? (
               <div className="explain-pill-stack">
                 <div className="context-pill explain-pill">
-                  <div className="side-line" ref={timerRefs.dayHoursTrack}>Explain Topic</div>
+                  <div className="side-line" ref={timerRefs.explainTopicText}>Explain Topic</div>
                 </div>
                 <div className="context-pill explain-pill">
                   <div className="side-line" ref={timerRefs.explainAccumulated}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>

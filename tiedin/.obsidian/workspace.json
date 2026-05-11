@@ -4,17 +4,19 @@
     "type": "split",
     "children": [
       {
-        "id": "9460d50d11f87827",
+        "id": "ac7aa62f87ec0ed1",
         "type": "tabs",
         "children": [
           {
-            "id": "e74df8ae8ea79ccd",
+            "id": "436a4684481b10a3",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
-              "icon": "lucide-file",
-              "title": "New tab"
+              "type": "excalidraw",
+              "state": {
+                "file": "Excalidraw/Drawing 2026-05-10 10.52.52.excalidraw.md"
+              },
+              "icon": "excalidraw-icon",
+              "title": "Drawing 2026-05-10 10.52.52.excalidraw"
             }
           }
         ]
@@ -74,7 +76,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "e4dbe6c9cf847700",
@@ -90,7 +93,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Claude Code's Memory.md",
+                "file": "Excalidraw/Drawing 2026-05-10 10.52.52.excalidraw.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -100,7 +103,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Claude Code's Memory"
+              "title": "Backlinks for Drawing 2026-05-10 10.52.52.excalidraw"
             }
           },
           {
@@ -165,8 +168,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -180,9 +182,14 @@
       "obsidian-excalidraw-plugin:New drawing": false
     }
   },
-  "active": "e74df8ae8ea79ccd",
+  "active": "436a4684481b10a3",
   "lastOpenFiles": [
+    "Aditya Sehgal.md",
+    "Excalidraw/Drawing 2026-05-10 10.52.52.excalidraw.md",
+    "Excalidraw",
     "4 — Progression/Though Funneling In Excalidraw.md",
+    "4 — Progression/2026-04-05.md",
+    "1 — Playbook/000 Index.md",
     "Claude Dump.md",
     "{D9F8DDC4-F0F9-42B5-A56D-62637368078E}.png",
     "claudecommands.png",
