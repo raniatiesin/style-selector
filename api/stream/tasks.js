@@ -48,7 +48,7 @@ export default async function handler(req, res) {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // FIX: Align the database 'date' string format calculation with the state poll 
-    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
 
     // Fetch the current task arrays so we can dynamically modify them
     const { data, error: fetchError } = await supabase

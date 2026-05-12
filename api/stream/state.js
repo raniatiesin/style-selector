@@ -32,9 +32,9 @@ export default async function handler(req, res) {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Use local timezone (e.g. 'America/New_York') for day bounds
-    // to strictly prevent 8PM UTC roll-overs
-    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
+    // Use local timezone (e.g. 'Europe/Paris') for day bounds
+    // to strictly prevent roll-overs mismatching your location
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
     
     // Fetch today's metrics
     const { data, error } = await supabase
