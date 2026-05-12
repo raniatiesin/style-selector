@@ -4,22 +4,39 @@
     "type": "split",
     "children": [
       {
-        "id": "ac7aa62f87ec0ed1",
+        "id": "45fe3357b0ae374f",
         "type": "tabs",
         "children": [
           {
-            "id": "436a4684481b10a3",
+            "id": "9a8dbddd008db14d",
             "type": "leaf",
             "state": {
-              "type": "excalidraw",
+              "type": "markdown",
               "state": {
-                "file": "Excalidraw/Drawing 2026-05-10 10.52.52.excalidraw.md"
+                "file": "Course 1 - Communicating Ideas Through Design/Chapter 3 - Exploring The Creative Routes.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "excalidraw-icon",
-              "title": "Drawing 2026-05-10 10.52.52.excalidraw"
+              "icon": "lucide-file",
+              "title": "Chapter 3 - Exploring The Creative Routes"
+            }
+          },
+          {
+            "id": "f68e623296ac9bf7",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Mastering the art of visual storytelling (with examples).md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Mastering the art of visual storytelling (with examples)"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -76,8 +93,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 283.5
   },
   "right": {
     "id": "e4dbe6c9cf847700",
@@ -93,7 +109,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Excalidraw/Drawing 2026-05-10 10.52.52.excalidraw.md",
+                "file": "Mastering the art of visual storytelling (with examples).md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -103,7 +119,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Drawing 2026-05-10 10.52.52.excalidraw"
+              "title": "Backlinks for Mastering the art of visual storytelling (with examples)"
             }
           },
           {
@@ -155,20 +171,31 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Claude Code's Memory.md",
+                "file": "Mastering the art of visual storytelling (with examples).md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Claude Code's Memory"
+              "title": "Outline of Mastering the art of visual storytelling (with examples)"
+            }
+          },
+          {
+            "id": "d6e7687aa9bbab9e",
+            "type": "leaf",
+            "state": {
+              "type": "copilot-chat-view",
+              "state": {},
+              "icon": "message-square",
+              "title": "Copilot"
             }
           }
-        ]
+        ],
+        "currentTab": 5
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 665.5
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -179,25 +206,50 @@
       "templates:Insert template": false,
       "command-palette:Open command palette": false,
       "bases:Create new base": false,
-      "obsidian-excalidraw-plugin:New drawing": false
+      "obsidian-excalidraw-plugin:New drawing": false,
+      "copilot:Open Copilot Chat": false
     }
   },
-  "active": "436a4684481b10a3",
+  "active": "f68e623296ac9bf7",
   "lastOpenFiles": [
-    "Aditya Sehgal.md",
-    "Excalidraw/Drawing 2026-05-10 10.52.52.excalidraw.md",
-    "Excalidraw",
-    "4 — Progression/Though Funneling In Excalidraw.md",
-    "4 — Progression/2026-04-05.md",
-    "1 — Playbook/000 Index.md",
-    "Claude Dump.md",
+    "skill/SKILL (3).md",
+    "skill/SKILL (2).md",
+    "skill/SKILL (1).md",
+    "skill/SKILL.md",
+    "copilot/copilot-conversations/hi@20260511_211738.md",
+    "copilot/copilot-conversations",
+    "copilot/copilot-custom-prompts/Clip Web Page.md",
+    "copilot/copilot-custom-prompts/Clip YouTube Transcript.md",
+    "copilot/copilot-custom-prompts/Rewrite as tweet thread.md",
+    "copilot/copilot-custom-prompts/Rewrite as tweet.md",
+    "copilot/copilot-custom-prompts/Remove URLs.md",
+    "copilot/copilot-custom-prompts/Generate glossary.md",
+    "copilot/copilot-custom-prompts/Generate table of contents.md",
+    "copilot/copilot-custom-prompts/Make longer.md",
+    "copilot/copilot-custom-prompts/Make shorter.md",
+    "copilot/copilot-custom-prompts/Emojify.md",
+    "copilot/copilot-custom-prompts/Explain like I am 5.md",
+    "copilot/copilot-custom-prompts/Simplify.md",
+    "copilot/copilot-custom-prompts/Summarize.md",
+    "copilot/copilot-custom-prompts/Translate to Chinese.md",
+    "copilot/copilot-custom-prompts/Fix grammar and spelling.md",
+    "copilot/copilot-custom-prompts",
+    "copilot",
+    "Mastering the art of visual storytelling (with examples).md",
+    "skill",
+    "Vid 1/Alex.jpg",
+    "Vid 1/Alex.jpg.crdownload",
+    "Vid 1",
+    "New folder",
+    "Course 1 - Communicating Ideas Through Design/Chapter 3 - Exploring The Creative Routes.md",
+    "Courses/Visual Story Telling With Hand Literring/U1- Introduction/0_About Me.mp4",
+    "Courses/Drawing & Self Expression/U1- Introduction/0_About Me.mp4",
+    "Courses/Creative Infographics/U1 - Introducción/U1L01 - Presentación.mp4",
+    "Course 1 - Communicating Ideas Through Design/Chapter 4 -.md",
+    "Excalidraw/Drawing 2026-05-11 18.32.05.excalidraw.md",
+    "Course 1 - Communicating Ideas Through Design/Chapter 2/Boil Down Ideas Into Their Most Basic Form.md",
+    "Course 1 - Communicating Ideas Through Design/Chapter 2/Brainstorming Ideas.md",
     "{D9F8DDC4-F0F9-42B5-A56D-62637368078E}.png",
-    "claudecommands.png",
-    "Everything There Is To Claude.md",
-    "Claude Questions.md",
-    "Claude Code's Commands.md",
-    "Claude Code's Skills.md",
-    "Claude Code's Memory.md",
-    "desktop.ini"
+    "claudecommands.png"
   ]
 }
