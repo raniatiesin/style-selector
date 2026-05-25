@@ -36,6 +36,9 @@ desktop.ini
 staging/
 segments/
 
+# Local minecraft overlay
+local-minecraft-overlay/runs.db
+
 
 .vercel
 
