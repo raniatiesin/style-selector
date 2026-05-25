@@ -4,6 +4,7 @@ import './TiedInApp.css?v=20260525a';
 const HOURS_TARGET = 2000;
 const CONTEXT_WIDTH = 1075.33;
 const EXPLAIN_TOPIC_KEY = 'EXPLAIN_TOPIC';
+const MINECRAFT_OVERLAY_VERSION = 'mc-overlay-v1';
 
 function clamp(number, min, max) { return Math.min(max, Math.max(min, number)); }
 function pad(value) { return String(value).padStart(2, "0"); }
@@ -331,9 +332,15 @@ export default function TiedInApp({ displayMode }) {
       <div className="obs-frame frame-display" aria-hidden="true"></div>
       <div className="obs-frame frame-webcam" aria-hidden="true"></div>
       {activeMode === 'minecraft' ? (
+        <div className="minecraft-test-stamp" aria-hidden="true">TEST</div>
+      ) : null}
+      {activeMode === 'minecraft' ? (
         <div className="tl-pill current minecraft-run-badge">
-          <div className="tl-title">Run #{(Number(minecraftStats.totals.totalRuns) || 0) + 1} -</div>
+          <div className="tl-title">Run Counter #{(Number(minecraftStats.totals.totalRuns) || 0) + 1}</div>
         </div>
+      ) : null}
+      {activeMode === 'minecraft' ? (
+        <div className="minecraft-test-stamp">{MINECRAFT_OVERLAY_VERSION}</div>
       ) : null}
 
       <section className="zone-top">
