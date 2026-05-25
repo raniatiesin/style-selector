@@ -466,87 +466,54 @@ export default function TiedInApp({ displayMode }) {
         <div className="progress-fill" ref={timerRefs.progressFill}></div>
       </section>
 
-      <section 
-        className="break-screen" 
-        id="breakScreen" 
-        style={{ 
-          display: activeMode === 'break' ? 'flex' : 'none', 
-          flexDirection: 'column', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          background: '#000000', 
-          position: 'absolute', 
-          inset: 0, 
-          zIndex: 100 
-        }}
-      >
-        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '40px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0px' }}>
-            <div style={{ fontSize: '32px', fontWeight: 300, lineHeight: 1, letterSpacing: '0.2em', color: 'var(--a29a96)', whiteSpace: 'nowrap', opacity: 1.0 }}>
-              WILL BE BACK
-            </div>
-            <div 
-              style={{ fontSize: '220px', fontWeight: 300, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--a29a96)', fontFamily: 'monospace' }}
-              ref={timerRefs.breakTime}
-            >     
+      <section className="break-screen full-screen" id="breakScreen">
+        <div className="screen-stack">
+          <div className="screen-block">
+            <div className="break-label">WILL BE BACK</div>
+            <div className="break-timer" ref={timerRefs.breakTime}>
               00:00:00
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ fontSize: '32px', color: 'var(--white-75)', letterSpacing: '0.04em', textTransform: 'uppercase' }} ref={timerRefs.nowTimeBreak}>
+          <div className="screen-time-stack">
+            <div className="screen-time" ref={timerRefs.nowTimeBreak}>
               --:-- --
             </div>
-            <div style={{ fontSize: '20px', color: 'var(--white-45)', letterSpacing: '0.02em' }} ref={timerRefs.nowDateBreak}>
+            <div className="screen-date" ref={timerRefs.nowDateBreak}>
               ----
             </div>
           </div>
 
-          <div style={{ width: '60px', height: '2px', background: 'var(--white-25)' }}></div>
+          <div className="screen-divider"></div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-            <div style={{ fontSize: '14px', letterSpacing: '0.2em', color: 'var(--white-45)', textTransform: 'uppercase' }}>To Continue</div>
+          <div className="screen-task-stack">
+            <div className="screen-task-label">To Continue</div>
             {tasks.filter(t => t.status === "in_progress").length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="screen-task-list">
                 {tasks.filter(t => t.status === "in_progress").map(t => (
-                  <div key={t.id} style={{ fontSize: '24px', color: 'var(--white-92)', fontWeight: 400 }}>
-                     {t.name}
+                  <div key={t.id} className="screen-task-item">
+                    {t.name}
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ fontSize: '20px', color: 'var(--white-25)', fontStyle: 'italic' }}>Enjoy your break</div>
+              <div className="screen-task-empty">Enjoy your break</div>
             )}
           </div>
         </div>
       </section>
 
-      <section 
-        className="standby-screen" 
-        id="standbyScreen" 
-        style={{ 
-          display: activeMode === 'standby' ? 'flex' : 'none', 
-          flexDirection: 'column', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          background: '#000000', 
-          position: 'absolute', 
-          inset: 0, 
-          zIndex: 100 
-        }}
-      >
-        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '40px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0px' }}>
-            <div style={{ fontSize: '72px', fontWeight: 300, lineHeight: 1, letterSpacing: '0.2em', color: 'var(--a29a96)', whiteSpace: 'nowrap', opacity: 1.0, fontFamily: 'var(--font)' }}>
-              STANDBY
-            </div>
+      <section className="standby-screen full-screen" id="standbyScreen">
+        <div className="screen-stack">
+          <div className="screen-block">
+            <div className="standby-title">STANDBY</div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ fontSize: '32px', color: 'var(--white-75)', letterSpacing: '0.04em', textTransform: 'uppercase' }} ref={timerRefs.nowTimeStandby}>
+          <div className="screen-time-stack">
+            <div className="screen-time" ref={timerRefs.nowTimeStandby}>
               --:-- --
             </div>
-            <div style={{ fontSize: '20px', color: 'var(--white-45)', letterSpacing: '0.02em' }} ref={timerRefs.nowDateStandby}>
+            <div className="screen-date" ref={timerRefs.nowDateStandby}>
               ----
             </div>
           </div>

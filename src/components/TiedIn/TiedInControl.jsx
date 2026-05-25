@@ -443,49 +443,43 @@ export default function TiedInControl() {
    };
 
    if (isLocked) {
-    return (
-      <div className="dashboard-login">
-         <div className="login-box overlay-root">
-             <h2 style={{color: '#fff', marginBottom: 24, fontSize: 18}}>TiedIn Control Panel</h2>
-             <form onSubmit={saveAdminKey} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                 <input 
-                   type="password" 
-                   autoFocus
-                   placeholder="Vercel Admin Secret" 
-                   value={inputKey} 
-                   onChange={e => setInputKey(e.target.value)} 
-                 />
-                 <input 
-                   type="password" 
-                   placeholder="OBS WS Password" 
-                   value={inputObs} 
-                   onChange={e => setInputObs(e.target.value)} 
-                 />
-                 <button type="submit" style={{marginTop: 8}}>UNCLOCK</button>
-             </form>
+      return (
+         <div className="dashboard-login">
+            <div className="login-box overlay-root">
+               <h2 className="login-title">TiedIn Control Panel</h2>
+               <form onSubmit={saveAdminKey} className="form-stack">
+                  <input
+                     type="password"
+                     autoFocus
+                     placeholder="Vercel Admin Secret"
+                     value={inputKey}
+                     onChange={e => setInputKey(e.target.value)}
+                  />
+                  <input
+                     type="password"
+                     placeholder="OBS WS Password"
+                     value={inputObs}
+                     onChange={e => setInputObs(e.target.value)}
+                  />
+                  <button type="submit" className="button-tight">UNCLOCK</button>
+               </form>
+            </div>
          </div>
-      </div>
-    );
-  }
+      );
+   }
 
   const workText = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG" ? `work - ${activeTaskRef.current}` : 'work';
 
-  return (
-    <div style={{ minHeight: '100dvh', width: '100%', background: '#000000', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-      <style>
-         {`
-           .no-scrollbar::-webkit-scrollbar { display: none; }
-           .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-         `}
-      </style>
-      <main className="overlay-root no-scrollbar" style={{ width: '100%', maxWidth: '800px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', padding: 'var(--context-gap, 10px)', gap: 'var(--context-gap, 10px)', flex: 1 }}>
+   return (
+      <div className="dashboard-shell">
+         <main className="overlay-root no-scrollbar control-panel">
 
        {/* Header Box */}
        <div className="context-pill stack">
-          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <div className="side-line panel-header">
              <span>TiedIn Control</span>
-             <span style={{ color: obsConnected ? '#4DAA57' : '#F95738', display: 'flex', alignItems: 'center', gap: 'var(--context-gap, 10px)' }}>
-                <span className="status-dot">●</span> 
+             <span className={`panel-status ${obsConnected ? 'connected' : 'disconnected'}`}>
+                <span className="status-dot">●</span>
                 {obsConnected ? 'Connected' : 'Disconnected'}
              </span>
           </div>
@@ -493,72 +487,72 @@ export default function TiedInControl() {
 
        {/* Mode Panel */}
        <div className="context-pill stack">
-          <div className="mode-buttons controls-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)', width: '100%', marginBottom: 'var(--context-gap, 10px)' }}>
-             <button className={`mode-btn ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')} style={{ width: '100%' }}>Work</button>
-             <button className={`mode-btn ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')} style={{ width: '100%' }}>Break</button>
+          <div className="grid-2 grid-gap-bottom">
+             <button className={`mode-btn button-wide ${state.mode === 'work' ? 'active' : ''}`} onClick={() => setMode('work')}>Work</button>
+             <button className={`mode-btn button-wide ${state.mode === 'break' ? 'active' : ''}`} onClick={() => setMode('break')}>Break</button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)', width: '100%' }}>
-             <input type="text" placeholder="what are you explaining?" value={explainTopic} onChange={e => setExplainTopic(e.target.value)} style={{ width: '100%', padding: '0 var(--context-gap, 10px)' }} />
-             <button className={`mode-btn ${state.mode.startsWith('explain') ? 'active' : ''}`} onClick={() => setMode('explain|' + explainTopic.trim())} style={{ width: '100%' }}>Explain</button>
+          <div className="grid-2">
+             <input type="text" placeholder="what are you explaining?" value={explainTopic} onChange={e => setExplainTopic(e.target.value)} className="input-full input-pad" />
+             <button className={`mode-btn button-wide ${state.mode.startsWith('explain') ? 'active' : ''}`} onClick={() => setMode('explain|' + explainTopic.trim())}>Explain</button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)', width: '100%', marginTop: 'var(--context-gap, 10px)' }}>
-             <button className={`mode-btn ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ width: '100%' }}>Standby</button>
-             <button className={`mode-btn ${state.mode === 'minecraft' ? 'active' : ''}`} onClick={() => setMode('minecraft')} style={{ width: '100%' }}>Play</button>
+          <div className="grid-2 grid-gap-top">
+             <button className={`mode-btn button-wide ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')}>Standby</button>
+             <button className={`mode-btn button-wide ${state.mode === 'minecraft' ? 'active' : ''}`} onClick={() => setMode('minecraft')}>Play</button>
           </div>
        </div>
 
        {/* Metrics Box */}
        <div className="context-pill stack">
-          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+          <div className="side-line panel-row">
              <span>Runs: {state.contactedCount}</span>
-             <div className="inline-form" style={{ gap: 'var(--context-gap, 10px)' }}>
-                <button className="mode-btn" onClick={() => handleMetric('contactedCount', -1)} style={{ width: '60px' }}>-</button>
-                <button className="mode-btn" onClick={() => handleMetric('contactedCount', 1)} style={{ width: '60px' }}>+</button>
+             <div className="inline-form">
+                <button className="mode-btn button-xs" onClick={() => handleMetric('contactedCount', -1)}>-</button>
+                <button className="mode-btn button-xs" onClick={() => handleMetric('contactedCount', 1)}>+</button>
              </div>
           </div>
-          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+          <div className="side-line panel-row">
              <span>PR: {state.convertedCount}</span>
-             <div className="inline-form" style={{ gap: 'var(--context-gap, 10px)' }}>
-                <button className="mode-btn" onClick={() => handleMetric('convertedCount', -1)} style={{ width: '60px' }}>-</button>
-                <button className="mode-btn" onClick={() => handleMetric('convertedCount', 1)} style={{ width: '60px' }}>+</button>
+             <div className="inline-form">
+                <button className="mode-btn button-xs" onClick={() => handleMetric('convertedCount', -1)}>-</button>
+                <button className="mode-btn button-xs" onClick={() => handleMetric('convertedCount', 1)}>+</button>
              </div>
           </div>
        </div>
 
        {/* YouTube Markers Box */}
-       <div className="context-pill stack" style={{ flex: 1, minHeight: '350px' }}>
-          <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+       <div className="context-pill stack panel-grow">
+          <div className="side-line panel-row">
              <span>Timestamps</span>
-             <div className="inline-form" style={{ gap: 'var(--context-gap, 10px)' }}>
-                <button className="mode-btn" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode === 'break' ? 'break' : state.mode === 'minecraft' ? 'minecraft' : 'standby')} style={{ width: '80px', fontSize: '10px' }}>MARK</button>
-                <button className="mode-btn" onClick={resetMarkers} style={{ width: '80px', fontSize: '10px' }}>CLEAR</button>
+             <div className="inline-form">
+                <button className="mode-btn button-sm" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode === 'break' ? 'break' : state.mode === 'minecraft' ? 'minecraft' : 'standby')}>MARK</button>
+                <button className="mode-btn button-sm" onClick={resetMarkers}>CLEAR</button>
              </div>
           </div>
           {streamStart && (
-             <div className="side-line" style={{ color: '#4DAA57', fontSize: '14px' }}>
+             <div className="side-line yt-live">
                 Live: {formatYTTime(streamStart)}
              </div>
           )}
-          {ytMarkers.length === 0 ? <div className="side-line" style={{ color: 'var(--white-35)', fontSize: '14px' }}>No markers yet</div> : null}
-          <textarea 
+          {ytMarkers.length === 0 ? <div className="side-line yt-empty">No markers yet</div> : null}
+          <textarea
              readOnly
              value={ytMarkers.join('\n')}
-             style={{ flex: 1, width: '100%', minHeight: '280px', background: 'transparent', border: 'none', color: 'var(--white-70)', resize: 'vertical', outline: 'none', fontFamily: 'monospace' }}
+             className="yt-textarea"
           />
        </div>
 
        {/* Action Buttons Box */}
        <div className="context-pill stack">
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 'var(--context-gap, 10px)', width: '100%' }}>
-             <button onClick={resetDay} className="mode-btn" style={{ width: '100%', borderColor: 'rgba(249, 87, 56, 0.5)', color: '#F95738' }}>Reset Overlay Clocks</button>
-             <button onClick={logout} className="mode-btn" style={{ width: '100%' }}>Disconnect & Lock</button>
+          <div className="grid-1">
+             <button onClick={resetDay} className="mode-btn button-wide danger">Reset Overlay Clocks</button>
+             <button onClick={logout} className="mode-btn button-wide">Disconnect & Lock</button>
           </div>
        </div>
 
        {/* Floating Logs */}
-       <div className="floating-logs" style={{ position: 'fixed', bottom: 'var(--context-gap, 10px)', right: '5%', width: '90%', maxWidth: '300px', pointerEvents: 'none', zIndex: 999 }}>
+       <div className="floating-logs">
            {logs.map((l, i) => (
-              <div key={i} style={{ background: 'var(--panel-bg)', color: 'var(--white-92)', fontSize: '11px', fontFamily: 'monospace', padding: 'var(--context-gap, 10px)', borderLeft: '2px solid var(--white-45)', marginBottom: 'var(--context-gap, 10px)', backdropFilter: 'blur(10px)', wordBreak: 'break-word' }}>
+              <div key={i} className="floating-log">
                  {l}
               </div>
            ))}
