@@ -35,6 +35,8 @@ html:has(.overlay-root) body {
   --panel-bg: rgba(0, 0, 0, 0.62);
 
   --context-gap: 10px;
+  --top-region-height: 810px;
+  --bottom-region-height: calc(1080px - var(--top-region-height));
 }
 
 .overlay-root *,
@@ -82,7 +84,7 @@ html:has(.overlay-root) body {
   left: 0;
   top: 0;
   width: 1440px;
-  height: 810px;
+  height: var(--top-region-height);
 }
 
 .timeline {
@@ -192,9 +194,9 @@ html:has(.overlay-root) body {
 .context-shell {
   position: absolute;
   left: 0;
-  top: 809px;
+  top: var(--top-region-height);
   width: 1440px;
-  height: 261px;
+  height: var(--bottom-region-height);
   display: none;
   padding: 0;
 }
@@ -205,9 +207,6 @@ html:has(.overlay-root) body {
   display: block;
 }
 
-.mode-minecraft .context-shell {
-  height: 261px;
-}
 
 .overlay-root.mode-work .explain-banner,
 .overlay-root.mode-minecraft .explain-banner,
