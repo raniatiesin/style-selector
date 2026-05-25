@@ -35,8 +35,6 @@ html:has(.overlay-root) body {
   --panel-bg: rgba(0, 0, 0, 0.62);
 
   --context-gap: 10px;
-  --top-region-height: 810px;
-  --bottom-region-height: calc(1080px - var(--top-region-height));
 }
 
 .overlay-root *,
@@ -84,7 +82,7 @@ html:has(.overlay-root) body {
   left: 0;
   top: 0;
   width: 1440px;
-  height: var(--top-region-height);
+  height: 810px;
 }
 
 .timeline {
@@ -107,10 +105,6 @@ html:has(.overlay-root) body {
 }
 .mode-minecraft .context-panel {
   grid-template-columns: minmax(0, 1fr) 334.67px;
-}
-
-.mode-minecraft .hero-col {
-  height: 100%;
 }
 
 .mode-minecraft .side-col {
@@ -198,9 +192,9 @@ html:has(.overlay-root) body {
 .context-shell {
   position: absolute;
   left: 0;
-  top: var(--top-region-height);
+  top: 809px;
   width: 1440px;
-  height: var(--bottom-region-height);
+  height: 261px;
   display: none;
   padding: 0;
 }
@@ -211,6 +205,9 @@ html:has(.overlay-root) body {
   display: block;
 }
 
+.mode-minecraft .context-shell {
+  height: 261px;
+}
 
 .overlay-root.mode-work .explain-banner,
 .overlay-root.mode-minecraft .explain-banner,
@@ -343,8 +340,7 @@ html:has(.overlay-root) body {
 
 .minecraft-summary {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   gap: var(--context-gap);
   height: 100%;
 }
@@ -358,7 +354,6 @@ html:has(.overlay-root) body {
   border: 1px solid var(--white-45);
   background: transparent;
   text-align: left;
-  height: 100%;
 }
 
 .minecraft-box-title {
