@@ -452,8 +452,8 @@ export default function TiedInApp({ displayMode }) {
                   <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
                 </div>
                 <div className="context-pill stack side-line-counts">
-                  <div className="side-line">Runs: {counts.contacted}</div>
-                  <div className="side-line">PR: {counts.converted}</div>
+                  <div className="side-line">Contacted</div>
+                  <div className="side-line">Converted</div>
                 </div>
               </>
             )}
