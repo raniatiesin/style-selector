@@ -90,6 +90,9 @@ html:has(.overlay-root) body {
 .mode-work .timeline {
   display: block;
 }
+.mode-minecraft .timeline {
+  display: block;
+}
 .mode-explain .timeline { display: none; } 
 .mode-break .timeline {
   display: none; 
@@ -180,11 +183,13 @@ html:has(.overlay-root) body {
 }
 
 .mode-work .context-shell,
+.mode-minecraft .context-shell,
 .mode-explain .context-shell {
   display: block;
 }
 
 .overlay-root.mode-work .explain-banner,
+.overlay-root.mode-minecraft .explain-banner,
 .overlay-root.mode-standby .explain-banner,
 .overlay-root.mode-break .explain-banner {
   display: none !important;

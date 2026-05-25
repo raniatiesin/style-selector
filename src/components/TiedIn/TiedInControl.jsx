@@ -7,6 +7,7 @@ const SCENE_WORK = "work";
 const SCENE_EXPLAIN = "explain";
 const SCENE_BREAK = "break";
 const SCENE_STANDBY = "standby";
+const SCENE_MINECRAFT = "minecraft";
 
 export default function TiedInControl() {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem('STREAM_ADMIN_KEY') || '');
@@ -15,7 +16,6 @@ export default function TiedInControl() {
   const [inputKey, setInputKey] = useState('');
   const [inputObs, setInputObs] = useState('');
   const [explainTopic, setExplainTopic] = useState('');
-   const [standbyNote, setStandbyNote] = useState('');
   
   const [isLocked, setIsLocked] = useState(!adminKey);
 
@@ -170,7 +170,7 @@ export default function TiedInControl() {
 
         obs.on("CurrentProgramSceneChanged", (event) => {
            addLog(`OBS Scene changed to: ${event.sceneName}`);
-           const map = { [SCENE_WORK]: "work", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby" };
+           const map = { [SCENE_WORK]: "work", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby", [SCENE_MINECRAFT]: "minecraft" };
            const mapped = map[event.sceneName];
            if (mapped) {
              setState(s => {
@@ -217,7 +217,7 @@ export default function TiedInControl() {
                  const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
                  const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
                  const explainText = getExplainMarkerText(s.mode, explainTopic);
-                 addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'break' ? 'break' : 'standby');
+                 addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'break' ? 'break' : mapped === 'minecraft' ? 'minecraft' : 'standby');
                  return newState;
                }
                return s;
@@ -387,10 +387,6 @@ export default function TiedInControl() {
          try { localStorage.setItem('EXPLAIN_TOPIC', explainTopicTarget); } catch {}
       }
 
-      if (mode === 'standby' && !standbyNote.trim()) {
-         alert('Please enter what you are doing before switching to Standby.');
-         return;
-      }
     
     if (state.mode === mode) return;
 
@@ -420,7 +416,7 @@ export default function TiedInControl() {
 
     if (obsRef.current && obsConnected) {
       addLog(`Telling OBS to switch scene to: ${isExplainTarget ? 'explain' : mode}`);
-      const scene = mode === "work" ? SCENE_WORK : isExplainTarget ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : SCENE_STANDBY;
+      const scene = mode === "work" ? SCENE_WORK : isExplainTarget ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : mode === "minecraft" ? SCENE_MINECRAFT : SCENE_STANDBY;
       obsRef.current.call("SetCurrentProgramScene", { sceneName: scene }).catch(e => {
          addLog(`OBS Scene Change Error: ${e.message}`);
       });
@@ -443,7 +439,7 @@ export default function TiedInControl() {
     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
     const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
    const explainText = getExplainMarkerText(mode, explainTopicTarget);
-   addYtMarker(mode === 'work' ? workText : isExplainTarget ? explainText : mode === 'break' ? 'break' : 'standby');
+   addYtMarker(mode === 'work' ? workText : isExplainTarget ? explainText : mode === 'break' ? 'break' : mode === 'minecraft' ? 'minecraft' : 'standby');
    };
 
    if (isLocked) {
@@ -506,8 +502,8 @@ export default function TiedInControl() {
              <button className={`mode-btn ${state.mode.startsWith('explain') ? 'active' : ''}`} onClick={() => setMode('explain|' + explainTopic.trim())} style={{ width: '100%' }}>Explain</button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--context-gap, 10px)', width: '100%', marginTop: 'var(--context-gap, 10px)' }}>
-             <input type="text" placeholder="what are you doing?" value={standbyNote} onChange={e => setStandbyNote(e.target.value)} style={{ width: '100%', padding: '0 var(--context-gap, 10px)' }} />
              <button className={`mode-btn ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')} style={{ width: '100%' }}>Standby</button>
+             <button className={`mode-btn ${state.mode === 'minecraft' ? 'active' : ''}`} onClick={() => setMode('minecraft')} style={{ width: '100%' }}>Play</button>
           </div>
        </div>
 
@@ -534,7 +530,7 @@ export default function TiedInControl() {
           <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
              <span>Timestamps</span>
              <div className="inline-form" style={{ gap: 'var(--context-gap, 10px)' }}>
-                <button className="mode-btn" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode === 'break' ? 'break' : 'standby')} style={{ width: '80px', fontSize: '10px' }}>MARK</button>
+                <button className="mode-btn" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode === 'break' ? 'break' : state.mode === 'minecraft' ? 'minecraft' : 'standby')} style={{ width: '80px', fontSize: '10px' }}>MARK</button>
                 <button className="mode-btn" onClick={resetMarkers} style={{ width: '80px', fontSize: '10px' }}>CLEAR</button>
              </div>
           </div>

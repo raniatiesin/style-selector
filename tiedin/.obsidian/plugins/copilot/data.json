@@ -74,7 +74,9 @@
       "projectEnabled": true,
       "capabilities": [
         "vision"
-      ]
+      ],
+      "apiKey": "AIzaSyAnN7bsPADNoXwaEdTzusAH8xHTx5yRi0A",
+      "baseUrl": "https://generativelanguages.googleapis.com"
     },
     {
       "name": "gpt-5.4",
@@ -134,9 +136,11 @@
       "enabled": true,
       "isBuiltIn": true,
       "projectEnabled": true,
-      "capabilities": [
-        "vision"
-      ]
+      "capabilities": [],
+      "baseUrl": "",
+      "apiKey": "AIzaSyAnN7bsPADNoXwaEdTzusAH8xHTx5yRi0A",
+      "isEmbeddingModel": false,
+      "stream": true
     },
     {
       "name": "google/gemini-3-flash-preview",

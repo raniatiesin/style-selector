@@ -19,11 +19,13 @@ if (rootElement) {
     componentToRender = <TiedInApp displayMode="break" />;
   } else if (path.includes('overlays/work')) {
     componentToRender = <TiedInApp displayMode="work" />;
+  } else if (path.includes('overlays/minecraft')) {
+    componentToRender = <TiedInApp displayMode="minecraft" />;
   } else if (path.includes('overlays/standby')) {
     componentToRender = <TiedInApp displayMode="standby" />;
   } else {
     // Default fallback
-    componentToRender = <div style={{ color: 'white', padding: '20px' }}>Please specify an overlay path like /tiedin/overlays/work, /tiedin/overlays/explain, /tiedin/overlays/break, or /tiedin/controls</div>;
+    componentToRender = <div style={{ color: 'white', padding: '20px' }}>Please specify an overlay path like /tiedin/overlays/work, /tiedin/overlays/minecraft, /tiedin/overlays/explain, /tiedin/overlays/break, or /tiedin/controls</div>;
   }
 
   createRoot(rootElement).render(
