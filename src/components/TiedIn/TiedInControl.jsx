@@ -504,14 +504,14 @@ export default function TiedInControl() {
        {/* Metrics Box */}
        <div className="context-pill stack">
           <div className="side-line panel-row">
-             <span>Runs: {state.contactedCount}</span>
+             <span>Contacted: {state.contactedCount}</span>
              <div className="inline-form">
                 <button className="mode-btn button-xs" onClick={() => handleMetric('contactedCount', -1)}>-</button>
                 <button className="mode-btn button-xs" onClick={() => handleMetric('contactedCount', 1)}>+</button>
              </div>
           </div>
           <div className="side-line panel-row">
-             <span>PR: {state.convertedCount}</span>
+             <span>Converted: {state.convertedCount}</span>
              <div className="inline-form">
                 <button className="mode-btn button-xs" onClick={() => handleMetric('convertedCount', -1)}>-</button>
                 <button className="mode-btn button-xs" onClick={() => handleMetric('convertedCount', 1)}>+</button>
