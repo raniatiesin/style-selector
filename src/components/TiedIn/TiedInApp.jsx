@@ -331,7 +331,9 @@ export default function TiedInApp({ displayMode }) {
       <div className="obs-frame frame-display" aria-hidden="true"></div>
       <div className="obs-frame frame-webcam" aria-hidden="true"></div>
       {activeMode === 'minecraft' ? (
-        <div className="context-pill minecraft-run-badge">Run #{minecraftStats.totals.totalRuns || 0} -</div>
+        <div className="tl-pill current minecraft-run-badge">
+          <div className="tl-title">Run #{minecraftStats.totals.totalRuns || 0} -</div>
+        </div>
       ) : null}
 
       <section className="zone-top">
