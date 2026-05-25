@@ -267,8 +267,8 @@ html:has(.overlay-root) body {
 
 .minecraft-run-badge {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: calc(10px + var(--context-gap));
+  right: calc(10px + var(--context-gap));
   left: auto;
   width: 280px;
   height: 54px;
