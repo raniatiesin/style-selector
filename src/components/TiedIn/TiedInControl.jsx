@@ -471,7 +471,7 @@ export default function TiedInControl() {
   const workText = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG" ? `work - ${activeTaskRef.current}` : 'work';
 
    return (
-      <div className="dashboard-shell">
+      <div className="dashboard-shell" style={{ minHeight: '100dvh', width: '100%', background: '#000000' }}>
          <main className="overlay-root no-scrollbar control-panel">
 
        {/* Header Box */}
