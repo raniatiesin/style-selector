@@ -313,10 +313,7 @@ html:has(.overlay-root) body {
 }
 
 .minecraft-box-title {
-  font-size: 12px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--white-45);
+  margin-bottom: 2px;
 }
 
 .minecraft-today-grid {
@@ -342,9 +339,6 @@ html:has(.overlay-root) body {
   grid-column: 1 / -1;
 }
 
-.minecraft-metric-label {
-  margin-top: 2px;
-}
 
 /* Webcam placement handles dynamically bottom right overlapping now */
 
