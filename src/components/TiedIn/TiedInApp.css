@@ -35,6 +35,9 @@ html:has(.overlay-root) body {
   --panel-bg: rgba(0, 0, 0, 0.62);
 
   --context-gap: 10px;
+  --frame-inset: 10px;
+  --webcam-width: 334.67px;
+  --webcam-height: 251px;
   --top-region-height: 810px;
   --bottom-region-height: calc(1080px - var(--top-region-height));
 }
@@ -1031,17 +1034,17 @@ html:has(.overlay-root) body {
 }
 
 .frame-display {
-  left: 10px;
-  top: 10px;
-  width: 1420px;
-  height: 799px;
+  left: var(--frame-inset);
+  top: var(--frame-inset);
+  right: var(--frame-inset);
+  height: calc(var(--top-region-height) - (2 * var(--frame-inset)));
 }
 
 .frame-webcam {
-  left: 1095.33px;
-  top: 819px;
-  width: 334.67px;
-  height: 251px;
+  right: var(--frame-inset);
+  bottom: var(--frame-inset);
+  width: var(--webcam-width);
+  height: var(--webcam-height);
 }
 
 .mode-explain .frame-webcam {
