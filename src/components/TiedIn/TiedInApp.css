@@ -274,6 +274,9 @@ html:has(.overlay-root) body {
   height: 54px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex: none;
+  align-self: flex-start;
   font-size: 20px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
