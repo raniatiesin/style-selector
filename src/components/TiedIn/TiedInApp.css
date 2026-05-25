@@ -93,6 +93,13 @@ html:has(.overlay-root) body {
 .mode-minecraft .timeline {
   display: none;
 }
+.mode-minecraft .context-panel {
+  grid-template-columns: minmax(0, 1fr) 334.67px;
+}
+
+.mode-minecraft .side-col {
+  display: none;
+}
 .mode-explain .timeline { display: none; } 
 .mode-break .timeline {
   display: none; 
@@ -277,52 +284,67 @@ html:has(.overlay-root) body {
   justify-content: flex-start;
   flex: none;
   align-self: flex-start;
-  padding: 18px 12px;
+  padding: 22px 14px;
   text-align: left;
   z-index: 3;
 }
 
-.minecraft-stats-grid {
+.minecraft-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: var(--context-gap);
+  height: 100%;
+}
+
+.minecraft-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--context-gap);
+  padding: 18px 20px;
+  border: 1px solid var(--white-45);
+  background: transparent;
+  text-align: left;
+}
+
+.minecraft-box-title {
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--white-45);
+}
+
+.minecraft-today-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--context-gap);
+  align-content: start;
+}
+
+.minecraft-total-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--context-gap);
 }
 
-.minecraft-stat-pill {
-  height: 70px;
-  justify-content: center;
-}
-
-.minecraft-stat-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.minecraft-stat-label {
-  color: var(--white-92);
-}
-
-.minecraft-stat-value {
-  font-variant-numeric: tabular-nums;
-  color: var(--white-100);
-  white-space: nowrap;
-}
-.minecraft-panel {
+.minecraft-metric {
   display: flex;
   flex-direction: column;
-  gap: var(--context-gap);
+  gap: 6px;
 }
 
-.minecraft-stat-label {
+.minecraft-metric-wide {
+  grid-column: 1 / -1;
+}
+
+.minecraft-metric-label {
   font-size: 12px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--white-45);
 }
 
-.minecraft-stat-value {
+.minecraft-metric-value {
   font-size: 36px;
   line-height: 1.04;
   letter-spacing: -0.006em;

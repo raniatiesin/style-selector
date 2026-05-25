@@ -332,7 +332,7 @@ export default function TiedInApp({ displayMode }) {
       <div className="obs-frame frame-webcam" aria-hidden="true"></div>
       {activeMode === 'minecraft' ? (
         <div className="tl-pill current minecraft-run-badge">
-          <div className="tl-title">Run Counter #{minecraftStats.totals.totalRuns || 0} -</div>
+          <div className="tl-title">Run #{(Number(minecraftStats.totals.totalRuns) || 0) + 1} -</div>
         </div>
       ) : null}
 
@@ -378,41 +378,43 @@ export default function TiedInApp({ displayMode }) {
         <div className="context-panel">
           <div className="hero-col">
             {activeMode === 'minecraft' ? (
-              <div className="minecraft-stats-grid">
-                <div className="context-pill minecraft-stat-pill">
-                  <div className="minecraft-stat-line">
-                    <span className="side-line minecraft-stat-label">Runs</span>
-                    <span className="side-line minecraft-stat-value">{minecraftStats.totals.totalRuns}</span>
+              <div className="minecraft-summary">
+                <div className="minecraft-box minecraft-box-today">
+                  <div className="minecraft-box-title">Today</div>
+                  <div className="minecraft-today-grid">
+                    <div className="minecraft-metric">
+                      <div className="minecraft-metric-label">Runs</div>
+                      <div className="minecraft-metric-value">{minecraftStats.totals.totalRuns}</div>
+                    </div>
+                    <div className="minecraft-metric">
+                      <div className="minecraft-metric-label">Completed</div>
+                      <div className="minecraft-metric-value">{minecraftStats.totals.completedRuns}</div>
+                    </div>
+                    <div className="minecraft-metric minecraft-metric-wide">
+                      <div className="minecraft-metric-label">Avg IGT</div>
+                      <div className="minecraft-metric-value">{formatMillis(minecraftStats.averages.avgFinalIgtCompleted)}</div>
+                    </div>
                   </div>
                 </div>
-                <div className="context-pill minecraft-stat-pill">
-                  <div className="minecraft-stat-line">
-                    <span className="side-line minecraft-stat-label">Completed</span>
-                    <span className="side-line minecraft-stat-value">{minecraftStats.totals.completedRuns}</span>
-                  </div>
-                </div>
-                <div className="context-pill minecraft-stat-pill">
-                  <div className="minecraft-stat-line">
-                    <span className="side-line minecraft-stat-label">PB IGT</span>
-                    <span className="side-line minecraft-stat-value">{formatMillis(minecraftStats.bests.bestFinalIgt)}</span>
-                  </div>
-                </div>
-                <div className="context-pill minecraft-stat-pill">
-                  <div className="minecraft-stat-line">
-                    <span className="side-line minecraft-stat-label">Avg IGT</span>
-                    <span className="side-line minecraft-stat-value">{formatMillis(minecraftStats.averages.avgFinalIgtCompleted)}</span>
-                  </div>
-                </div>
-                <div className="context-pill minecraft-stat-pill">
-                  <div className="minecraft-stat-line">
-                    <span className="side-line minecraft-stat-label">Avg Nether</span>
-                    <span className="side-line minecraft-stat-value">{formatMillis(minecraftStats.averages.avgEnterNetherIgt)}</span>
-                  </div>
-                </div>
-                <div className="context-pill minecraft-stat-pill">
-                  <div className="minecraft-stat-line">
-                    <span className="side-line minecraft-stat-label">Avg End</span>
-                    <span className="side-line minecraft-stat-value">{formatMillis(minecraftStats.averages.avgEnterEndIgt)}</span>
+                <div className="minecraft-box minecraft-box-total">
+                  <div className="minecraft-box-title">Total</div>
+                  <div className="minecraft-total-grid">
+                    <div className="minecraft-metric">
+                      <div className="minecraft-metric-label">PB IGT</div>
+                      <div className="minecraft-metric-value">{formatMillis(minecraftStats.bests.bestFinalIgt)}</div>
+                    </div>
+                    <div className="minecraft-metric">
+                      <div className="minecraft-metric-label">Avg IGT</div>
+                      <div className="minecraft-metric-value">{formatMillis(minecraftStats.averages.avgFinalIgtCompleted)}</div>
+                    </div>
+                    <div className="minecraft-metric">
+                      <div className="minecraft-metric-label">Avg Nether</div>
+                      <div className="minecraft-metric-value">{formatMillis(minecraftStats.averages.avgEnterNetherIgt)}</div>
+                    </div>
+                    <div className="minecraft-metric">
+                      <div className="minecraft-metric-label">Avg End</div>
+                      <div className="minecraft-metric-value">{formatMillis(minecraftStats.averages.avgEnterEndIgt)}</div>
+                    </div>
                   </div>
                 </div>
               </div>
