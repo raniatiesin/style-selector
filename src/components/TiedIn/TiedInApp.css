@@ -300,14 +300,15 @@ html:has(.overlay-root) body {
 }
 
 .minecraft-stat-label {
-  font-size: 14px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-size: 36px;
+  line-height: 1.04;
+  letter-spacing: -0.006em;
+  text-transform: none;
   color: var(--white-92);
 }
 
 .minecraft-stat-value {
-  font-size: 32px;
+  font-size: 36px;
   line-height: 1.04;
   letter-spacing: -0.006em;
   font-variant-numeric: tabular-nums;
