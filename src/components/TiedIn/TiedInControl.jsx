@@ -510,14 +510,14 @@ export default function TiedInControl() {
        {/* Metrics Box */}
        <div className="context-pill stack">
           <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-             <span>Contacted: {state.contactedCount}</span>
+             <span>Runs: {state.contactedCount}</span>
              <div className="inline-form" style={{ gap: 'var(--context-gap, 10px)' }}>
                 <button className="mode-btn" onClick={() => handleMetric('contactedCount', -1)} style={{ width: '60px' }}>-</button>
                 <button className="mode-btn" onClick={() => handleMetric('contactedCount', 1)} style={{ width: '60px' }}>+</button>
              </div>
           </div>
           <div className="side-line" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-             <span>Converted: {state.convertedCount}</span>
+             <span>PR: {state.convertedCount}</span>
              <div className="inline-form" style={{ gap: 'var(--context-gap, 10px)' }}>
                 <button className="mode-btn" onClick={() => handleMetric('convertedCount', -1)} style={{ width: '60px' }}>-</button>
                 <button className="mode-btn" onClick={() => handleMetric('convertedCount', 1)} style={{ width: '60px' }}>+</button>
