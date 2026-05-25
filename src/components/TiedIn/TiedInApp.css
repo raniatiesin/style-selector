@@ -205,6 +205,10 @@ html:has(.overlay-root) body {
   display: block;
 }
 
+.mode-minecraft .context-shell {
+  height: 271px;
+}
+
 .overlay-root.mode-work .explain-banner,
 .overlay-root.mode-minecraft .explain-banner,
 .overlay-root.mode-standby .explain-banner,
