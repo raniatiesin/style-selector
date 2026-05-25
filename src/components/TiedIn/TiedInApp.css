@@ -291,15 +291,22 @@ html:has(.overlay-root) body {
   justify-content: center;
 }
 
+.minecraft-stat-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
 .minecraft-stat-label {
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--white-45);
 }
 
 .minecraft-stat-value {
-  font-size: 28px;
+  font-size: 32px;
   line-height: 1.04;
   letter-spacing: -0.006em;
   font-variant-numeric: tabular-nums;

@@ -377,29 +377,41 @@ export default function TiedInApp({ displayMode }) {
           <div className="hero-col">
             {activeMode === 'minecraft' ? (
               <div className="minecraft-stats-grid">
-                <div className="context-pill stack minecraft-stat-pill">
-                  <div className="minecraft-stat-label">Runs</div>
-                  <div className="minecraft-stat-value">{minecraftStats.totals.totalRuns}</div>
+                <div className="context-pill minecraft-stat-pill">
+                  <div className="minecraft-stat-line">
+                    <span className="minecraft-stat-label">Runs</span>
+                    <span className="minecraft-stat-value">{minecraftStats.totals.totalRuns}</span>
+                  </div>
                 </div>
-                <div className="context-pill stack minecraft-stat-pill">
-                  <div className="minecraft-stat-label">Completed</div>
-                  <div className="minecraft-stat-value">{minecraftStats.totals.completedRuns}</div>
+                <div className="context-pill minecraft-stat-pill">
+                  <div className="minecraft-stat-line">
+                    <span className="minecraft-stat-label">Completed</span>
+                    <span className="minecraft-stat-value">{minecraftStats.totals.completedRuns}</span>
+                  </div>
                 </div>
-                <div className="context-pill stack minecraft-stat-pill">
-                  <div className="minecraft-stat-label">PB IGT</div>
-                  <div className="minecraft-stat-value">{formatMillis(minecraftStats.bests.bestFinalIgt)}</div>
+                <div className="context-pill minecraft-stat-pill">
+                  <div className="minecraft-stat-line">
+                    <span className="minecraft-stat-label">PB IGT</span>
+                    <span className="minecraft-stat-value">{formatMillis(minecraftStats.bests.bestFinalIgt)}</span>
+                  </div>
                 </div>
-                <div className="context-pill stack minecraft-stat-pill">
-                  <div className="minecraft-stat-label">Avg IGT</div>
-                  <div className="minecraft-stat-value">{formatMillis(minecraftStats.averages.avgFinalIgtCompleted)}</div>
+                <div className="context-pill minecraft-stat-pill">
+                  <div className="minecraft-stat-line">
+                    <span className="minecraft-stat-label">Avg IGT</span>
+                    <span className="minecraft-stat-value">{formatMillis(minecraftStats.averages.avgFinalIgtCompleted)}</span>
+                  </div>
                 </div>
-                <div className="context-pill stack minecraft-stat-pill">
-                  <div className="minecraft-stat-label">Avg Nether</div>
-                  <div className="minecraft-stat-value">{formatMillis(minecraftStats.averages.avgEnterNetherIgt)}</div>
+                <div className="context-pill minecraft-stat-pill">
+                  <div className="minecraft-stat-line">
+                    <span className="minecraft-stat-label">Avg Nether</span>
+                    <span className="minecraft-stat-value">{formatMillis(minecraftStats.averages.avgEnterNetherIgt)}</span>
+                  </div>
                 </div>
-                <div className="context-pill stack minecraft-stat-pill">
-                  <div className="minecraft-stat-label">Avg End</div>
-                  <div className="minecraft-stat-value">{formatMillis(minecraftStats.averages.avgEnterEndIgt)}</div>
+                <div className="context-pill minecraft-stat-pill">
+                  <div className="minecraft-stat-line">
+                    <span className="minecraft-stat-label">Avg End</span>
+                    <span className="minecraft-stat-value">{formatMillis(minecraftStats.averages.avgEnterEndIgt)}</span>
+                  </div>
                 </div>
               </div>
             ) : (
