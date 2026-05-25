@@ -91,7 +91,7 @@ html:has(.overlay-root) body {
   display: block;
 }
 .mode-minecraft .timeline {
-  display: block;
+  display: none;
 }
 .mode-explain .timeline { display: none; } 
 .mode-break .timeline {
@@ -261,30 +261,62 @@ html:has(.overlay-root) body {
   display: none !important;
 }
 
+.mode-minecraft .side-col {
+  display: none !important;
+}
+
+.mode-minecraft .hero-col {
+  justify-content: flex-end;
+}
+
 .mode-explain .side-col {
   display: none !important;
 }
 
-.minecraft-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--context-gap);
-}
-
 .minecraft-stat-label {
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--white-45);
 }
 
 .minecraft-stat-value {
-  font-size: 36px;
+  font-size: 28px;
   line-height: 1.04;
   letter-spacing: -0.006em;
   font-variant-numeric: tabular-nums;
   color: var(--white-92);
   white-space: nowrap;
+}
+
+.minecraft-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--context-gap);
+  width: 100%;
+}
+
+.minecraft-stat-card {
+  border: 1px solid var(--white-45);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: transparent;
+}
+
+.minecraft-run-banner {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  padding: 6px 12px;
+  border: 1px solid var(--white-45);
+  background: var(--panel-bg);
+  font-size: 18px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--white-92);
+  z-index: 20;
 }
 
 /* Webcam placement handles dynamically bottom right overlapping now */
