@@ -271,7 +271,7 @@ html:has(.overlay-root) body {
   right: calc(10px + var(--context-gap));
   left: auto;
   width: 280px;
-  height: 54px;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -300,17 +300,10 @@ html:has(.overlay-root) body {
 }
 
 .minecraft-stat-label {
-  font-size: 36px;
-  line-height: 1.04;
-  letter-spacing: -0.006em;
-  text-transform: none;
   color: var(--white-92);
 }
 
 .minecraft-stat-value {
-  font-size: 36px;
-  line-height: 1.04;
-  letter-spacing: -0.006em;
   font-variant-numeric: tabular-nums;
   color: var(--white-100);
   white-space: nowrap;
