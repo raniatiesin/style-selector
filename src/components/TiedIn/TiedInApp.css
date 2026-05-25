@@ -289,6 +289,11 @@ html:has(.overlay-root) body {
   z-index: 3;
 }
 
+.minecraft-run-badge .tl-title {
+  text-align: left;
+  width: 100%;
+}
+
 .minecraft-summary {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
