@@ -330,7 +330,7 @@ html:has(.overlay-root) body {
 .minecraft-metric {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .minecraft-metric-wide {
@@ -339,7 +339,7 @@ html:has(.overlay-root) body {
 
 .minecraft-metric-label {
   font-size: 12px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--white-45);
 }
