@@ -343,19 +343,7 @@ html:has(.overlay-root) body {
 }
 
 .minecraft-metric-label {
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--white-45);
-}
-
-.minecraft-metric-value {
-  font-size: 36px;
-  line-height: 1.04;
-  letter-spacing: -0.006em;
-  font-variant-numeric: tabular-nums;
-  color: var(--white-92);
-  white-space: nowrap;
+  margin-top: 2px;
 }
 
 /* Webcam placement handles dynamically bottom right overlapping now */
