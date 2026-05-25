@@ -21,6 +21,15 @@ function formatTime12(date) {
   h = h % 12 || 12;
   return `${h}:${m} ${ampm}`;
 }
+function formatMillis(ms) {
+  const safe = Math.max(0, Number(ms) || 0);
+  if (!safe) return "--:--";
+  const totalSeconds = Math.floor(safe / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
 function toLongDate(date) {
   return date.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric" });
 }
@@ -43,6 +52,11 @@ export default function TiedInApp({ displayMode }) {
   // Purely data-driven state for UI lists (tasks, counts)
   const [tasks, setTasks] = useState([]);
   const [counts, setCounts] = useState({ contacted: 0, converted: 0 });
+  const [minecraftStats, setMinecraftStats] = useState({
+    totals: { totalRuns: 0, completedRuns: 0 },
+    averages: { avgFinalIgtCompleted: 0, avgEnterNetherIgt: 0, avgEnterEndIgt: 0 },
+    bests: { bestFinalIgt: 0 }
+  });
   const [modeReact, setModeReact] = useState("standby"); // for changing class names
 
   // Refs for requestAnimationFrame clock updates
@@ -183,6 +197,7 @@ export default function TiedInApp({ displayMode }) {
 
   // API Polling Loop
   useEffect(() => {
+    if (displayMode === 'minecraft') return;
     let pollingInterval;
     async function fetchState() {
       try {
@@ -257,13 +272,47 @@ export default function TiedInApp({ displayMode }) {
     fetchState();
     pollingInterval = setInterval(fetchState, 1500);
     return () => clearInterval(pollingInterval);
-  }, []);
+  }, [displayMode]);
+
+  useEffect(() => {
+    const rawMode = displayMode || modeReact;
+    const activeMode = rawMode.startsWith('explain') ? 'explain' : rawMode;
+    if (activeMode !== 'minecraft') return;
+
+    const source = new EventSource('http://localhost:2026/events');
+    const handleStats = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        setMinecraftStats(payload);
+      } catch (error) {
+        console.error('Minecraft stats parse failed', error);
+      }
+    };
+
+    source.addEventListener('stats', handleStats);
+    source.onerror = () => {
+      // Let EventSource handle reconnects.
+    };
+
+    return () => {
+      source.removeEventListener('stats', handleStats);
+      source.close();
+    };
+  }, [displayMode, modeReact]);
 
   // --- Render Mappings ---
   const rawMode = displayMode || modeReact;
   const activeMode = rawMode.startsWith('explain') ? 'explain' : rawMode;
   const explainTopicDisplay = rawMode.startsWith('explain|') ? rawMode.split('|').slice(1).join('|') : "";
   const inProgressIds = new Set(tasks.filter(t => t.status === "in_progress").map(t => t.id));
+  const minecraftStatsList = [
+    { label: 'Runs', value: minecraftStats.totals.totalRuns },
+    { label: 'Completed', value: minecraftStats.totals.completedRuns },
+    { label: 'Avg IGT', value: formatMillis(minecraftStats.averages.avgFinalIgtCompleted) },
+    { label: 'PB IGT', value: formatMillis(minecraftStats.bests.bestFinalIgt) },
+    { label: 'Avg Nether', value: formatMillis(minecraftStats.averages.avgEnterNetherIgt) },
+    { label: 'Avg End', value: formatMillis(minecraftStats.averages.avgEnterEndIgt) }
+  ];
 
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
@@ -293,7 +342,14 @@ export default function TiedInApp({ displayMode }) {
       <section className="zone-top">
         <aside className="timeline" id="timeline">
           <div className="timeline-list">
-             {displayTasks.map(task => {
+             {activeMode === 'minecraft' ? minecraftStatsList.map((stat) => (
+               <div key={stat.label} className="tl-item">
+                 <div className="tl-pill current">
+                   <div className="tl-title">{stat.value}</div>
+                   <div className="tl-meta current">{stat.label}</div>
+                 </div>
+               </div>
+             )) : displayTasks.map(task => {
                 const isCurrent = inProgressIds.has(task.id);
                 const pillClass = isCurrent ? "tl-pill current" : "tl-pill done";
                 const metaClass = isCurrent ? "tl-meta current" : "tl-meta done";
@@ -331,37 +387,69 @@ export default function TiedInApp({ displayMode }) {
       <section className="context-shell" id="contextShell" aria-label="Work and explain context panel">
         <div className="context-panel">
           <div className="hero-col">
-            <div className="context-pill stack hero-timer-pill">
-              <div className="today-time" ref={timerRefs.todayTime}>00:00:00</div>
-              <div className="session-line">
-                <span className="session-label">since last break</span>
-                <span ref={timerRefs.sessionTime}>00:00:00</span>
-              </div>
-            </div>
-            {activeMode === 'explain' ? (
-              <div className="explain-pill-stack">
-                <div className="context-pill explain-pill">
-                  <div className="side-line" ref={timerRefs.explainTopicText}>Explain Topic</div>
+            {activeMode === 'minecraft' ? (
+              <div className="minecraft-panel">
+                <div className="context-pill stack">
+                  <div className="minecraft-stat-label">Runs</div>
+                  <div className="minecraft-stat-value">{minecraftStats.totals.totalRuns}</div>
+                  <div className="minecraft-stat-label">Completed</div>
+                  <div className="minecraft-stat-value">{minecraftStats.totals.completedRuns}</div>
                 </div>
-                <div className="context-pill explain-pill">
-                  <div className="side-line" ref={timerRefs.explainAccumulated}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>
+                <div className="context-pill stack">
+                  <div className="minecraft-stat-label">PB IGT</div>
+                  <div className="minecraft-stat-value">{formatMillis(minecraftStats.bests.bestFinalIgt)}</div>
+                  <div className="minecraft-stat-label">Avg IGT</div>
+                  <div className="minecraft-stat-value">{formatMillis(minecraftStats.averages.avgFinalIgtCompleted)}</div>
                 </div>
               </div>
             ) : (
-              <div className="context-pill hero-pill">
-                <div className="side-line" ref={timerRefs.dayHoursTrack}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>
-              </div>
+              <>
+                <div className="context-pill stack hero-timer-pill">
+                  <div className="today-time" ref={timerRefs.todayTime}>00:00:00</div>
+                  <div className="session-line">
+                    <span className="session-label">since last break</span>
+                    <span ref={timerRefs.sessionTime}>00:00:00</span>
+                  </div>
+                </div>
+                {activeMode === 'explain' ? (
+                  <div className="explain-pill-stack">
+                    <div className="context-pill explain-pill">
+                      <div className="side-line" ref={timerRefs.explainTopicText}>Explain Topic</div>
+                    </div>
+                    <div className="context-pill explain-pill">
+                      <div className="side-line" ref={timerRefs.explainAccumulated}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="context-pill hero-pill">
+                    <div className="side-line" ref={timerRefs.dayHoursTrack}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>
+                  </div>
+                )}
+              </>
             )}
           </div>
           <div className="side-col">
-            <div className="context-pill stack">
-              <div className="side-line" ref={timerRefs.nowDateMain}>--/--/----</div>
-              <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
-            </div>
-            <div className="context-pill stack side-line-counts">
-              <div className="side-line">Runs: {counts.contacted}</div>
-              <div className="side-line">PR: {counts.converted}</div>
-            </div>
+            {activeMode === 'minecraft' ? (
+              <div className="minecraft-panel">
+                <div className="context-pill stack">
+                  <div className="minecraft-stat-label">Avg Nether</div>
+                  <div className="minecraft-stat-value">{formatMillis(minecraftStats.averages.avgEnterNetherIgt)}</div>
+                  <div className="minecraft-stat-label">Avg End</div>
+                  <div className="minecraft-stat-value">{formatMillis(minecraftStats.averages.avgEnterEndIgt)}</div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="context-pill stack">
+                  <div className="side-line" ref={timerRefs.nowDateMain}>--/--/----</div>
+                  <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
+                </div>
+                <div className="context-pill stack side-line-counts">
+                  <div className="side-line">Runs: {counts.contacted}</div>
+                  <div className="side-line">PR: {counts.converted}</div>
+                </div>
+              </>
+            )}
           </div>
           <div className="webcam-col"></div>
         </div>

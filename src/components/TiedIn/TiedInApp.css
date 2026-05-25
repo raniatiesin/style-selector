@@ -257,8 +257,34 @@ html:has(.overlay-root) body {
   display: none !important;
 }
 
+.mode-minecraft .progress-strip {
+  display: none !important;
+}
+
 .mode-explain .side-col {
   display: none !important;
+}
+
+.minecraft-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--context-gap);
+}
+
+.minecraft-stat-label {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--white-45);
+}
+
+.minecraft-stat-value {
+  font-size: 36px;
+  line-height: 1.04;
+  letter-spacing: -0.006em;
+  font-variant-numeric: tabular-nums;
+  color: var(--white-92);
+  white-space: nowrap;
 }
 
 /* Webcam placement handles dynamically bottom right overlapping now */
