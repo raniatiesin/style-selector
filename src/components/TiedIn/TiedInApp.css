@@ -305,7 +305,7 @@ html:has(.overlay-root) body {
   font-size: 14px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--white-45);
+  color: var(--white-92);
 }
 
 .minecraft-stat-value {
@@ -313,7 +313,7 @@ html:has(.overlay-root) body {
   line-height: 1.04;
   letter-spacing: -0.006em;
   font-variant-numeric: tabular-nums;
-  color: var(--white-92);
+  color: var(--white-100);
   white-space: nowrap;
 }
 .minecraft-panel {
