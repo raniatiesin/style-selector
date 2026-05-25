@@ -383,15 +383,15 @@ export default function TiedInApp({ displayMode }) {
                   <div className="tl-meta minecraft-box-title">Today</div>
                   <div className="minecraft-today-grid">
                     <div className="minecraft-metric">
-                      <div className="side-line">{minecraftStats.totals.totalRuns}</div>
+                      <div className="tl-title">{minecraftStats.totals.totalRuns}</div>
                       <div className="tl-meta">Runs</div>
                     </div>
                     <div className="minecraft-metric">
-                      <div className="side-line">{minecraftStats.totals.completedRuns}</div>
+                      <div className="tl-title">{minecraftStats.totals.completedRuns}</div>
                       <div className="tl-meta">Completed</div>
                     </div>
                     <div className="minecraft-metric minecraft-metric-wide">
-                      <div className="side-line">{formatMillis(minecraftStats.averages.avgFinalIgtCompleted)}</div>
+                      <div className="tl-title">{formatMillis(minecraftStats.averages.avgFinalIgtCompleted)}</div>
                       <div className="tl-meta">Avg IGT</div>
                     </div>
                   </div>
@@ -400,19 +400,19 @@ export default function TiedInApp({ displayMode }) {
                   <div className="tl-meta minecraft-box-title">Total</div>
                   <div className="minecraft-total-grid">
                     <div className="minecraft-metric">
-                      <div className="side-line">{formatMillis(minecraftStats.bests.bestFinalIgt)}</div>
+                      <div className="tl-title">{formatMillis(minecraftStats.bests.bestFinalIgt)}</div>
                       <div className="tl-meta">PB IGT</div>
                     </div>
                     <div className="minecraft-metric">
-                      <div className="side-line">{formatMillis(minecraftStats.averages.avgFinalIgtCompleted)}</div>
+                      <div className="tl-title">{formatMillis(minecraftStats.averages.avgFinalIgtCompleted)}</div>
                       <div className="tl-meta">Avg IGT</div>
                     </div>
                     <div className="minecraft-metric">
-                      <div className="side-line">{formatMillis(minecraftStats.averages.avgEnterNetherIgt)}</div>
+                      <div className="tl-title">{formatMillis(minecraftStats.averages.avgEnterNetherIgt)}</div>
                       <div className="tl-meta">Avg Nether</div>
                     </div>
                     <div className="minecraft-metric">
-                      <div className="side-line">{formatMillis(minecraftStats.averages.avgEnterEndIgt)}</div>
+                      <div className="tl-title">{formatMillis(minecraftStats.averages.avgEnterEndIgt)}</div>
                       <div className="tl-meta">Avg End</div>
                     </div>
                   </div>
