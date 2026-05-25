@@ -305,10 +305,12 @@ export default function TiedInApp({ displayMode }) {
   const activeMode = rawMode.startsWith('explain') ? 'explain' : rawMode;
   const explainTopicDisplay = rawMode.startsWith('explain|') ? rawMode.split('|').slice(1).join('|') : "";
   const inProgressIds = new Set(tasks.filter(t => t.status === "in_progress").map(t => t.id));
-  const minecraftStatsList = [
+  const minecraftStatsLeft = [
     { label: 'Runs', value: minecraftStats.totals.totalRuns },
     { label: 'Completed', value: minecraftStats.totals.completedRuns },
-    { label: 'PB IGT', value: formatMillis(minecraftStats.bests.bestFinalIgt) },
+    { label: 'PB IGT', value: formatMillis(minecraftStats.bests.bestFinalIgt) }
+  ];
+  const minecraftStatsRight = [
     { label: 'Avg IGT', value: formatMillis(minecraftStats.averages.avgFinalIgtCompleted) },
     { label: 'Avg Nether', value: formatMillis(minecraftStats.averages.avgEnterNetherIgt) },
     { label: 'Avg End', value: formatMillis(minecraftStats.averages.avgEnterEndIgt) }
@@ -342,7 +344,7 @@ export default function TiedInApp({ displayMode }) {
 
       <section className="zone-top">
         {activeMode === 'minecraft' ? (
-          <div className="minecraft-run-banner">{minecraftRunLabel}</div>
+          <div className="minecraft-run-banner context-pill">{minecraftRunLabel}</div>
         ) : null}
         {activeMode !== 'minecraft' ? (
           <aside className="timeline" id="timeline">
@@ -387,11 +389,11 @@ export default function TiedInApp({ displayMode }) {
         <div className="context-panel">
           <div className="hero-col">
             {activeMode === 'minecraft' ? (
-              <div className="minecraft-stats-grid">
-                {minecraftStatsList.map((stat) => (
-                  <div key={stat.label} className="minecraft-stat-card">
+              <div className="context-pill stack">
+                {minecraftStatsLeft.map((stat) => (
+                  <div key={stat.label} className="minecraft-stat-row">
                     <div className="minecraft-stat-label">{stat.label}</div>
-                    <div className="minecraft-stat-value">{stat.value}</div>
+                    <div className="side-line">{stat.value}</div>
                   </div>
                 ))}
               </div>
@@ -422,7 +424,16 @@ export default function TiedInApp({ displayMode }) {
             )}
           </div>
           <div className="side-col">
-            {activeMode === 'minecraft' ? null : (
+            {activeMode === 'minecraft' ? (
+              <div className="context-pill stack">
+                {minecraftStatsRight.map((stat) => (
+                  <div key={stat.label} className="minecraft-stat-row">
+                    <div className="minecraft-stat-label">{stat.label}</div>
+                    <div className="side-line">{stat.value}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
               <>
                 <div className="context-pill stack">
                   <div className="side-line" ref={timerRefs.nowDateMain}>--/--/----</div>
