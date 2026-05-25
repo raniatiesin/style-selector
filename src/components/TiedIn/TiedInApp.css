@@ -274,10 +274,11 @@ html:has(.overlay-root) body {
   height: auto;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex: none;
   align-self: flex-start;
-  padding: 10px 10px;
+  padding: 18px 12px;
+  text-align: left;
   z-index: 3;
 }
 
