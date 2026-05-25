@@ -294,7 +294,7 @@ html:has(.overlay-root) body {
   justify-content: flex-start;
   flex: none;
   align-self: flex-start;
-  padding: 22px 14px;
+  padding: 28px 14px;
   text-align: left;
   z-index: 3;
 }
@@ -302,6 +302,36 @@ html:has(.overlay-root) body {
 .minecraft-run-badge .tl-title {
   text-align: left;
   width: 100%;
+}
+
+.minecraft-stat-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.minecraft-stat-line .side-line {
+  font-size: 36px;
+  line-height: 1.04;
+  font-weight: 300;
+  letter-spacing: -0.006em;
+  color: var(--white-92);
+}
+
+.minecraft-test-stamp {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  padding: 8px 14px;
+  border: 2px solid #ff3b3b;
+  color: #ff3b3b;
+  background: rgba(0, 0, 0, 0.35);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  z-index: 50;
 }
 
 .minecraft-summary {
