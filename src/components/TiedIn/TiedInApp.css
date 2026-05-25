@@ -321,8 +321,8 @@ html:has(.overlay-root) body {
 
 .minecraft-test-stamp {
   position: absolute;
-  left: 20px;
-  bottom: 20px;
+  left: 10px;
+  top: 10px;
   padding: 8px 14px;
   border: 2px solid #ff3b3b;
   color: #ff3b3b;

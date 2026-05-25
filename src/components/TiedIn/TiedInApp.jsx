@@ -336,7 +336,7 @@ export default function TiedInApp({ displayMode }) {
       ) : null}
       {activeMode === 'minecraft' ? (
         <div className="tl-pill current minecraft-run-badge">
-          <div className="tl-title">Run Counter #{(Number(minecraftStats.totals.totalRuns) || 0) + 1}</div>
+          <div className="tl-title">Run # {(Number(minecraftStats.totals.totalRuns) || 0) + 1} -</div>
         </div>
       ) : null}
       {activeMode === 'minecraft' ? (
