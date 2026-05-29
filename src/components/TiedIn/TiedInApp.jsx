@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import './TiedInApp.css?v=20260529k';
+import './TiedInApp.css?v=20260529l';
 
 const HOURS_TARGET = 2000;
 const CONTEXT_WIDTH = 1075.33;

@@ -283,8 +283,14 @@ html:has(.overlay-root) body {
 
 .mode-minecraft .context-panel {
   grid-template-columns: 100%;
+  grid-template-rows: 1fr;
   gap: var(--context-gap);
   padding: var(--context-gap);
+}
+
+.mode-minecraft .hero-col {
+  height: 100%;
+  min-height: 0;
 }
 
 .mode-explain .side-col {
