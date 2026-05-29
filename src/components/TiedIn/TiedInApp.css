@@ -273,7 +273,8 @@ html:has(.overlay-root) body {
 }
 
 .mode-minecraft .context-shell {
-  height: 261px;
+  height: auto;
+  bottom: 10px;
 }
 
 .mode-explain .hero-timer-pill,
