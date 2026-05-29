@@ -287,13 +287,6 @@ html:has(.overlay-root) body {
   padding: var(--context-gap);
 }
 
-.mode-minecraft .hero-col {
-  display: grid;
-  grid-template-rows: 1fr 1fr;
-  gap: 0;
-  height: 100%;
-}
-
 .mode-explain .side-col {
   display: none !important;
 }
@@ -352,9 +345,10 @@ html:has(.overlay-root) body {
 
 .minecraft-summary {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: var(--context-gap);
   height: 100%;
+  min-height: 0;
 }
 
 .minecraft-box {
