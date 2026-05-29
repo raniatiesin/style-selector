@@ -365,6 +365,10 @@ html:has(.overlay-root) body {
   margin-bottom: 2px;
 }
 
+.mode-minecraft .minecraft-box > * {
+  visibility: hidden;
+}
+
 .minecraft-today-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
