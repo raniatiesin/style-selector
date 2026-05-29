@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import './TiedInApp.css?v=20260529m';
+import './TiedInApp.css?v=20260529n';
 
 const HOURS_TARGET = 2000;
 const CONTEXT_WIDTH = 1075.33;
@@ -331,6 +331,7 @@ export default function TiedInApp({ displayMode }) {
 
       <div className="obs-frame frame-display" aria-hidden="true"></div>
       <div className="obs-frame frame-webcam" aria-hidden="true"></div>
+      <div className="obs-frame frame-context" aria-hidden="true"></div>
       {activeMode === 'minecraft' ? (
         <div className="tl-pill current minecraft-run-badge">
           <div className="tl-title">Run # {(Number(minecraftStats.totals.totalRuns) || 0) + 1} -</div>

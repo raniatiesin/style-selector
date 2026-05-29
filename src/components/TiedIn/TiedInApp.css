@@ -371,6 +371,10 @@ html:has(.overlay-root) body {
   overflow: hidden;
 }
 
+.mode-minecraft .minecraft-box {
+  border: 0;
+}
+
 .minecraft-box-title {
   margin: 0;
 }
@@ -1062,6 +1066,18 @@ html:has(.overlay-root) body {
   top: 819px;
   width: 334.67px;
   height: 251px;
+}
+
+.frame-context {
+  display: none;
+}
+
+.mode-minecraft .frame-context {
+  display: block;
+  left: 10px;
+  right: calc(334.67px + 20px);
+  top: 819px;
+  height: 241px;
 }
 
 .mode-minecraft .frame-webcam {
