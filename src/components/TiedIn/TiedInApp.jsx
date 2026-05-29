@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import './TiedInApp.css?v=20260529n';
+import './TiedInApp.css?v=20260529o';
 
 const HOURS_TARGET = 2000;
 const CONTEXT_WIDTH = 1075.33;
@@ -384,44 +384,7 @@ export default function TiedInApp({ displayMode }) {
           <div className="hero-col">
             {activeMode === 'minecraft' ? (
               <div className="minecraft-summary">
-                <div className="minecraft-box minecraft-box-today">
-                  <div className="tl-meta minecraft-box-title">Today</div>
-                  <div className="minecraft-today-grid">
-                    <div className="minecraft-metric">
-                      <div className="tl-title">{minecraftStats.totals.totalRuns}</div>
-                      <div className="tl-meta">Runs</div>
-                    </div>
-                    <div className="minecraft-metric">
-                      <div className="tl-title">{minecraftStats.totals.completedRuns}</div>
-                      <div className="tl-meta">Completed</div>
-                    </div>
-                    <div className="minecraft-metric minecraft-metric-wide">
-                      <div className="tl-title">{formatMillis(minecraftStats.averages.avgFinalIgtCompleted)}</div>
-                      <div className="tl-meta">Avg IGT</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="minecraft-box minecraft-box-total">
-                  <div className="tl-meta minecraft-box-title">Total</div>
-                  <div className="minecraft-total-grid">
-                    <div className="minecraft-metric">
-                      <div className="tl-title">{formatMillis(minecraftStats.bests.bestFinalIgt)}</div>
-                      <div className="tl-meta">PB IGT</div>
-                    </div>
-                    <div className="minecraft-metric">
-                      <div className="tl-title">{formatMillis(minecraftStats.averages.avgFinalIgtCompleted)}</div>
-                      <div className="tl-meta">Avg IGT</div>
-                    </div>
-                    <div className="minecraft-metric">
-                      <div className="tl-title">{formatMillis(minecraftStats.averages.avgEnterNetherIgt)}</div>
-                      <div className="tl-meta">Avg Nether</div>
-                    </div>
-                    <div className="minecraft-metric">
-                      <div className="tl-title">{formatMillis(minecraftStats.averages.avgEnterEndIgt)}</div>
-                      <div className="tl-meta">Avg End</div>
-                    </div>
-                  </div>
-                </div>
+                {/* Minecraft stats will be rebuilt here */}
               </div>
             ) : (
               <>
