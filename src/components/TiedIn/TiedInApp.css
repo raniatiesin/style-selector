@@ -209,9 +209,6 @@ html:has(.overlay-root) body {
   display: block;
 }
 
-.mode-minecraft .context-shell {
-  height: 261px;
-}
 
 .overlay-root.mode-work .explain-banner,
 .overlay-root.mode-minecraft .explain-banner,
@@ -276,7 +273,7 @@ html:has(.overlay-root) body {
 }
 
 .mode-minecraft .context-shell {
-  height: 261px;
+  height: 271px;
 }
 
 .mode-explain .hero-timer-pill,
