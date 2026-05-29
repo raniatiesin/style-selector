@@ -1,1 +1,0 @@
-Rich people buy time. Poor people buy stuff. Ambitious people buy skills. Lazy people buy distraction.

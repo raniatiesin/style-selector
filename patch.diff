@@ -1,0 +1,21 @@
+--- src/components/TiedIn/TiedInApp.css
++++ src/components/TiedIn/TiedInApp.css
+@@ -107,6 +107,10 @@
+   grid-template-columns: minmax(0, 1fr) 334.67px;
+ }
+ 
++.mode-minecraft .hero-col {
++  height: 100%;
++}
++
+ .mode-minecraft .side-col {
+   display: none;
+ }
+@@ -354,6 +358,7 @@
+   border: 1px solid var(--white-45);
+   background: transparent;
+   text-align: left;
++  height: 100%;
+ }
+ 
+ .minecraft-box-title {

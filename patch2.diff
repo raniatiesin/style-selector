@@ -1,0 +1,12 @@
+--- src/components/TiedIn/TiedInApp.css
++++ src/components/TiedIn/TiedInApp.css
+@@ -205,6 +205,9 @@
+   display: block;
+ }
+ 
++.mode-minecraft .context-shell {
++  height: 271px;
++}
+ 
+ .overlay-root.mode-work .explain-banner,
+ .overlay-root.mode-minecraft .explain-banner,

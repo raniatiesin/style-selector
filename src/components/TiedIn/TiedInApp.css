@@ -103,13 +103,6 @@ html:has(.overlay-root) body {
 .mode-minecraft .timeline {
   display: none;
 }
-.mode-minecraft .context-panel {
-  grid-template-columns: minmax(0, 1fr) 334.67px;
-}
-
-.mode-minecraft .hero-col {
-  height: 100%;
-}
 
 .mode-minecraft .side-col {
   display: none;
@@ -273,8 +266,9 @@ html:has(.overlay-root) body {
 }
 
 .mode-minecraft .context-shell {
-  height: auto;
-  bottom: 10px;
+  top: 809px;
+  height: 261px;
+  width: calc(1440px - 334.67px - 20px);
 }
 
 .mode-explain .hero-timer-pill,
@@ -285,6 +279,19 @@ html:has(.overlay-root) body {
 
 .mode-minecraft .progress-strip {
   display: none !important;
+}
+
+.mode-minecraft .context-panel {
+  grid-template-columns: 100%;
+  gap: var(--context-gap);
+  padding: var(--context-gap);
+}
+
+.mode-minecraft .hero-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: var(--context-gap);
+  height: 100%;
 }
 
 .mode-explain .side-col {
@@ -344,10 +351,7 @@ html:has(.overlay-root) body {
 }
 
 .minecraft-summary {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-  gap: var(--context-gap);
-  height: 100%;
+  display: contents;
 }
 
 .minecraft-box {
@@ -355,19 +359,20 @@ html:has(.overlay-root) body {
   flex-direction: column;
   justify-content: space-between;
   gap: var(--context-gap);
-  padding: 18px 20px;
+  padding: 0;
   border: 1px solid var(--white-45);
   background: transparent;
   text-align: left;
   height: 100%;
+  min-height: 0;
 }
 
 .minecraft-box-title {
-  margin-bottom: 2px;
+  margin: 0;
 }
 
 .mode-minecraft .minecraft-box > * {
-  visibility: hidden;
+  visibility: visible;
 }
 
 .minecraft-today-grid {
@@ -1053,6 +1058,14 @@ html:has(.overlay-root) body {
   top: 819px;
   width: 334.67px;
   height: 251px;
+}
+
+.mode-minecraft .frame-webcam {
+  left: auto;
+  right: 10px;
+  top: 819px;
+  width: 334.67px;
+  height: 241px;
 }
 
 .mode-explain .frame-webcam {
