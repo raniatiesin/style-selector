@@ -266,8 +266,8 @@ html:has(.overlay-root) body {
 }
 
 .mode-minecraft .context-shell {
-  top: 809px;
-  height: 261px;
+  top: 819px;
+  height: 241px;
   width: calc(1440px - 334.67px - 20px);
 }
 
@@ -285,7 +285,7 @@ html:has(.overlay-root) body {
   grid-template-columns: 100%;
   grid-template-rows: 1fr;
   gap: var(--context-gap);
-  padding: var(--context-gap);
+  padding: 0;
 }
 
 .mode-minecraft .hero-col {
