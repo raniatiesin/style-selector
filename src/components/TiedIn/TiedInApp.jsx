@@ -337,9 +337,6 @@ export default function TiedInApp({ displayMode }) {
           <div className="tl-title">Run # {(Number(minecraftStats.totals.totalRuns) || 0) + 1} -</div>
         </div>
       ) : null}
-      {activeMode === 'minecraft' ? (
-        <div className="minecraft-test-stamp">{MINECRAFT_OVERLAY_VERSION}</div>
-      ) : null}
 
       <section className="zone-top">
         <aside className="timeline" id="timeline">
