@@ -283,7 +283,7 @@ html:has(.overlay-root) body {
   right: calc(334.67px + 10px + 10px);
   height: 241px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  grid-template-columns: 334.67px 1fr;
   gap: var(--context-gap);
   padding: 0;
 }
@@ -302,8 +302,8 @@ html:has(.overlay-root) body {
 
 .minecraft-run-badge {
   position: absolute;
-  top: calc(10px + var(--context-gap));
-  right: calc(10px + var(--context-gap));
+  top: 10px;
+  right: 10px;
   left: auto;
   width: 280px;
   height: auto;
