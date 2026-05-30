@@ -280,6 +280,7 @@ html:has(.overlay-root) body {
   position: absolute;
   top: 10px;
   left: 10px;
+  width: auto;
   right: calc(334.67px + 10px + 10px);
   height: 241px;
   display: grid;
