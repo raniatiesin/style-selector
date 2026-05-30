@@ -378,13 +378,18 @@ export default function TiedInApp({ displayMode }) {
 
       <section className="context-shell" id="contextShell" aria-label="Work and explain context panel">
         <div className="context-panel">
-          <div className="hero-col">
-            {activeMode === 'minecraft' ? (
-              <div className="minecraft-summary">
-                {/* Minecraft stats will be rebuilt here */}
+          {activeMode === 'minecraft' ? (
+            <>
+              <div className="minecraft-box">
+                {/* Left box (matches webcam dimensions) */}
               </div>
-            ) : (
-              <>
+              <div className="minecraft-box">
+                {/* Right box (wide box) */}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="hero-col">
                 <div className="context-pill stack hero-timer-pill">
                   <div className="today-time" ref={timerRefs.todayTime}>00:00:00</div>
                   <div className="session-line">
@@ -406,12 +411,8 @@ export default function TiedInApp({ displayMode }) {
                     <div className="side-line" ref={timerRefs.dayHoursTrack}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>
                   </div>
                 )}
-              </>
-            )}
-          </div>
-          <div className="side-col">
-            {activeMode === 'minecraft' ? null : (
-              <>
+              </div>
+              <div className="side-col">
                 <div className="context-pill stack">
                   <div className="side-line" ref={timerRefs.nowDateMain}>--/--/----</div>
                   <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
@@ -420,10 +421,10 @@ export default function TiedInApp({ displayMode }) {
                   <div className="side-line">Contacted: {counts.contacted}</div>
                   <div className="side-line">Converted: {counts.converted}</div>
                 </div>
-              </>
-            )}
-          </div>
-          <div className="webcam-col"></div>
+              </div>
+              <div className="webcam-col"></div>
+            </>
+          )}
         </div>
       </section>
 
