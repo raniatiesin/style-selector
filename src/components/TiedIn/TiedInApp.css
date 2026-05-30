@@ -199,11 +199,6 @@ html:has(.overlay-root) body {
   display: block;
 }
 
-.mode-minecraft .context-shell {
-  top: 819px;
-  height: 251px;
-}
-
 
 .overlay-root.mode-work .explain-banner,
 .overlay-root.mode-minecraft .explain-banner,
@@ -287,7 +282,7 @@ html:has(.overlay-root) body {
   left: 10px;
   width: auto;
   right: calc(334.67px + 10px + 10px);
-  height: 241px;
+  height: 251px;
   display: grid;
   grid-template-columns: 334.67px 1fr;
   gap: var(--context-gap);
@@ -299,7 +294,7 @@ html:has(.overlay-root) body {
   right: 10px;
   top: 819px;
   width: 334.67px;
-  height: 241px;
+  height: 251px;
 }
 
 .mode-explain .side-col {
@@ -1086,7 +1081,7 @@ html:has(.overlay-root) body {
   right: 10px;
   top: 819px;
   width: 334.67px;
-  height: 241px;
+  height: 251px;
 }
 
 .mode-explain .frame-webcam {
