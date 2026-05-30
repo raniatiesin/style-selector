@@ -373,6 +373,7 @@ html:has(.overlay-root) body {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .minecraft-box-title {
