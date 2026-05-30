@@ -278,7 +278,7 @@ html:has(.overlay-root) body {
 
 .mode-minecraft .context-panel {
   position: absolute;
-  top: 819px;
+  top: 10px;
   left: 10px;
   right: calc(334.67px + 10px + 10px);
   height: 241px;
