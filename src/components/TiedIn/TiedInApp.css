@@ -1166,6 +1166,5 @@ html:has(.overlay-root) body {
   border-bottom: 1px solid var(--white-45);
   pointer-events: none;
 }
-.overlay-root.mode-minecraft { --font: 'Space Mono', monospace; font-family: var(--font); }
 .overlay-root.mode-minecraft { --font: 'Minecraft', monospace; font-family: var(--font); }
 @font-face { font-family: 'Minecraft'; src: url('/fonts/minecraft_font.ttf') format('truetype'); font-weight: normal; font-style: normal; font-display: block; }
