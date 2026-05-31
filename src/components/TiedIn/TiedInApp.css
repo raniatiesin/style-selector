@@ -399,12 +399,12 @@ html:has(.overlay-root) body {
   z-index: 1;
   width: 100%;
   height: 100%;
-  padding: 4px 8px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
-  gap: 2px;
+  gap: 4px;
   color: var(--white-92);
   mix-blend-mode: difference;
   pointer-events: none;
@@ -412,13 +412,13 @@ html:has(.overlay-root) body {
 
 .minecraft-session-progress-overlay .tl-meta {
   justify-content: flex-start;
-  font-size: 9px;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  letter-spacing: 0.1em;
 }
 
 .minecraft-session-progress-overlay .side-line {
   font-size: 35px;
-  line-height: 1;
+  line-height: 1.04;
 }
 
 .minecraft-box-title {
