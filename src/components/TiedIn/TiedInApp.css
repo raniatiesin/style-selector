@@ -321,6 +321,7 @@ html:has(.overlay-root) body {
 .minecraft-run-badge .tl-title {
   text-align: left;
   width: 100%;
+  white-space: normal;
 }
 
 .minecraft-stat-line {
