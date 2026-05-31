@@ -459,13 +459,13 @@ export default function TiedInApp({ displayMode }) {
 
               {/* BOTTOM LEFT BOX - Normal width (Session Progress) */}
               <div className="minecraft-box">
-                <div className="minecraft-session-progress">
-                  <div className="minecraft-session-head">
-                    <span className="tl-meta">MC Session</span>
-                    <span className="side-line" ref={timerRefs.mcSessionTime}>00:00:00</span>
+                <div className="minecraft-metric" style={{ height: '100%', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
+                    <span className="tl-meta" style={{ marginBottom: '4px' }}>MC Session</span>
+                    <span className="side-line" ref={timerRefs.mcSessionTime} style={{ fontSize: '28px' }}>00:00:00</span>
                   </div>
-                  <div className="minecraft-session-strip">
-                    <div className="progress-fill minecraft-session-fill" ref={timerRefs.mcProgressFill}></div>
+                  <div style={{ width: '100%', height: '6px', border: '1px solid var(--white-45)', marginTop: '2px', position: 'relative' }}>
+                    <div ref={timerRefs.mcProgressFill} style={{ height: '100%', width: '0%', background: 'var(--white-92)', transition: 'width 1s linear' }}></div>
                   </div>
                 </div>
               </div>
