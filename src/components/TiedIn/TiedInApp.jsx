@@ -383,25 +383,26 @@ export default function TiedInApp({ displayMode }) {
         <div className="context-panel">
           {activeMode === 'minecraft' ? (
             <>
+              {/* TOP LEFT BOX - Normal width (Matches webcam size) */}
               <div className="minecraft-box">
-                <div className="minecraft-box-title tl-meta">TODAY</div>
                 <div className="minecraft-today-grid">
                   <div className="minecraft-metric">
-                    <span className="tl-meta">Avg IGT</span>
+                    <span className="tl-meta">Today's Avg IGT</span>
                     <span className="side-line">
                       {formatMillis(minecraftStats.averages?.todayAvgIgt || 0)}
                     </span>
                   </div>
                   <div className="minecraft-metric">
-                    <span className="tl-meta">Best IGT</span>
+                    <span className="tl-meta">Today's Best IGT</span>
                     <span className="side-line" style={{ color: 'var(--white-92)' }}>
                       {formatMillis(minecraftStats.bests?.todayBestIgt || 0)}
                     </span>
                   </div>
                 </div>
               </div>
+
+              {/* TOP RIGHT BOX - Wide width */}
               <div className="minecraft-box">
-                <div className="minecraft-box-title tl-meta">TOTAL</div>
                 <div className="minecraft-total-grid">
                   <div className="minecraft-metric">
                     <span className="tl-meta">Avg IGT</span>
@@ -441,8 +442,14 @@ export default function TiedInApp({ displayMode }) {
                     </span>
                   </div>
                 </div>
-                
-                {/* 3rd Row for Totals (3 columns) */}
+              </div>
+
+              {/* BOTTOM LEFT BOX - Normal width (Empty) */}
+              <div className="minecraft-box">
+              </div>
+
+              {/* BOTTOM RIGHT BOX - Wide width */}
+              <div className="minecraft-box">
                 <div className="minecraft-total-grid">
                   <div className="minecraft-metric">
                     <span className="tl-meta">Playtime</span>
