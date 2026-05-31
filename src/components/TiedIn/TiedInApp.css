@@ -365,7 +365,7 @@ html:has(.overlay-root) body {
 .minecraft-box {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--context-gap);
   padding: 10px;
   background: transparent;

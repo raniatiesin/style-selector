@@ -387,12 +387,6 @@ export default function TiedInApp({ displayMode }) {
                 <div className="minecraft-box-title tl-meta">TODAY</div>
                 <div className="minecraft-today-grid">
                   <div className="minecraft-metric">
-                    <span className="tl-meta">Total Runs</span>
-                    <span className="side-line">
-                      {minecraftStats.totals?.todayRuns || 0}
-                    </span>
-                  </div>
-                  <div className="minecraft-metric">
                     <span className="tl-meta">Avg IGT</span>
                     <span className="side-line">
                       {formatMillis(minecraftStats.averages?.todayAvgIgt || 0)}
