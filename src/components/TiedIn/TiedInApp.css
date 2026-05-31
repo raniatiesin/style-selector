@@ -405,20 +405,34 @@ html:has(.overlay-root) body {
   gap: 4px;
 }
 
-.mc-hour-progress {
-  width: 100%;
+.minecraft-session-progress {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   height: 100%;
-  border: 1px solid var(--white-45);
-  background: transparent;
-  position: relative;
-  overflow: hidden;
+  gap: 6px;
 }
 
-.mc-hour-progress-fill {
-  height: 100%;
-  width: 0;
-  background: var(--white-92);
-  transition: width 1s linear;
+.minecraft-session-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.minecraft-session-head .side-line {
+  font-size: 28px;
+}
+
+.minecraft-inline-progress {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 100%;
+}
+
+.mode-minecraft .minecraft-inline-progress {
+  display: block !important;
 }
 
 .minecraft-metric .tl-meta {
