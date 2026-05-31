@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/refs, react-hooks/exhaustive-deps */
+
 import { useState, useEffect, useRef } from 'react';
 import './TiedInApp.css?v=20260529o';
 
@@ -5,6 +7,7 @@ const HOURS_TARGET = 2000;
 const CONTEXT_WIDTH = 1075.33;
 const EXPLAIN_TOPIC_KEY = 'EXPLAIN_TOPIC';
 const MINECRAFT_OVERLAY_VERSION = 'mc-overlay-v2';
+const MINECRAFT_API_URL = import.meta.env.VITE_MINECRAFT_API_URL?.trim() || '';
 
 function clamp(number, min, max) { return Math.min(max, Math.max(min, number)); }
 function pad(value) { return String(value).padStart(2, "0"); }
@@ -86,7 +89,7 @@ export default function TiedInApp({ displayMode }) {
   const liveStateRef = useRef({
     mode: "standby",
     accumulatedTodaySeconds: 0,
-    modeTimestamp: Date.now(),
+    modeTimestamp: 0,
     previousDaysSeconds: 0,
     totalDays: 1,
     explainTopic: ""
@@ -98,7 +101,7 @@ export default function TiedInApp({ displayMode }) {
   };
 
   const setStoredExplainTopic = (topic) => {
-    try { localStorage.setItem(EXPLAIN_TOPIC_KEY, topic); } catch {}
+    try { localStorage.setItem(EXPLAIN_TOPIC_KEY, topic); } catch { return; }
   };
 
   // Animation Loop - Updates DOM directly
@@ -293,11 +296,39 @@ export default function TiedInApp({ displayMode }) {
     const activeMode = rawMode.startsWith('explain') ? 'explain' : rawMode;
     if (activeMode !== 'minecraft') return;
 
+    const useServerApi = Boolean(MINECRAFT_API_URL) || window.location.hostname !== 'localhost';
+
+    if (useServerApi) {
+      let cancelled = false;
+
+      const fetchMinecraftStats = async () => {
+        try {
+          const response = await fetch(MINECRAFT_API_URL || '/api/stream/minecraft', { cache: 'no-store' });
+          if (!response.ok) return;
+
+          const payload = await response.json();
+          if (!cancelled) {
+            setMinecraftStats(payload.stats || payload);
+          }
+        } catch (error) {
+          console.error('Minecraft stats fetch failed', error);
+        }
+      };
+
+      fetchMinecraftStats();
+      const interval = setInterval(fetchMinecraftStats, 10000);
+
+      return () => {
+        cancelled = true;
+        clearInterval(interval);
+      };
+    }
+
     const source = new EventSource('http://localhost:2026/events');
     const handleStats = (event) => {
       try {
         const payload = JSON.parse(event.data);
-        setMinecraftStats(payload);
+        setMinecraftStats(payload.stats || payload);
       } catch (error) {
         console.error('Minecraft stats parse failed', error);
       }
@@ -317,7 +348,6 @@ export default function TiedInApp({ displayMode }) {
   // --- Render Mappings ---
   const rawMode = displayMode || modeReact;
   const activeMode = rawMode.startsWith('explain') ? 'explain' : rawMode;
-  const explainTopicDisplay = rawMode.startsWith('explain|') ? rawMode.split('|').slice(1).join('|') : "";
   const inProgressIds = new Set(tasks.filter(t => t.status === "in_progress").map(t => t.id));
 
   const startOfToday = new Date();
