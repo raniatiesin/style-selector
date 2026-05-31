@@ -181,6 +181,38 @@ function readWorldRecord(filePath) {
   }
 }
 
+function findLatestExistingRecord() {
+  try {
+    const worlds = fs.readdirSync(SAVES_DIR, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => path.join(SAVES_DIR, entry.name, 'speedrunigt', 'record.json'))
+      .filter((filePath) => fs.existsSync(filePath))
+      .map((filePath) => ({
+        filePath,
+        mtimeMs: fs.statSync(filePath).mtimeMs
+      }))
+      .sort((left, right) => right.mtimeMs - left.mtimeMs);
+
+    return worlds[0]?.filePath || null;
+  } catch (error) {
+    console.error('[Watcher] Failed to scan existing worlds:', error.message);
+    return null;
+  }
+}
+
+function bootstrapExistingWorld() {
+  const latestRecord = findLatestExistingRecord();
+  if (!latestRecord) {
+    console.log('[Watcher] No existing record.json found yet. Waiting for a new world.');
+    return;
+  }
+
+  activeWorldPath = latestRecord;
+  activeWorldStartedAt = fs.statSync(latestRecord).mtimeMs || Date.now();
+  activeWorldData = readWorldRecord(latestRecord);
+  console.log(`[Watcher] Bootstrapped active world from existing record: ${latestRecord}`);
+}
+
 async function publishRunSnapshot(snapshot) {
   if (!MINECRAFT_SERVER_URL || !MINECRAFT_WEBHOOK_SECRET) {
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
@@ -189,6 +221,7 @@ async function publishRunSnapshot(snapshot) {
     }
 
     try {
+      console.log(`[Watcher] Writing directly to Supabase for ${snapshot.worldName || snapshot.world_id} (${snapshot.run_type || 'unknown'})`);
       const { createClient } = await import('@supabase/supabase-js');
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
       const { error } = await supabase
@@ -207,6 +240,7 @@ async function publishRunSnapshot(snapshot) {
   }
 
   try {
+    console.log(`[Watcher] Writing through relay for ${snapshot.worldName || snapshot.world_id} (${snapshot.run_type || 'unknown'})`);
     const response = await fetch(MINECRAFT_SERVER_URL, {
       method: 'POST',
       headers: {
@@ -339,6 +373,9 @@ async function finalizePreviousRun(worldPath, data) {
 }
 
 console.log(`[Watcher] Initializing file watcher on: ${SAVES_DIR}/*/speedrunigt/record.json`);
+console.log(`[Watcher] Write mode: ${MINECRAFT_SERVER_URL && MINECRAFT_WEBHOOK_SECRET ? 'relay' : 'direct Supabase'}`);
+
+bootstrapExistingWorld();
 
 const watcher = chokidar.watch(`${SAVES_DIR}/*/speedrunigt/record.json`, {
   ignored: /(^|[/\\])\../,
