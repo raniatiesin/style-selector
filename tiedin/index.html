@@ -37,8 +37,16 @@
         const root = document.getElementById('root');
         const isControls = window.location.pathname.includes('/controls') || window.location.search.includes('controls');
         if (root && !isControls) {
-          const scaleX = window.innerWidth / 1440;
-          const scaleY = window.innerHeight / 1080;
+          const DESIGN_WIDTH = 1440;
+          const DESIGN_HEIGHT = 1080;
+          const TARGET_WIDTH = 960;
+          const TARGET_HEIGHT = 720;
+
+          const fitWidth = Math.min(window.innerWidth, TARGET_WIDTH);
+          const fitHeight = Math.min(window.innerHeight, TARGET_HEIGHT);
+
+          const scaleX = fitWidth / DESIGN_WIDTH;
+          const scaleY = fitHeight / DESIGN_HEIGHT;
           const scale = Math.min(scaleX, scaleY);
           root.style.transform = `scale(${scale})`;
         }
