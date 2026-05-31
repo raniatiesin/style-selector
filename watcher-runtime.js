@@ -211,6 +211,7 @@ function bootstrapExistingWorld() {
   activeWorldStartedAt = fs.statSync(latestRecord).mtimeMs || Date.now();
   activeWorldData = readWorldRecord(latestRecord);
   console.log(`[Watcher] Bootstrapped active world from existing record: ${latestRecord}`);
+  void captureAndPublishActiveWorld(latestRecord, Date.now());
 }
 
 async function publishRunSnapshot(snapshot) {
