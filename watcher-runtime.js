@@ -9,6 +9,8 @@ const SAVES_DIR = 'C:/Users/rania/AppData/Roaming/PrismLauncher/instances/1.16.1
 const PORT = 2026;
 const MINECRAFT_SERVER_URL = process.env.MINECRAFT_SERVER_URL || '';
 const MINECRAFT_WEBHOOK_SECRET = process.env.MINECRAFT_WEBHOOK_SECRET || process.env.OVERLAY_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET || '';
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 const TIME_ZONE = 'Europe/Paris';
 
 const GAMEMODE_BY_ID = {
@@ -179,7 +181,29 @@ function readWorldRecord(filePath) {
 }
 
 async function publishRunSnapshot(snapshot) {
-  if (!MINECRAFT_SERVER_URL) return;
+  if (!MINECRAFT_SERVER_URL || !MINECRAFT_WEBHOOK_SECRET) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+      console.warn('[Watcher] No MINECRAFT_SERVER_URL or Supabase credentials available; skipping run write.');
+      return;
+    }
+
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      const { error } = await supabase
+        .from('paceman')
+        .upsert(snapshot, { onConflict: 'world_id' });
+
+      if (error) {
+        throw error;
+      }
+
+      return;
+    } catch (error) {
+      console.error('[Watcher] Direct Supabase write failed:', error.message);
+      return;
+    }
+  }
 
   try {
     const response = await fetch(MINECRAFT_SERVER_URL, {
