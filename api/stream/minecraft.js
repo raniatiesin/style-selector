@@ -123,7 +123,7 @@ export default async function handler(req, res) {
       };
 
       const { error } = await supabase
-        .from('minecraft_runs')
+        .from('paceman')
         .upsert(row, { onConflict: 'world_id' });
 
       if (error) {
@@ -137,7 +137,7 @@ export default async function handler(req, res) {
       const date = typeof req.query?.date === 'string' && req.query.date.trim() ? req.query.date.trim() : getTodayString();
 
       const { data: rows, error } = await supabase
-        .from('minecraft_runs')
+        .from('paceman')
         .select('*')
         .eq('date', date)
         .order('updated_at', { ascending: false });
