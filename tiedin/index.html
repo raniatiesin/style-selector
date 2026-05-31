@@ -4,6 +4,35 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>tiesin stream overlay</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+        background: transparent;
+      }
+
+      #root {
+        width: 1440px;
+        height: 1080px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: top left;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script>
+      function fitToOBS() {
+        const root = document.getElementById('root');
+        const isControls = window.location.pathname.includes('/controls') || window.location.search.includes('controls');
+
         if (root && !isControls) {
           const DESIGN_WIDTH = 1440;
           const DESIGN_HEIGHT = 1080;
@@ -22,40 +51,9 @@
           root.style.transform = `translateX(${offsetX}px) scale(${scale})`;
         } else if (root) {
           root.style.transform = 'none';
-        height: 100vh;
-      }
-      #root {
-        width: 1440px;
-        height: 1080px;
-        position: absolute;
-        top: 0;
-        left: 0;
-        transform-origin: top left;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-
-    <script>
-      function fitToOBS() {
-        const root = document.getElementById('root');
-        const isControls = window.location.pathname.includes('/controls') || window.location.search.includes('controls');
-        if (root && !isControls) {
-          const DESIGN_WIDTH = 1440;
-          const DESIGN_HEIGHT = 1080;
-          const TARGET_WIDTH = 960;
-          const TARGET_HEIGHT = 72;
-
-          const fitWidth = Math.min(window.innerWidth, TARGET_WIDTH);
-          const fitHeight = Math.min(window.innerHeight, TARGET_HEIGHT);
-
-          const scaleX = fitWidth / DESIGN_WIDTH;
-          const scaleY = fitHeight / DESIGN_HEIGHT;
-          const scale = Math.min(scaleX, scaleY);
-          root.style.transform = `scale(${scale})`;
         }
       }
+
       window.addEventListener('resize', fitToOBS);
       fitToOBS();
       setTimeout(fitToOBS, 150);
