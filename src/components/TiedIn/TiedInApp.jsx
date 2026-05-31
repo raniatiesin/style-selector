@@ -464,6 +464,7 @@ export default function TiedInApp({ displayMode }) {
                   className="minecraft-session-progress-fill"
                 ></div>
                 <div className="minecraft-session-progress-overlay">
+                  <span className="tl-meta">Today's Playtime</span>
                   <span className="side-line" ref={timerRefs.mcSessionTime}>00:00:00</span>
                 </div>
               </div>
