@@ -64,7 +64,6 @@ export default function TiedInApp({ displayMode }) {
   const timerRefs = {
     todayTime: useRef(null),
     sessionTime: useRef(null),
-    mcSessionTime: useRef(null),
     mcProgressFill: useRef(null),
     dayHoursTrack: useRef(null),
     nowDateMain: useRef(null),
@@ -131,7 +130,6 @@ export default function TiedInApp({ displayMode }) {
       if (timerRefs.todayTime.current) timerRefs.todayTime.current.innerText = formatHMS(todaySecs);
       if (timerRefs.sessionTime.current) timerRefs.sessionTime.current.innerText = formatHMS(sessionSecs);
       if (timerRefs.breakTime.current) timerRefs.breakTime.current.innerText = formatHMS(breakSecs);
-      if (timerRefs.mcSessionTime.current) timerRefs.mcSessionTime.current.innerText = formatHMS(mcSessionSecs);
       
       if (timerRefs.mcProgressFill.current) {
         let mcProgress = mcSessionSecs / 3600; // reaches end at 1 hour
@@ -458,16 +456,19 @@ export default function TiedInApp({ displayMode }) {
               </div>
 
               {/* BOTTOM LEFT BOX - Normal width (Session Progress) */}
-              <div className="minecraft-box">
-                <div className="minecraft-metric" style={{ height: '100%', justifyContent: 'center' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
-                    <span className="tl-meta" style={{ marginBottom: '4px' }}>MC Session</span>
-                    <span className="side-line" ref={timerRefs.mcSessionTime} style={{ fontSize: '28px' }}>00:00:00</span>
-                  </div>
-                  <div style={{ width: '100%', height: '6px', border: '1px solid var(--white-45)', marginTop: '2px', position: 'relative' }}>
-                    <div ref={timerRefs.mcProgressFill} style={{ height: '100%', width: '0%', background: 'var(--white-92)', transition: 'width 1s linear' }}></div>
-                  </div>
-                </div>
+              <div className="minecraft-box" style={{ position: 'relative', padding: 0, gap: 0 }}>
+                <div
+                  ref={timerRefs.mcProgressFill}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: '0%',
+                    background: 'var(--white-92)',
+                    transition: 'width 1s linear'
+                  }}
+                ></div>
               </div>
 
               {/* BOTTOM RIGHT BOX - Wide width */}
