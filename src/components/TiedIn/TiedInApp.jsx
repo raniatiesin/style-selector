@@ -464,8 +464,8 @@ export default function TiedInApp({ displayMode }) {
                     <span className="tl-meta">MC Session</span>
                     <span className="side-line" ref={timerRefs.mcSessionTime}>00:00:00</span>
                   </div>
-                  <div className="progress-strip minecraft-inline-progress">
-                    <div className="progress-fill" ref={timerRefs.mcProgressFill}></div>
+                  <div className="minecraft-session-strip">
+                    <div className="progress-fill minecraft-session-fill" ref={timerRefs.mcProgressFill}></div>
                   </div>
                 </div>
               </div>

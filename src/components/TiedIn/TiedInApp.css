@@ -424,15 +424,18 @@ html:has(.overlay-root) body {
   font-size: 28px;
 }
 
-.minecraft-inline-progress {
+.minecraft-session-strip {
   position: relative;
-  left: auto;
-  top: auto;
   width: 100%;
+  height: 6px;
+  background: transparent;
+  border: 1px solid var(--white-45);
+  border-radius: 0;
+  overflow: hidden;
 }
 
-.mode-minecraft .minecraft-inline-progress {
-  display: block !important;
+.minecraft-session-fill {
+  background: var(--a29a96);
 }
 
 .minecraft-metric .tl-meta {
