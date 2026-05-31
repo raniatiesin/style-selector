@@ -31,6 +31,7 @@ let activeWorldData = null;
 let activeWorldStartedAt = null;
 let activeWorldSnapshotSent = false;
 let clients = [];
+let shuttingDown = false;
 
 function coerceNumber(value, fallback = 0) {
   const parsed = Number(value);
@@ -233,6 +234,36 @@ function broadcastStats() {
   console.log(`[SSE] Broadcasted stats:`, stats);
 }
 
+async function shutdown(reason = 'shutdown') {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
+  console.log(`[Server] Closing watcher backend (${reason})...`);
+
+  try {
+    await watcher.close();
+  } catch (error) {
+    console.error('[Server] Failed to close file watcher:', error.message);
+  }
+
+  for (const client of clients) {
+    try {
+      client.end();
+    } catch {
+      // Ignore socket teardown errors during shutdown.
+    }
+  }
+  clients = [];
+
+  try {
+    await new Promise((resolve) => server.close(resolve));
+  } catch (error) {
+    console.error('[Server] Failed to close HTTP server:', error.message);
+  }
+
+  process.exit(0);
+}
+
 function resetActiveWorld(filePath) {
   activeWorldPath = filePath;
   activeWorldData = null;
@@ -358,3 +389,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   console.log(`[Server] Watcher backend running on http://localhost:${PORT}`);
 });
+
+process.on('SIGINT', () => void shutdown('SIGINT'));
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGHUP', () => void shutdown('SIGHUP'));
