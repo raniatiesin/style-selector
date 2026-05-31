@@ -64,7 +64,6 @@ export default function TiedInApp({ displayMode }) {
   const timerRefs = {
     todayTime: useRef(null),
     sessionTime: useRef(null),
-    mcSessionTime: useRef(null),
     mcProgressFill: useRef(null),
     dayHoursTrack: useRef(null),
     nowDateMain: useRef(null),
@@ -131,7 +130,6 @@ export default function TiedInApp({ displayMode }) {
       if (timerRefs.todayTime.current) timerRefs.todayTime.current.innerText = formatHMS(todaySecs);
       if (timerRefs.sessionTime.current) timerRefs.sessionTime.current.innerText = formatHMS(sessionSecs);
       if (timerRefs.breakTime.current) timerRefs.breakTime.current.innerText = formatHMS(breakSecs);
-      if (timerRefs.mcSessionTime.current) timerRefs.mcSessionTime.current.innerText = formatHMS(mcSessionSecs);
       
       if (timerRefs.mcProgressFill.current) {
         let mcProgress = mcSessionSecs / 3600; // reaches end at 1 hour
@@ -459,14 +457,8 @@ export default function TiedInApp({ displayMode }) {
 
               {/* BOTTOM LEFT BOX - Normal width (Session Progress) */}
               <div className="minecraft-box">
-                <div className="minecraft-session-progress">
-                  <div className="minecraft-session-head">
-                    <span className="tl-meta">MC Session</span>
-                    <span className="side-line" ref={timerRefs.mcSessionTime}>00:00:00</span>
-                  </div>
-                  <div className="progress-strip minecraft-inline-progress">
-                    <div className="progress-fill" ref={timerRefs.mcProgressFill}></div>
-                  </div>
+                <div className="mc-hour-progress">
+                  <div className="mc-hour-progress-fill" ref={timerRefs.mcProgressFill}></div>
                 </div>
               </div>
 
