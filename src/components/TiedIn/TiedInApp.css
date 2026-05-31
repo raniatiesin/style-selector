@@ -417,7 +417,7 @@ html:has(.overlay-root) body {
 }
 
 .minecraft-session-progress-overlay .side-line {
-  font-size: 34px;
+  font-size: 40px;
   line-height: 1;
 }
 
