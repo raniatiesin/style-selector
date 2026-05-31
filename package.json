@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "minecraft:watch": "node watcher.js",
+    "minecraft:watch": "node \"C:/Users/rania/AppData/Roaming/PrismLauncher/instances/1.16.1 - Speedrunning/minecraft/exe/watcher.js\"",
     "generate-manifest": "node scripts/generate-manifest-dev.cjs",
     "perf:probe": "node scripts/perf-probe.mjs"
   },

@@ -4,10 +4,6 @@ import fs from 'fs';
 import path from 'path';
 import http from 'http';
 import chokidar from 'chokidar';
-import {
-  buildMinecraftRunSnapshot,
-  toSupabaseRow
-} from './lib/minecraft-run.js';
 
 const SAVES_DIR = 'C:/Users/rania/AppData/Roaming/PrismLauncher/instances/1.16.1 - Speedrunning/minecraft/saves';
 const PORT = 2026;
@@ -15,21 +11,159 @@ const MINECRAFT_SERVER_URL = process.env.MINECRAFT_SERVER_URL || '';
 const MINECRAFT_WEBHOOK_SECRET = process.env.MINECRAFT_WEBHOOK_SECRET || process.env.OVERLAY_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET || '';
 const TIME_ZONE = 'Europe/Paris';
 
-// In-memory stats to send to TiedInApp
+const GAMEMODE_BY_ID = {
+  0: 'survival',
+  1: 'creative',
+  2: 'adventure',
+  3: 'spectator'
+};
+
 let stats = {
   totals: { totalRuns: 0, completedRuns: 0 },
   averages: { avgFinalIgtCompleted: 0, avgEnterNetherIgt: 0, avgEnterEndIgt: 0 },
   bests: { bestFinalIgt: Infinity, bestEnterNetherIgt: Infinity, bestEnterEndIgt: Infinity }
 };
 
-// Track the live state of the currently active world
 let activeWorldPath = null;
 let activeWorldData = null;
 let activeWorldStartedAt = null;
 let activeWorldSnapshotSent = false;
-
-// SSE Clients
 let clients = [];
+
+function coerceNumber(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function normalizeGamemode(value) {
+  if (value == null) return 'unknown';
+
+  if (typeof value === 'number') {
+    return GAMEMODE_BY_ID[value] || 'unknown';
+  }
+
+  const text = String(value).trim().toLowerCase();
+  if (!text) return 'unknown';
+
+  if (text === '0' || text.includes('survival')) return 'survival';
+  if (text === '1' || text.includes('creative')) return 'creative';
+  if (text === '2' || text.includes('adventure')) return 'adventure';
+  if (text === '3' || text.includes('spectator')) return 'spectator';
+
+  return 'unknown';
+}
+
+function getWorldContext(filePath) {
+  const recordPath = path.normalize(filePath);
+  const worldDir = path.dirname(path.dirname(recordPath));
+  const worldName = path.basename(worldDir);
+
+  return {
+    filePath: recordPath,
+    worldPath: worldDir,
+    worldId: worldDir.replace(/\\/g, '/'),
+    worldName
+  };
+}
+
+function pickFirstDefined(source, keys) {
+  for (const key of keys) {
+    if (source && Object.hasOwn(source, key) && source[key] != null) {
+      return source[key];
+    }
+  }
+
+  return undefined;
+}
+
+function detectStartGamemode(data) {
+  if (!data || typeof data !== 'object') return 'unknown';
+
+  const directValue = pickFirstDefined(data, [
+    'start_gamemode',
+    'startGamemode',
+    'startingGamemode',
+    'starting_gamemode',
+    'gameMode',
+    'gamemode',
+    'mode'
+  ]);
+  const directGamemode = normalizeGamemode(directValue);
+  if (directGamemode !== 'unknown') return directGamemode;
+
+  const nestedSources = [data.player, data.metadata, data.world, data.settings, data.run, data.session];
+  for (const source of nestedSources) {
+    if (!source || typeof source !== 'object') continue;
+
+    const nestedValue = pickFirstDefined(source, [
+      'start_gamemode',
+      'startGamemode',
+      'startingGamemode',
+      'starting_gamemode',
+      'gameMode',
+      'gamemode',
+      'mode'
+    ]);
+    const nestedGamemode = normalizeGamemode(nestedValue);
+    if (nestedGamemode !== 'unknown') return nestedGamemode;
+  }
+
+  return 'unknown';
+}
+
+function detectRunType({ startGamemode, worldName }) {
+  const loweredWorldName = String(worldName || '').toLowerCase();
+
+  if (loweredWorldName.includes('practice')) return 'practice';
+  if (startGamemode === 'creative') return 'practice';
+  if (startGamemode === 'survival') return 'speedrun';
+
+  return 'unknown';
+}
+
+function extractIgtValue(data, keys) {
+  const rawValue = pickFirstDefined(data, keys);
+  return coerceNumber(rawValue, 0);
+}
+
+function buildMinecraftRunSnapshot({ filePath, data, seenAt = Date.now(), finalizedAt = null }) {
+  const world = getWorldContext(filePath);
+  const startGamemode = detectStartGamemode(data);
+  const runType = detectRunType({ startGamemode, worldName: world.worldName });
+  const capturedAt = finalizedAt || seenAt;
+
+  return {
+    ...world,
+    startGamemode,
+    runType,
+    isCompleted: Boolean(data?.is_completed ?? data?.completed ?? data?.finished ?? data?.done),
+    finalIgt: extractIgtValue(data, ['final_igt', 'finalIgt', 'igt', 'final_time', 'finalTime', 'finalTimeMs']),
+    enterNetherIgt: extractIgtValue(data, ['enter_nether_igt', 'enterNetherIgt']),
+    enterEndIgt: extractIgtValue(data, ['enter_end_igt', 'enterEndIgt']),
+    observedDurationMs: Math.max(0, coerceNumber(capturedAt - seenAt, 0)),
+    seenAt,
+    capturedAt,
+    rawData: data ?? null
+  };
+}
+
+function toSupabaseRow(snapshot, date) {
+  return {
+    world_id: snapshot.worldId,
+    world_name: snapshot.worldName,
+    world_path: snapshot.worldPath,
+    run_type: snapshot.runType,
+    start_gamemode: snapshot.startGamemode,
+    is_completed: snapshot.isCompleted,
+    final_igt: snapshot.finalIgt,
+    enter_nether_igt: snapshot.enterNetherIgt,
+    enter_end_igt: snapshot.enterEndIgt,
+    observed_duration_ms: snapshot.observedDurationMs,
+    date,
+    raw_data: snapshot.rawData,
+    updated_at: new Date(snapshot.capturedAt).toISOString()
+  };
+}
 
 function getTodayString() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE }).format(new Date());
@@ -69,7 +203,6 @@ async function publishRunSnapshot(snapshot) {
   }
 }
 
-// Broadcast to TiedInApp
 function broadcastStats() {
   const payload = JSON.stringify(stats);
   clients.forEach(client => client.write(`data: ${payload}\n\n`));
@@ -104,7 +237,6 @@ async function captureAndPublishActiveWorld(filePath, finalizedAt = null) {
   return snapshot;
 }
 
-// Process a run once it's done (triggered by a NEW run starting)
 async function finalizePreviousRun(worldPath, data) {
   if (!data) return;
 
@@ -126,10 +258,8 @@ async function finalizePreviousRun(worldPath, data) {
     }
   }
 
-  // Very naive average calc just to lay the foundation
-  // We can expand this heavily as we parse specific timelines
-  let netherStart = data.timelines?.find(t => t.name === 'enter_nether');
-  let endStart = data.timelines?.find(t => t.name === 'enter_end');
+  const netherStart = data.timelines?.find(t => t.name === 'enter_nether');
+  const endStart = data.timelines?.find(t => t.name === 'enter_end');
 
   if (netherStart) {
     stats.averages.avgEnterNetherIgt = Math.round(
@@ -153,21 +283,17 @@ async function finalizePreviousRun(worldPath, data) {
   broadcastStats();
 }
 
-
-// Watcher Initialization
 console.log(`[Watcher] Initializing file watcher on: ${SAVES_DIR}/*/speedrunigt/record.json`);
 
 const watcher = chokidar.watch(`${SAVES_DIR}/*/speedrunigt/record.json`, {
   ignored: /(^|[/\\])\../,
   persistent: true,
-  ignoreInitial: true // Only watch for NEW events or changes while server is running
+  ignoreInitial: true
 });
 
 watcher.on('add', (filePath) => {
   console.log(`[Watcher] New world detected: ${filePath}`);
-  
-  // This is your genius idea: When a NEW record.json is added, 
-  // we finalize the PREVIOUS run and update the database/UI.
+
   if (activeWorldPath && activeWorldPath !== filePath) {
     void finalizePreviousRun(activeWorldPath, activeWorldData);
   }
@@ -177,26 +303,23 @@ watcher.on('add', (filePath) => {
 });
 
 watcher.on('change', (filePath) => {
-  // As the runner plays, speedrunigt constantly updates this file with new splits.
-  // We just keep updating our active memory with the freshest data.
   if (filePath === activeWorldPath) {
     void captureAndPublishActiveWorld(filePath);
   }
 });
 
-// Setup HTTP Server for Server-Sent Events (SSE)
 const server = http.createServer((req, res) => {
   if (req.url === '/events') {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*' // Allow TiedInApp to connect from localhost:5173
+      'Access-Control-Allow-Origin': '*'
     });
 
     res.write(`data: ${JSON.stringify(stats)}\n\n`);
     clients.push(res);
-    
+
     console.log(`[Server] TiedInApp UI connected via SSE.`);
 
     req.on('close', () => {
