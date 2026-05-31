@@ -378,6 +378,49 @@ html:has(.overlay-root) body {
   box-sizing: border-box;
 }
 
+.minecraft-session-progress-box {
+  position: relative;
+  padding: 0;
+  gap: 0;
+}
+
+.minecraft-session-progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: var(--white-92);
+  transition: width 1s linear;
+}
+
+.minecraft-session-progress-overlay {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  color: var(--white-92);
+  mix-blend-mode: difference;
+  pointer-events: none;
+}
+
+.minecraft-session-progress-overlay .tl-meta {
+  justify-content: center;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.minecraft-session-progress-overlay .side-line {
+  font-size: 24px;
+  line-height: 1;
+}
+
 .minecraft-box-title {
   margin: 0;
 }

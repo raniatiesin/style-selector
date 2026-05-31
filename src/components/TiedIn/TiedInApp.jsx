@@ -64,6 +64,7 @@ export default function TiedInApp({ displayMode }) {
   const timerRefs = {
     todayTime: useRef(null),
     sessionTime: useRef(null),
+    mcSessionTime: useRef(null),
     mcProgressFill: useRef(null),
     dayHoursTrack: useRef(null),
     nowDateMain: useRef(null),
@@ -130,6 +131,7 @@ export default function TiedInApp({ displayMode }) {
       if (timerRefs.todayTime.current) timerRefs.todayTime.current.innerText = formatHMS(todaySecs);
       if (timerRefs.sessionTime.current) timerRefs.sessionTime.current.innerText = formatHMS(sessionSecs);
       if (timerRefs.breakTime.current) timerRefs.breakTime.current.innerText = formatHMS(breakSecs);
+      if (timerRefs.mcSessionTime.current) timerRefs.mcSessionTime.current.innerText = formatHMS(mcSessionSecs);
       
       if (timerRefs.mcProgressFill.current) {
         let mcProgress = mcSessionSecs / 3600; // reaches end at 1 hour
@@ -456,19 +458,15 @@ export default function TiedInApp({ displayMode }) {
               </div>
 
               {/* BOTTOM LEFT BOX - Normal width (Session Progress) */}
-              <div className="minecraft-box" style={{ position: 'relative', padding: 0, gap: 0 }}>
+              <div className="minecraft-box minecraft-session-progress-box">
                 <div
                   ref={timerRefs.mcProgressFill}
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: '0%',
-                    background: 'var(--white-92)',
-                    transition: 'width 1s linear'
-                  }}
+                  className="minecraft-session-progress-fill"
                 ></div>
+                <div className="minecraft-session-progress-overlay">
+                  <span className="tl-meta">Today's Playtime</span>
+                  <span className="side-line" ref={timerRefs.mcSessionTime}>00:00:00</span>
+                </div>
               </div>
 
               {/* BOTTOM RIGHT BOX - Wide width */}
