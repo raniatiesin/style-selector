@@ -64,8 +64,6 @@ export default function TiedInApp({ displayMode }) {
   const timerRefs = {
     todayTime: useRef(null),
     sessionTime: useRef(null),
-    mcSessionTime: useRef(null),
-    mcProgressFill: useRef(null),
     dayHoursTrack: useRef(null),
     nowDateMain: useRef(null),
     nowTimeMain: useRef(null),
@@ -111,12 +109,10 @@ export default function TiedInApp({ displayMode }) {
       
       const isWorking = ls.mode === 'work';
       const isBreak = ls.mode === 'break';
-      const isMinecraft = ls.mode === 'minecraft';
       
       let todaySecs = ls.accumulatedTodaySeconds || 0;
       let sessionSecs = 0;
       let breakSecs = 0;
-      let mcSessionSecs = 0;
       
       if (isWorking) {
         const elapsed = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
@@ -124,20 +120,11 @@ export default function TiedInApp({ displayMode }) {
         sessionSecs = elapsed;
       } else if (isBreak) {
         breakSecs = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
-      } else if (isMinecraft) {
-        mcSessionSecs = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
       }
       
       if (timerRefs.todayTime.current) timerRefs.todayTime.current.innerText = formatHMS(todaySecs);
       if (timerRefs.sessionTime.current) timerRefs.sessionTime.current.innerText = formatHMS(sessionSecs);
       if (timerRefs.breakTime.current) timerRefs.breakTime.current.innerText = formatHMS(breakSecs);
-      if (timerRefs.mcSessionTime.current) timerRefs.mcSessionTime.current.innerText = formatHMS(mcSessionSecs);
-      
-      if (timerRefs.mcProgressFill.current) {
-        let mcProgress = mcSessionSecs / 3600; // reaches end at 1 hour
-        if (mcProgress > 1) mcProgress = 1;
-        timerRefs.mcProgressFill.current.style.width = `${(mcProgress * 100).toFixed(2)}%`;
-      }
       
       const time12 = formatTime12(d);
       const ldate = toLongDate(d);
@@ -457,17 +444,8 @@ export default function TiedInApp({ displayMode }) {
                 </div>
               </div>
 
-              {/* BOTTOM LEFT BOX - Normal width (Session Progress) */}
+              {/* BOTTOM LEFT BOX - Normal width (Empty) */}
               <div className="minecraft-box">
-                <div className="minecraft-metric" style={{ height: '100%', justifyContent: 'center' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
-                    <span className="tl-meta" style={{ marginBottom: '4px' }}>MC Session</span>
-                    <span className="side-line" ref={timerRefs.mcSessionTime} style={{ fontSize: '28px' }}>00:00:00</span>
-                  </div>
-                  <div style={{ width: '100%', height: '6px', border: '1px solid var(--white-45)', marginTop: '2px', position: 'relative' }}>
-                    <div ref={timerRefs.mcProgressFill} style={{ height: '100%', width: '0%', background: 'var(--white-92)', transition: 'width 1s linear' }}></div>
-                  </div>
-                </div>
               </div>
 
               {/* BOTTOM RIGHT BOX - Wide width */}
