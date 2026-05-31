@@ -4,24 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>tiesin stream overlay</title>
-        if (root && !isControls) {
-          const DESIGN_WIDTH = 1440;
-          const DESIGN_HEIGHT = 1080;
-
-          const params = new URLSearchParams(window.location.search);
-          const queryOffsetX = Number(params.get('offsetX'));
-          const queryZoom = Number(params.get('zoom'));
-
-          const offsetX = Number.isFinite(queryOffsetX) ? queryOffsetX : 241;
-          const zoom = Number.isFinite(queryZoom) && queryZoom > 0 ? queryZoom : 1;
-
-          const scaleX = window.innerWidth / DESIGN_WIDTH;
-          const scaleY = window.innerHeight / DESIGN_HEIGHT;
-          const scale = Math.min(scaleX, scaleY) * zoom;
-
-          root.style.transform = `translateX(${offsetX}px) scale(${scale})`;
-        } else if (root) {
-          root.style.transform = 'none';
+    <link rel="icon" type="image/png" href="/icon.png" />
+    <link rel="apple-touch-icon" href="/icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Space+Grotesk:wght@300;400&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/components/TiedIn/TiedInApp.css?v=20260529o">
+    <style>
+      html, body {
+        background: transparent;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        width: 100vw;
         height: 100vh;
       }
       #root {
@@ -45,7 +40,7 @@
           const DESIGN_WIDTH = 1440;
           const DESIGN_HEIGHT = 1080;
           const TARGET_WIDTH = 960;
-          const TARGET_HEIGHT = 72;
+          const TARGET_HEIGHT = 720;
 
           const fitWidth = Math.min(window.innerWidth, TARGET_WIDTH);
           const fitHeight = Math.min(window.innerHeight, TARGET_HEIGHT);
