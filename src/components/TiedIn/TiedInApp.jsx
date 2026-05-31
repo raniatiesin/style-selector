@@ -450,7 +450,7 @@ export default function TiedInApp({ displayMode }) {
 
               {/* BOTTOM RIGHT BOX - Wide width */}
               <div className="minecraft-box">
-                <div className="minecraft-total-grid">
+                <div className="minecraft-total-grid bottom-metrics">
                   <div className="minecraft-metric">
                     <span className="tl-meta">Playtime</span>
                     <span className="side-line">

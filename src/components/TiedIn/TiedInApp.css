@@ -405,6 +405,22 @@ html:has(.overlay-root) body {
   gap: 4px;
 }
 
+.minecraft-metric .tl-meta {
+  font-size: 14px;
+}
+
+.minecraft-metric .side-line {
+  font-size: 38px;
+}
+
+.bottom-metrics .tl-meta {
+  font-size: 11px;
+}
+
+.bottom-metrics .side-line {
+  font-size: 35px;
+}
+
 .minecraft-metric-wide {
   grid-column: 1 / -1;
 }
