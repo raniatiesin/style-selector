@@ -16,6 +16,11 @@ export default function TiedInControl() {
   const [inputKey, setInputKey] = useState('');
   const [inputObs, setInputObs] = useState('');
   const [explainTopic, setExplainTopic] = useState('');
+  const explainTopicRef = useRef('');
+  
+  useEffect(() => {
+    explainTopicRef.current = explainTopic;
+  }, [explainTopic]);
   
   const [isLocked, setIsLocked] = useState(!adminKey);
 
@@ -26,6 +31,11 @@ export default function TiedInControl() {
     accumulatedTodaySeconds: 0,
     modeTimestamp: Date.now()
   });
+
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const isSyncingRef = useRef(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -128,13 +138,13 @@ export default function TiedInControl() {
            const taskName = activeTask ? activeTask.name : null;
            if (taskName && activeTaskRef.current !== taskName) {
               if (activeTaskRef.current !== "INITIAL_LOAD_FLAG") {
-                 setState(s => {
-                    if (s.mode === 'work') addYtMarker(`work - ${taskName}`);
-                    return s;
-                 });
+                 if (stateRef.current.mode === 'work') addYtMarker(`work - ${taskName}`);
               }
               activeTaskRef.current = taskName;
            } else if (!taskName && activeTaskRef.current !== null) {
+              if (activeTaskRef.current !== "INITIAL_LOAD_FLAG") {
+                 if (stateRef.current.mode === 'work') addYtMarker('work');
+              }
               activeTaskRef.current = null;
            }
         }
@@ -174,9 +184,10 @@ export default function TiedInControl() {
            const mapped = map[event.sceneName];
            if (mapped) {
              setState(s => {
-               if (s.mode !== mapped) {
+               const isAlreadyExplain = s.mode.startsWith('explain') && mapped === 'explain';
+               if (s.mode !== mapped && !isAlreadyExplain) {
                          if (mapped === "explain") {
-                            const topic = (s.mode.startsWith('explain|') ? s.mode.split('|').slice(1).join('|') : explainTopic).trim();
+                            const topic = (s.mode.startsWith('explain|') ? s.mode.split('|').slice(1).join('|') : explainTopicRef.current).trim();
                             if (topic) setExplainRecordingName(topic);
                    obs.call("StartRecord")
                      .then(() => addLog("OBS record started (from scene)"))
@@ -216,7 +227,7 @@ export default function TiedInControl() {
                  pushUpdate(newState);
                  const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
                  const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
-                 const explainText = getExplainMarkerText(s.mode, explainTopic);
+                 const explainText = getExplainMarkerText(s.mode, explainTopicRef.current);
                  addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'break' ? 'break' : mapped === 'minecraft' ? 'minecraft' : 'standby');
                  return newState;
                }
