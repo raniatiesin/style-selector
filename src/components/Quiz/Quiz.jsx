@@ -29,11 +29,10 @@ function getAnswerIndexForStep(stepIndex) {
   return level === 0 ? getMainAnswerIndex(categoryIndex) : getLeafAnswerIndex(categoryIndex);
 }
 
-/** Derive the current category's {main, sub, subsub} from the answers map */
+/** Derive the current category's {main, subsub} from the answers map */
 function getCategoryState(answers, categoryIndex) {
   return {
     main: answers[getMainAnswerIndex(categoryIndex)] ?? null,
-    sub: null,
     subsub: answers[getLeafAnswerIndex(categoryIndex)] ?? null,
   };
 }
@@ -41,14 +40,13 @@ function getCategoryState(answers, categoryIndex) {
 function normalizeCategoryState(catState) {
   return {
     main: catState.main ?? null,
-    sub: catState.sub ?? null,
     subsub: catState.subsub ?? null,
   };
 }
 
 function buildSeed(canonicalStageIndex, catState) {
   const normalized = normalizeCategoryState(catState);
-  return `${canonicalStageIndex}:${normalized.main}:${normalized.sub}:${normalized.subsub}`;
+  return `${canonicalStageIndex}:${normalized.main}:${normalized.subsub}`;
 }
 
 function deriveDeterministicCategoryState(answers, stepIndex) {
@@ -68,7 +66,7 @@ function deriveDeterministicCategoryState(answers, stepIndex) {
 
   return {
     categoryIndex,
-    catState: normalizeCategoryState({ main, sub: null, subsub }),
+    catState: normalizeCategoryState({ main, subsub }),
   };
 }
 
@@ -167,7 +165,7 @@ export default function Quiz() {
       const nextCat = categoryIndex + offset;
       if (nextCat >= MAINS.length) break;
       const defaultMain = MAINS[nextCat].options[0];
-      preloadCategoryState(manifest, nextCat, { main: defaultMain, sub: null, subsub: null }, 12);
+      preloadCategoryState(manifest, nextCat, { main: defaultMain, subsub: null }, 12);
     }
 
     // Warm likely immediate branches in the current category.
@@ -177,7 +175,7 @@ export default function Quiz() {
         [getMainAnswerIndex(categoryIndex)]: catState.main,
       });
       leafStep?.options?.slice(0, 2).forEach(leaf => {
-        preloadCategoryState(manifest, categoryIndex, { main: catState.main, sub: null, subsub: leaf }, 10);
+        preloadCategoryState(manifest, categoryIndex, { main: catState.main, subsub: leaf }, 10);
       });
     }
   }, [preloadCategoryState]);
@@ -291,7 +289,7 @@ export default function Quiz() {
   useEffect(() => {
     const defaultMain = MAINS[0].options[0];
     selectAnswer(0, defaultMain);
-    queueBackgroundUpdate(0, { main: defaultMain, sub: null, subsub: null });
+    queueBackgroundUpdate(0, { main: defaultMain, subsub: null });
     scheduleUpcomingPreload(0, { 0: defaultMain });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -412,7 +410,7 @@ export default function Quiz() {
           const defaultMain = MAINS[newCat].options[0];
           save(getMainAnswerIndex(newCat), defaultMain);
           queueVersionedDeferredWork(tapVersion, () => {
-            queueBackgroundUpdate(newCat, { main: defaultMain, sub: null, subsub: null });
+            queueBackgroundUpdate(newCat, { main: defaultMain, subsub: null });
             scheduleUpcomingPreload(newStep, { ...useQuizStore.getState().answers, [getMainAnswerIndex(newCat)]: defaultMain });
           });
         } else {
@@ -452,7 +450,7 @@ export default function Quiz() {
               const defaultMain = MAINS[newCat].options[0];
               freshSave(getMainAnswerIndex(newCat), defaultMain);
               queueVersionedDeferredWork(tapVersion, () => {
-                queueBackgroundUpdate(newCat, { main: defaultMain, sub: null, subsub: null });
+                queueBackgroundUpdate(newCat, { main: defaultMain, subsub: null });
                 scheduleUpcomingPreload(newCs, { ...useQuizStore.getState().answers, [getMainAnswerIndex(newCat)]: defaultMain });
               });
             } else {

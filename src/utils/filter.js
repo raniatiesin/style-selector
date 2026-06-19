@@ -1,4 +1,4 @@
-import { SUBSUB_DESCENDANTS, SUBSUBS, SUBSUBS_OVERRIDES } from '../config/questionTree.js';
+import { SUBS } from '../config/questionTree.js';
 
 /** Mulberry32 — seeded PRNG (same as generateSlots.js). */
 function mulberry32(seed) {
@@ -28,26 +28,20 @@ function hashSeed(str) {
  * @param {{ main: string|null, sub: string|null, subsub: string|null }} state
  * @returns {Array} filtered manifest entries
  */
-export function filterImages(manifest, categoryIndex, { main, sub, subsub }) {
+export function filterImages(manifest, categoryIndex, { main, subsub }) {
   const normalizedMain = main ?? null;
-  const normalizedSub = sub ?? null;
   const normalizedSubsub = subsub ?? null;
   let validSet;
 
   if (normalizedSubsub) {
     validSet = new Set([normalizedSubsub]);
-  } else if (normalizedSub) {
-    // Use SUBSUBS directly (not SUBSUB_DESCENDANTS) to avoid key collisions.
-    // "Frozen Action" is both a MAIN and SUB with different descendants;
-    // "Essential Elements" appears in two categories with different children.
-    const entry = SUBSUBS_OVERRIDES[categoryIndex]?.[normalizedSub] || SUBSUBS[normalizedSub];
-    if (entry) {
+  } else if (normalizedMain) {
+    const entry = SUBS[normalizedMain];
+    if (entry?.options) {
       validSet = new Set(entry.options);
     } else {
       return [];
     }
-  } else if (normalizedMain && SUBSUB_DESCENDANTS[normalizedMain]) {
-    validSet = new Set(SUBSUB_DESCENDANTS[normalizedMain]);
   } else {
     return [];
   }

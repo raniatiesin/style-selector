@@ -320,7 +320,7 @@ export default function Welcome({ canvasRef }) {
     if (manifest) {
       const slotCount = window.innerWidth >= 768 ? DESKTOP_SLOTS.length : MOBILE_SLOTS.length;
       const defaultMain = MAINS[0].options[0];
-      const filtered = filterImages(manifest, 0, { main: defaultMain, sub: null, subsub: null });
+      const filtered = filterImages(manifest, 0, { main: defaultMain, subsub: null });
       const selected = selectForSlots(filtered, slotCount, `0:${defaultMain}:null:null`);
       preloadImagesPriority(selected.map(s => s.id));
     }

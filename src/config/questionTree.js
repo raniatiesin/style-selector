@@ -136,18 +136,6 @@ export const SUBS = {
   "Atmospheric Detail": { question: "What atmospheric quality?", columnLabels: ["Environmental Mood", "Spatial Depth"], options: ["Atmosphere Heavy", "Ambient Quality", "Distance Layers", "Perspective Emphasis"] },
 };
 
-export const SUBSUBS = {};
-
-export const SUBSUBS_OVERRIDES = {};
-
-export const SUBSUB_DESCENDANTS = (() => {
-  const map = {};
-  for (const [mainKey, config] of Object.entries(SUBS)) {
-    map[mainKey] = [...config.options];
-  }
-  return map;
-})();
-
 export function resolveStep(stepIndex, answers) {
   const level = stepIndex % STEPS_PER_STAGE;
   const visibleStageIndex = Math.floor(stepIndex / STEPS_PER_STAGE);
