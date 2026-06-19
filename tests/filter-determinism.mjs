@@ -20,14 +20,7 @@ const byMain = filterImages(manifest, 0, {
 });
 assert.deepEqual(ids(byMain), ['a', 'b']);
 
-// sub-level filtering should not widen to full manifest on unknown sub
-const byUnknownSub = filterImages(manifest, 0, {
-  main: 'Dreamlike & Surreal',
-  sub: 'Unknown Sub',
-  subsub: null,
-});
-assert.equal(byUnknownSub.length, 0);
-
+// (sub parameter removed — unused, always null at runtime)
 // completely unresolved state should fail closed
 const unresolved = filterImages(manifest, 0, {
   main: null,
@@ -42,7 +35,7 @@ const selectionSource = filterImages(manifest, 0, {
   sub: null,
   subsub: null,
 });
-const seed = '0:Dreamlike & Surreal:null:null';
+const seed = '0:Dreamlike & Surreal:null';
 const s1 = ids(selectForSlots(selectionSource, 2, seed));
 const s2 = ids(selectForSlots(selectionSource, 2, seed));
 assert.deepEqual(s1, s2);

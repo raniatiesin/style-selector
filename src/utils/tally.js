@@ -1,5 +1,7 @@
 import {
+  ANSWER_STRIDE,
   CANONICAL_STAGE_COUNT,
+  LEAF_SLOT_OFFSET,
   REMOVED_STAGE_DEFAULTS,
   VISIBLE_TO_CANONICAL_STAGE,
   getVisibleStageIndex,
@@ -10,7 +12,7 @@ export function buildCanonicalTallyArray(answers) {
 
   for (let visibleStageIndex = 0; visibleStageIndex < VISIBLE_TO_CANONICAL_STAGE.length; visibleStageIndex++) {
     const canonicalStageIndex = VISIBLE_TO_CANONICAL_STAGE[visibleStageIndex];
-    const answer = answers[visibleStageIndex * 3 + 2];
+    const answer = answers[visibleStageIndex * ANSWER_STRIDE + LEAF_SLOT_OFFSET];
     if (answer) slots[canonicalStageIndex] = answer;
   }
 
