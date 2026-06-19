@@ -1,565 +1,362 @@
 graph TD
-  %% ============================================================
-  %% STYLE SELECTOR — Question Tree Structure
-  %% Reverse-engineered from questionTree.js
-  %% 3 tiers: Stage → Main Answer → Sub-sub (Leaf) Answer
-  %% ============================================================
-
-  ROOT[Style Selector<br/>Quiz Structure]
-
-  %% ------------------------------------------------------------
-  %% STAGE 0 — Primary Vibe
-  %% ------------------------------------------------------------
-  subgraph S0[Stage 0: Primary Vibe]
-    direction TB
-    S0Q[What's the primary VIBE you want to communicate?]
-    S0_Dreamlike[Dreamlike & Surreal]
-    S0_Bold[Bold & Striking]
-    S0_Calm[Calm & Serene]
-    S0_Playful[Playful & Whimsical]
-    S0_Mysterious[Mysterious & Moody]
-    S0_Energetic[Energetic & Dynamic]
-    S0_Elegant[Elegant & Refined]
-    S0_Raw[Raw & Authentic]
-
-    S0_Dreamlike_sub1[Subtle Dreamlike]
-    S0_Dreamlike_sub2[Obvious Fantasy]
-    S0_Dreamlike_sub3[Chaotic Abstract]
-    S0_Dreamlike_sub4[Structured Abstract]
-
-    S0_Bold_sub1[Neon Vibrant]
-    S0_Bold_sub2[High-Contrast]
-    S0_Bold_sub3[Macro Details]
-    S0_Bold_sub4[Vast Expansive]
-
-    S0_Calm_sub1[Empty Space]
-    S0_Calm_sub2[Soft Filled]
-    S0_Calm_sub3[Organic Flowing]
-    S0_Calm_sub4[Geometric Zen]
-
-    S0_Playful_sub1[Flat 2D]
-    S0_Playful_sub2[3D Rendered Cute]
-    S0_Playful_sub3[Weird Charming]
-    S0_Playful_sub4[Absurdist Humor]
-
-    S0_Mysterious_sub1[Gothic Shadows]
-    S0_Mysterious_sub2[Noir Minimal]
-    S0_Mysterious_sub3[Folklore Symbols]
-    S0_Mysterious_sub4[Cosmic Ethereal]
-
-    S0_Energetic_sub1[Splatter Energy]
-    S0_Energetic_sub2[Geometric Kinetic]
-    S0_Energetic_sub3[Pop Art Bright]
-    S0_Energetic_sub4[Tropical Saturated]
-
-    S0_Elegant_sub1[Gold Accents]
-    S0_Elegant_sub2[Minimalist Expensive]
-    S0_Elegant_sub3[Renaissance Inspired]
-    S0_Elegant_sub4[Modern Classic]
-
-    S0_Raw_sub1[Urban Rough]
-    S0_Raw_sub2[Organic Earthy]
-    S0_Raw_sub3[Portrait Intimate]
-    S0_Raw_sub4[Documentary Real]
-  end
-
-  ROOT --> S0Q
-  S0Q --> S0_Dreamlike & S0_Bold & S0_Calm & S0_Playful & S0_Mysterious & S0_Energetic & S0_Elegant & S0_Raw
-  S0_Dreamlike --> S0_Dreamlike_sub1 & S0_Dreamlike_sub2 & S0_Dreamlike_sub3 & S0_Dreamlike_sub4
-  S0_Bold --> S0_Bold_sub1 & S0_Bold_sub2 & S0_Bold_sub3 & S0_Bold_sub4
-  S0_Calm --> S0_Calm_sub1 & S0_Calm_sub2 & S0_Calm_sub3 & S0_Calm_sub4
-  S0_Playful --> S0_Playful_sub1 & S0_Playful_sub2 & S0_Playful_sub3 & S0_Playful_sub4
-  S0_Mysterious --> S0_Mysterious_sub1 & S0_Mysterious_sub2 & S0_Mysterious_sub3 & S0_Mysterious_sub4
-  S0_Energetic --> S0_Energetic_sub1 & S0_Energetic_sub2 & S0_Energetic_sub3 & S0_Energetic_sub4
-  S0_Elegant --> S0_Elegant_sub1 & S0_Elegant_sub2 & S0_Elegant_sub3 & S0_Elegant_sub4
-  S0_Raw --> S0_Raw_sub1 & S0_Raw_sub2 & S0_Raw_sub3 & S0_Raw_sub4
-
-  %% ------------------------------------------------------------
-  %% STAGE 1 — Realism Level
-  %% ------------------------------------------------------------
-  subgraph S1[Stage 1: Realism Level]
-    direction TB
-    S1Q[How REALISTIC should the image feel?]
-    S1_Photo[Photorealistic]
-    S1_Illustrated[Illustrated/Painted]
-    S1_3D[3D Rendered]
-    S1_Flat[Flat Graphic]
-    S1_Mixed[Mixed Media]
-    S1_Abstract[Abstract Forms]
-    S1_Sketch[Sketch/Line Art]
-    S1_Pixel[Pixel Art]
-
-    S1_Photo_sub1[Studio Photography]
-    S1_Photo_sub2[Natural Environment]
-    S1_Photo_sub3[Enhanced Beauty]
-    S1_Photo_sub4[Artistic Interpretation]
-
-    S1_Illustrated_sub1[Smooth Blended]
-    S1_Illustrated_sub2[Visible Brushstrokes]
-    S1_Illustrated_sub3[Watercolor Soft]
-    S1_Illustrated_sub4[Oil Painting Rich]
-
-    S1_3D_sub1[Product Render Perfect]
-    S1_3D_sub2[Architectural Precise]
-    S1_3D_sub3[Cartoon Render]
-    S1_3D_sub4[Clay/Toy Aesthetic]
-
-    S1_Flat_sub1[Corporate Minimal]
-    S1_Flat_sub2[Playful Shapes]
-    S1_Flat_sub3[Vintage Propaganda]
-    S1_Flat_sub4[Modern Graphic]
-
-    S1_Mixed_sub1[Cut Paper Analog]
-    S1_Mixed_sub2[Digital Composite]
-    S1_Mixed_sub3[Seamless Blend]
-    S1_Mixed_sub4[Obvious Surreal]
-
-    S1_Abstract_sub1[Hard Edge Precise]
-    S1_Abstract_sub2[Flowing Shapes]
-    S1_Abstract_sub3[Natural Forms]
-    S1_Abstract_sub4[Chaotic Expressive]
-
-    S1_Sketch_sub1[Technical Pen]
-    S1_Sketch_sub2[Cross-hatched]
-    S1_Sketch_sub3[Quick Sketch]
-    S1_Sketch_sub4[Expressive Scribble]
-
-    S1_Pixel_sub1[NES/GameBoy Style]
-    S1_Pixel_sub2[C64 Limited Palette]
-    S1_Pixel_sub3[Detailed Sprites]
-    S1_Pixel_sub4[Pixel Painting]
-  end
-
-  S0Q -.-> S1Q
-  S1Q --> S1_Photo & S1_Illustrated & S1_3D & S1_Flat & S1_Mixed & S1_Abstract & S1_Sketch & S1_Pixel
-  S1_Photo --> S1_Photo_sub1 & S1_Photo_sub2 & S1_Photo_sub3 & S1_Photo_sub4
-  S1_Illustrated --> S1_Illustrated_sub1 & S1_Illustrated_sub2 & S1_Illustrated_sub3 & S1_Illustrated_sub4
-  S1_3D --> S1_3D_sub1 & S1_3D_sub2 & S1_3D_sub3 & S1_3D_sub4
-  S1_Flat --> S1_Flat_sub1 & S1_Flat_sub2 & S1_Flat_sub3 & S1_Flat_sub4
-  S1_Mixed --> S1_Mixed_sub1 & S1_Mixed_sub2 & S1_Mixed_sub3 & S1_Mixed_sub4
-  S1_Abstract --> S1_Abstract_sub1 & S1_Abstract_sub2 & S1_Abstract_sub3 & S1_Abstract_sub4
-  S1_Sketch --> S1_Sketch_sub1 & S1_Sketch_sub2 & S1_Sketch_sub3 & S1_Sketch_sub4
-  S1_Pixel --> S1_Pixel_sub1 & S1_Pixel_sub2 & S1_Pixel_sub3 & S1_Pixel_sub4
-
-  %% ------------------------------------------------------------
-  %% STAGE 2 — Texture Quality
-  %% ------------------------------------------------------------
-  subgraph S2[Stage 2: Texture Quality]
-    direction TB
-    S2Q[What TEXTURE quality do you prefer?]
-    S2_UltraSmooth[Ultra Smooth/Clean]
-    S2_Grainy[Grainy/Noisy]
-    S2_Painterly[Painterly/Brushed]
-    S2_Pointillistic[Pointillistic/Dotted]
-    S2_Geometric[Geometric/Patterned]
-    S2_Organic[Organic/Natural]
-    S2_Glitch[Glitch/Digital Artifacts]
-    S2_Layered[Layered/Dimensional]
-
-    S2_UltraSmooth_sub1[Mirror Shine]
-    S2_UltraSmooth_sub2[Wet Reflective]
-    S2_UltraSmooth_sub3[Powder Soft]
-    S2_UltraSmooth_sub4[Porcelain Finish]
-
-    S2_Grainy_sub1[35mm Texture]
-    S2_Grainy_sub2[Analog Warmth]
-    S2_Grainy_sub3[High ISO Grit]
-    S2_Grainy_sub4[Distressed Vintage]
-
-    S2_Painterly_sub1[Impasto Thick]
-    S2_Painterly_sub2[Expressive Marks]
-    S2_Painterly_sub3[Airbrushed Smooth]
-    S2_Painterly_sub4[Sfumato Subtle]
-
-    S2_Pointillistic_sub1[Delicate Stipple]
-    S2_Pointillistic_sub2[Halftone Screen]
-    S2_Pointillistic_sub3[Bold Pointillism]
-    S2_Pointillistic_sub4[Spray Paint Dots]
-
-    S2_Geometric_sub1[Wallpaper Regular]
-    S2_Geometric_sub2[Decorative Motifs]
-    S2_Geometric_sub3[Islamic Geometric]
-    S2_Geometric_sub4[Mosaic Tiles]
-
-    S2_Organic_sub1[Canvas Texture]
-    S2_Organic_sub2[Linen Threads]
-    S2_Organic_sub3[Rough Handmade]
-    S2_Organic_sub4[Subtle Grain]
-
-    S2_Glitch_sub1[Slight Distortion]
-    S2_Glitch_sub2[Digital Artifacts]
-    S2_Glitch_sub3[Datamosh Chaos]
-    S2_Glitch_sub4[Pixel Sorting]
-
-    S2_Layered_sub1[Slight Emboss]
-    S2_Layered_sub2[Soft Shadows]
-    S2_Layered_sub3[Clear Separation]
-    S2_Layered_sub4[3D Paper Craft]
-  end
-
-  S1Q -.-> S2Q
-  S2Q --> S2_UltraSmooth & S2_Grainy & S2_Painterly & S2_Pointillistic & S2_Geometric & S2_Organic & S2_Glitch & S2_Layered
-  S2_UltraSmooth --> S2_UltraSmooth_sub1 & S2_UltraSmooth_sub2 & S2_UltraSmooth_sub3 & S2_UltraSmooth_sub4
-  S2_Grainy --> S2_Grainy_sub1 & S2_Grainy_sub2 & S2_Grainy_sub3 & S2_Grainy_sub4
-  S2_Painterly --> S2_Painterly_sub1 & S2_Painterly_sub2 & S2_Painterly_sub3 & S2_Painterly_sub4
-  S2_Pointillistic --> S2_Pointillistic_sub1 & S2_Pointillistic_sub2 & S2_Pointillistic_sub3 & S2_Pointillistic_sub4
-  S2_Geometric --> S2_Geometric_sub1 & S2_Geometric_sub2 & S2_Geometric_sub3 & S2_Geometric_sub4
-  S2_Organic --> S2_Organic_sub1 & S2_Organic_sub2 & S2_Organic_sub3 & S2_Organic_sub4
-  S2_Glitch --> S2_Glitch_sub1 & S2_Glitch_sub2 & S2_Glitch_sub3 & S2_Glitch_sub4
-  S2_Layered --> S2_Layered_sub1 & S2_Layered_sub2 & S2_Layered_sub3 & S2_Layered_sub4
-
-  %% ------------------------------------------------------------
-  %% STAGE 3 — Color Philosophy
-  %% ------------------------------------------------------------
-  subgraph S3[Stage 3: Color Philosophy]
-    direction TB
-    S3Q[What's your COLOR philosophy?]
-    S3_Vibrant[Vibrant & Saturated]
-    S3_Pastel[Pastel & Soft]
-    S3_Muted[Muted & Desaturated]
-    S3_Monochrome[Monochromatic]
-    S3_HighContrast[High Contrast]
-    S3_Neon[Neon & Fluorescent]
-    S3_Natural[Natural & Organic]
-    S3_Metallic[Metallic & Iridescent]
-
-    S3_Vibrant_sub1[Red/Yellow/Blue Focus]
-    S3_Vibrant_sub2[Secondary Colors Too]
-    S3_Vibrant_sub3[Even Distribution]
-    S3_Vibrant_sub4[Gradient Flow]
-
-    S3_Pastel_sub1[Lavender/Mint/Sky]
-    S3_Pastel_sub2[Full Cool Range]
-    S3_Pastel_sub3[Coral/Cream/Blush]
-    S3_Pastel_sub4[Sunset Warmth]
-
-    S3_Muted_sub1[Brown/Beige/Olive]
-    S3_Muted_sub2[Terracotta/Rust]
-    S3_Muted_sub3[Faded 70s]
-    S3_Muted_sub4[Sepia Nostalgic]
-
-    S3_Monochrome_sub1[Blue Variations]
-    S3_Monochrome_sub2[Warm Tone Variations]
-    S3_Monochrome_sub3[Pure Grayscale]
-    S3_Monochrome_sub4[Tinted Monochrome]
-
-    S3_HighContrast_sub1[Orange/Blue]
-    S3_HighContrast_sub2[Red/Green Tension]
-    S3_HighContrast_sub3[Stark Contrast]
-    S3_HighContrast_sub4[Chiaroscuro Drama]
-
-    S3_Neon_sub1[Electric Pink/Blue]
-    S3_Neon_sub2[Acid Green/Purple]
-    S3_Neon_sub3[Hot Magenta]
-    S3_Neon_sub4[Day-glo Pop]
-
-    S3_Natural_sub1[Deep Emerald]
-    S3_Natural_sub2[Moss Tones]
-    S3_Natural_sub3[Aqua Turquoise]
-    S3_Natural_sub4[Deep Navy]
-
-    S3_Metallic_sub1[Warm Gold]
-    S3_Metallic_sub2[Cool Silver]
-    S3_Metallic_sub3[Shifting Colors]
-    S3_Metallic_sub4[Opalescent Sheen]
-  end
-
-  S2Q -.-> S3Q
-  S3Q --> S3_Vibrant & S3_Pastel & S3_Muted & S3_Monochrome & S3_HighContrast & S3_Neon & S3_Natural & S3_Metallic
-  S3_Vibrant --> S3_Vibrant_sub1 & S3_Vibrant_sub2 & S3_Vibrant_sub3 & S3_Vibrant_sub4
-  S3_Pastel --> S3_Pastel_sub1 & S3_Pastel_sub2 & S3_Pastel_sub3 & S3_Pastel_sub4
-  S3_Muted --> S3_Muted_sub1 & S3_Muted_sub2 & S3_Muted_sub3 & S3_Muted_sub4
-  S3_Monochrome --> S3_Monochrome_sub1 & S3_Monochrome_sub2 & S3_Monochrome_sub3 & S3_Monochrome_sub4
-  S3_HighContrast --> S3_HighContrast_sub1 & S3_HighContrast_sub2 & S3_HighContrast_sub3 & S3_HighContrast_sub4
-  S3_Neon --> S3_Neon_sub1 & S3_Neon_sub2 & S3_Neon_sub3 & S3_Neon_sub4
-  S3_Natural --> S3_Natural_sub1 & S3_Natural_sub2 & S3_Natural_sub3 & S3_Natural_sub4
-  S3_Metallic --> S3_Metallic_sub1 & S3_Metallic_sub2 & S3_Metallic_sub3 & S3_Metallic_sub4
-
-  %% ------------------------------------------------------------
-  %% STAGE 4 — Lighting Setup
-  %% ------------------------------------------------------------
-  subgraph S4[Stage 4: Lighting Setup]
-    direction TB
-    S4Q[What LIGHTING sets the scene?]
-    S4_NaturalDay[Natural Daylight]
-    S4_GoldenHour[Golden Hour Warm]
-    S4_Dramatic[Dramatic Side/Rim]
-    S4_Soft[Soft Diffused]
-    S4_NeonLight[Neon/Artificial]
-    S4_Moonlight[Moonlight/Night]
-    S4_Backlit[Backlit/Silhouette]
-    S4_Studio[Studio Controlled]
-
-    S4_NaturalDay_sub1[Sunrise Glow]
-    S4_NaturalDay_sub2[Sunset Amber]
-    S4_NaturalDay_sub3[Cloud Filtered]
-    S4_NaturalDay_sub4[Shade Soft]
-
-    S4_GoldenHour_sub1[Deep Blacks]
-    S4_GoldenHour_sub2[Mystery Silhouette]
-    S4_GoldenHour_sub3[Triangle Light]
-    S4_GoldenHour_sub4[Chiaroscuro Depth]
-
-    S4_Dramatic_sub1[Natural Daylight]
-    S4_Dramatic_sub2[Warm Radiance]
-    S4_Dramatic_sub3[Professional Setup]
-    S4_Dramatic_sub4[Controlled Uniform]
-
-    S4_Soft_sub1[Flickering Warmth]
-    S4_Soft_sub2[Soft Glow]
-    S4_Soft_sub3[Dusk Ambiance]
-    S4_Soft_sub4[Fading Light]
-
-    S4_NeonLight_sub1[Electric Pink/Blue]
-    S4_NeonLight_sub2[Urban Nightscape]
-    S4_NeonLight_sub3[Vintage Signs]
-    S4_NeonLight_sub4[50s Nostalgia]
-
-    S4_Moonlight_sub1[Bright Intensity]
-    S4_Moonlight_sub2[Strong Shadows]
-    S4_Moonlight_sub3[Through Leaves]
-    S4_Moonlight_sub4[Diffused Soft]
-
-    S4_Backlit_sub1[Edge Glow]
-    S4_Backlit_sub2[Outline Luminous]
-    S4_Backlit_sub3[Complete Shadow]
-    S4_Backlit_sub4[Dark Shape]
-
-    S4_Studio_sub1[Floating Sparkles]
-    S4_Studio_sub2[Luminous Dust]
-    S4_Studio_sub3[Light Beams]
-    S4_Studio_sub4[Divine Shafts]
-  end
-
-  S3Q -.-> S4Q
-  S4Q --> S4_NaturalDay & S4_GoldenHour & S4_Dramatic & S4_Soft & S4_NeonLight & S4_Moonlight & S4_Backlit & S4_Studio
-  S4_NaturalDay --> S4_NaturalDay_sub1 & S4_NaturalDay_sub2 & S4_NaturalDay_sub3 & S4_NaturalDay_sub4
-  S4_GoldenHour --> S4_GoldenHour_sub1 & S4_GoldenHour_sub2 & S4_GoldenHour_sub3 & S4_GoldenHour_sub4
-  S4_Dramatic --> S4_Dramatic_sub1 & S4_Dramatic_sub2 & S4_Dramatic_sub3 & S4_Dramatic_sub4
-  S4_Soft --> S4_Soft_sub1 & S4_Soft_sub2 & S4_Soft_sub3 & S4_Soft_sub4
-  S4_NeonLight --> S4_NeonLight_sub1 & S4_NeonLight_sub2 & S4_NeonLight_sub3 & S4_NeonLight_sub4
-  S4_Moonlight --> S4_Moonlight_sub1 & S4_Moonlight_sub2 & S4_Moonlight_sub3 & S4_Moonlight_sub4
-  S4_Backlit --> S4_Backlit_sub1 & S4_Backlit_sub2 & S4_Backlit_sub3 & S4_Backlit_sub4
-  S4_Studio --> S4_Studio_sub1 & S4_Studio_sub2 & S4_Studio_sub3 & S4_Studio_sub4
-
-  %% ------------------------------------------------------------
-  %% STAGE 5 — Emotional Mood  (canonical stage 7)
-  %% ------------------------------------------------------------
-  subgraph S5[Stage 5: Emotional Mood]
-    direction TB
-    S5Q[What EMOTIONAL MOOD should viewers feel?]
-    S5_Joyful[Joyful/Uplifting]
-    S5_Melancholic[Melancholic/Nostalgic]
-    S5_Contemplative[Contemplative/Introspective]
-    S5_EnergeticMood[Energetic/Exciting]
-    S5_MysteriousMood[Mysterious/Enigmatic]
-    S5_Serene[Serene/Peaceful]
-    S5_DramaticMood[Dramatic/Intense]
-    S5_Whimsical[Whimsical/Fantastical]
-
-    S5_Joyful_sub1[Party Festive]
-    S5_Joyful_sub2[Triumphant Victory]
-    S5_Joyful_sub3[Quiet Smile]
-    S5_Joyful_sub4[Peaceful Contentment]
-
-    S5_Melancholic_sub1[Sweet Sadness]
-    S5_Melancholic_sub2[Aching Nostalgia]
-    S5_Melancholic_sub3[Distant Past]
-    S5_Melancholic_sub4[Faded Remembrance]
-
-    S5_Contemplative_sub1[Anticipation Building]
-    S5_Contemplative_sub2[Climactic Moment]
-    S5_Contemplative_sub3[Dark Omen]
-    S5_Contemplative_sub4[Creeping Unease]
-
-    S5_EnergeticMood_sub1[Meditative Stillness]
-    S5_EnergeticMood_sub2[Profound Calm]
-    S5_EnergeticMood_sub3[Gentle Satisfaction]
-    S5_EnergeticMood_sub4[Relaxed Ease]
-
-    S5_MysteriousMood_sub1[Unbridled Energy]
-    S5_MysteriousMood_sub2[Explosive Strength]
-    S5_MysteriousMood_sub3[Focused Aggression]
-    S5_MysteriousMood_sub4[Disciplined Power]
-
-    S5_Serene_sub1[Innocent Discovery]
-    S5_Serene_sub2[Wide-eyed Joy]
-    S5_Serene_sub3[Overwhelming Majesty]
-    S5_Serene_sub4[Transcendent Beauty]
-
-    S5_DramaticMood_sub1[Intense Desire]
-    S5_DramaticMood_sub2[Burning Love]
-    S5_DramaticMood_sub3[Gentle Affection]
-    S5_DramaticMood_sub4[Intimate Closeness]
-
-    S5_Whimsical_sub1[Captivating Puzzle]
-    S5_Whimsical_sub2[Fascinating Secret]
-    S5_Whimsical_sub3[Eerie Uncertainty]
-    S5_Whimsical_sub4[Disturbing Ambiguity]
-  end
-
-  S4Q -.-> S5Q
-  S5Q --> S5_Joyful & S5_Melancholic & S5_Contemplative & S5_EnergeticMood & S5_MysteriousMood & S5_Serene & S5_DramaticMood & S5_Whimsical
-  S5_Joyful --> S5_Joyful_sub1 & S5_Joyful_sub2 & S5_Joyful_sub3 & S5_Joyful_sub4
-  S5_Melancholic --> S5_Melancholic_sub1 & S5_Melancholic_sub2 & S5_Melancholic_sub3 & S5_Melancholic_sub4
-  S5_Contemplative --> S5_Contemplative_sub1 & S5_Contemplative_sub2 & S5_Contemplative_sub3 & S5_Contemplative_sub4
-  S5_EnergeticMood --> S5_EnergeticMood_sub1 & S5_EnergeticMood_sub2 & S5_EnergeticMood_sub3 & S5_EnergeticMood_sub4
-  S5_MysteriousMood --> S5_MysteriousMood_sub1 & S5_MysteriousMood_sub2 & S5_MysteriousMood_sub3 & S5_MysteriousMood_sub4
-  S5_Serene --> S5_Serene_sub1 & S5_Serene_sub2 & S5_Serene_sub3 & S5_Serene_sub4
-  S5_DramaticMood --> S5_DramaticMood_sub1 & S5_DramaticMood_sub2 & S5_DramaticMood_sub3 & S5_DramaticMood_sub4
-  S5_Whimsical --> S5_Whimsical_sub1 & S5_Whimsical_sub2 & S5_Whimsical_sub3 & S5_Whimsical_sub4
-
-  %% ------------------------------------------------------------
-  %% STAGE 6 — Motion & Energy  (canonical stage 8)
-  %% ------------------------------------------------------------
-  subgraph S6[Stage 6: Motion & Energy]
-    direction TB
-    S6Q[How does MOVEMENT feel?]
-    S6_Speed[Speed Lines/Blur]
-    S6_Frozen[Frozen Action]
-    S6_Flowing[Flowing Curves]
-    S6_Static[Static Stillness]
-    S6_Spiral[Spiral/Vortex]
-    S6_Explosive[Explosive/Radiating]
-    S6_Collapsing[Collapsing/Heavy]
-    S6_Rhythmic[Rhythmic/Oscillating]
-
-    S6_Speed_sub1[Motion Trails]
-    S6_Speed_sub2[Directional Blur]
-    S6_Speed_sub3[Peak Moment]
-    S6_Speed_sub4[Mid-Action Freeze]
-
-    S6_Frozen_sub1[Streaming Current]
-    S6_Frozen_sub2[Ripple Surface]
-    S6_Frozen_sub3[Ethereal Tendrils]
-    S6_Frozen_sub4[Diffusing Vapor]
-
-    S6_Flowing_sub1[Immovable Weight]
-    S6_Flowing_sub2[Grounded Permanence]
-    S6_Flowing_sub3[Poised Calm]
-    S6_Flowing_sub4[Centered Equilibrium]
-
-    S6_Static_sub1[Barely Perceptible]
-    S6_Static_sub2[About to Shift]
-    S6_Static_sub3[Breathing Presence]
-    S6_Static_sub4[Quiet Animation]
-
-    S6_Spiral_sub1[Swirling Chaos]
-    S6_Spiral_sub2[Whirlpool Pull]
-    S6_Spiral_sub3[Slow Spin]
-    S6_Spiral_sub4[Orbiting Elements]
-
-    S6_Explosive_sub1[Explosive Force]
-    S6_Explosive_sub2[Star Burst]
-    S6_Explosive_sub3[Emanating Light]
-    S6_Explosive_sub4[Expanding Rings]
-
-    S6_Collapsing_sub1[Collapsing Inward]
-    S6_Collapsing_sub2[Vacuum Pull]
-    S6_Collapsing_sub3[Heavy Weight]
-    S6_Collapsing_sub4[Sinking Down]
-
-    S6_Rhythmic_sub1[Undulating Motion]
-    S6_Rhythmic_sub2[Ripple Effect]
-    S6_Rhythmic_sub3[Back and Forth]
-    S6_Rhythmic_sub4[Rhythmic Pulse]
-  end
-
-  S5Q -.-> S6Q
-  S6Q --> S6_Speed & S6_Frozen & S6_Flowing & S6_Static & S6_Spiral & S6_Explosive & S6_Collapsing & S6_Rhythmic
-  S6_Speed --> S6_Speed_sub1 & S6_Speed_sub2 & S6_Speed_sub3 & S6_Speed_sub4
-  S6_Frozen --> S6_Frozen_sub1 & S6_Frozen_sub2 & S6_Frozen_sub3 & S6_Frozen_sub4
-  S6_Flowing --> S6_Flowing_sub1 & S6_Flowing_sub2 & S6_Flowing_sub3 & S6_Flowing_sub4
-  S6_Static --> S6_Static_sub1 & S6_Static_sub2 & S6_Static_sub3 & S6_Static_sub4
-  S6_Spiral --> S6_Spiral_sub1 & S6_Spiral_sub2 & S6_Spiral_sub3 & S6_Spiral_sub4
-  S6_Explosive --> S6_Explosive_sub1 & S6_Explosive_sub2 & S6_Explosive_sub3 & S6_Explosive_sub4
-  S6_Collapsing --> S6_Collapsing_sub1 & S6_Collapsing_sub2 & S6_Collapsing_sub3 & S6_Collapsing_sub4
-  S6_Rhythmic --> S6_Rhythmic_sub1 & S6_Rhythmic_sub2 & S6_Rhythmic_sub3 & S6_Rhythmic_sub4
-
-  %% ------------------------------------------------------------
-  %% STAGE 7 — Detail Level  (canonical stage 10)
-  %% ------------------------------------------------------------
-  subgraph S7[Stage 7: Detail Level]
-    direction TB
-    S7Q[What LEVEL OF DETAIL is appropriate?]
-    S7_Hyperdetailed[Hyperdetailed]
-    S7_HighDetail[High Detail]
-    S7_Moderate[Moderate Detail]
-    S7_LowDetail[Low Detail]
-    S7_Minimal[Minimal Detail]
-    S7_AbstractDetail[Abstract/Suggestive]
-    S7_Textural[Textural Detail]
-    S7_Atmospheric[Atmospheric Detail]
-
-    S7_Hyperdetailed_sub1[Macro Photography Close]
-    S7_Hyperdetailed_sub2[Surface Detail Zoom]
-    S7_Hyperdetailed_sub3[Lace-like Complexity]
-    S7_Hyperdetailed_sub4[Ornamental Precision]
-
-    S7_HighDetail_sub1[Layered Depth]
-    S7_HighDetail_sub2[Varied Elements]
-    S7_HighDetail_sub3[Sharp Clarity]
-    S7_HighDetail_sub4[Technical Accuracy]
-
-    S7_Moderate_sub1[Even Attention]
-    S7_Moderate_sub2[Distributed Detail]
-    S7_Moderate_sub3[Hero Focus]
-    S7_Moderate_sub4[Depth of Field Blur]
-
-    S7_LowDetail_sub1[Basic Shapes]
-    S7_LowDetail_sub2[Clean Reduction]
-    S7_LowDetail_sub3[Core Components]
-    S7_LowDetail_sub4[Key Features Only]
-
-    S7_Minimal_sub1[Absolute Minimum]
-    S7_Minimal_sub2[Stripped Down]
-    S7_Minimal_sub3[Symbol Simple]
-    S7_Minimal_sub4[Logo-like]
-
-    S7_AbstractDetail_sub1[Suggested Shapes]
-    S7_AbstractDetail_sub2[Partial Rendering]
-    S7_AbstractDetail_sub3[Open Ended]
-    S7_AbstractDetail_sub4[Imagination Required]
-
-    S7_Textural_sub1[Material Quality]
-    S7_Textural_sub2[Tactile Focus]
-    S7_Textural_sub3[Physical Properties]
-    S7_Textural_sub4[Substance Highlight]
-
-    S7_Atmospheric_sub1[Atmosphere Heavy]
-    S7_Atmospheric_sub2[Ambient Quality]
-    S7_Atmospheric_sub3[Distance Layers]
-    S7_Atmospheric_sub4[Perspective Emphasis]
-  end
-
-  S6Q -.-> S7Q
-  S7Q --> S7_Hyperdetailed & S7_HighDetail & S7_Moderate & S7_LowDetail & S7_Minimal & S7_AbstractDetail & S7_Textural & S7_Atmospheric
-  S7_Hyperdetailed --> S7_Hyperdetailed_sub1 & S7_Hyperdetailed_sub2 & S7_Hyperdetailed_sub3 & S7_Hyperdetailed_sub4
-  S7_HighDetail --> S7_HighDetail_sub1 & S7_HighDetail_sub2 & S7_HighDetail_sub3 & S7_HighDetail_sub4
-  S7_Moderate --> S7_Moderate_sub1 & S7_Moderate_sub2 & S7_Moderate_sub3 & S7_Moderate_sub4
-  S7_LowDetail --> S7_LowDetail_sub1 & S7_LowDetail_sub2 & S7_LowDetail_sub3 & S7_LowDetail_sub4
-  S7_Minimal --> S7_Minimal_sub1 & S7_Minimal_sub2 & S7_Minimal_sub3 & S7_Minimal_sub4
-  S7_AbstractDetail --> S7_AbstractDetail_sub1 & S7_AbstractDetail_sub2 & S7_AbstractDetail_sub3 & S7_AbstractDetail_sub4
-  S7_Textural --> S7_Textural_sub1 & S7_Textural_sub2 & S7_Textural_sub3 & S7_Textural_sub4
-  S7_Atmospheric --> S7_Atmospheric_sub1 & S7_Atmospheric_sub2 & S7_Atmospheric_sub3 & S7_Atmospheric_sub4
-
-  %% ============================================================
-  %% STYLING
-  %% ============================================================
-  classDef root fill:#1a1a2e,color:#fff,stroke:#e94560,stroke-width:3px
-  classDef stage fill:#16213e,color:#fff,stroke:#0f3460,stroke-width:2px
-  classDef question fill:#0f3460,color:#e94560,stroke:#e94560,stroke-width:1px,font-style:italic
-  classDef main fill:#533483,color:#fff,stroke:#e94560,stroke-width:1px
-  classDef leaf fill:#e94560,color:#fff,stroke:#16213e,stroke-width:1px,font-size:11px
-
-  class ROOT root
-  class S0Q,S1Q,S2Q,S3Q,S4Q,S5Q,S6Q,S7Q question
-  class S0_Dreamlike,S0_Bold,S0_Calm,S0_Playful,S0_Mysterious,S0_Energetic,S0_Elegant,S0_Raw,S1_Photo,S1_Illustrated,S1_3D,S1_Flat,S1_Mixed,S1_Abstract,S1_Sketch,S1_Pixel,S2_UltraSmooth,S2_Grainy,S2_Painterly,S2_Pointillistic,S2_Geometric,S2_Organic,S2_Glitch,S2_Layered,S3_Vibrant,S3_Pastel,S3_Muted,S3_Monochrome,S3_HighContrast,S3_Neon,S3_Natural,S3_Metallic,S4_NaturalDay,S4_GoldenHour,S4_Dramatic,S4_Soft,S4_NeonLight,S4_Moonlight,S4_Backlit,S4_Studio,S5_Joyful,S5_Melancholic,S5_Contemplative,S5_EnergeticMood,S5_MysteriousMood,S5_Serene,S5_DramaticMood,S5_Whimsical,S6_Speed,S6_Frozen,S6_Flowing,S6_Static,S6_Spiral,S6_Explosive,S6_Collapsing,S6_Rhythmic,S7_Hyperdetailed,S7_HighDetail,S7_Moderate,S7_LowDetail,S7_Minimal,S7_AbstractDetail,S7_Textural,S7_Atmospheric main
-  class S0_Dreamlike_sub1,S0_Dreamlike_sub2,S0_Dreamlike_sub3,S0_Dreamlike_sub4,S0_Bold_sub1,S0_Bold_sub2,S0_Bold_sub3,S0_Bold_sub4,S0_Calm_sub1,S0_Calm_sub2,S0_Calm_sub3,S0_Calm_sub4,S0_Playful_sub1,S0_Playful_sub2,S0_Playful_sub3,S0_Playful_sub4,S0_Mysterious_sub1,S0_Mysterious_sub2,S0_Mysterious_sub3,S0_Mysterious_sub4,S0_Energetic_sub1,S0_Energetic_sub2,S0_Energetic_sub3,S0_Energetic_sub4,S0_Elegant_sub1,S0_Elegant_sub2,S0_Elegant_sub3,S0_Elegant_sub4,S0_Raw_sub1,S0_Raw_sub2,S0_Raw_sub3,S0_Raw_sub4 leaf
-  class S1_Photo_sub1,S1_Photo_sub2,S1_Photo_sub3,S1_Photo_sub4,S1_Illustrated_sub1,S1_Illustrated_sub2,S1_Illustrated_sub3,S1_Illustrated_sub4,S1_3D_sub1,S1_3D_sub2,S1_3D_sub3,S1_3D_sub4,S1_Flat_sub1,S1_Flat_sub2,S1_Flat_sub3,S1_Flat_sub4,S1_Mixed_sub1,S1_Mixed_sub2,S1_Mixed_sub3,S1_Mixed_sub4,S1_Abstract_sub1,S1_Abstract_sub2,S1_Abstract_sub3,S1_Abstract_sub4,S1_Sketch_sub1,S1_Sketch_sub2,S1_Sketch_sub3,S1_Sketch_sub4,S1_Pixel_sub1,S1_Pixel_sub2,S1_Pixel_sub3,S1_Pixel_sub4 leaf
-  class S2_UltraSmooth_sub1,S2_UltraSmooth_sub2,S2_UltraSmooth_sub3,S2_UltraSmooth_sub4,S2_Grainy_sub1,S2_Grainy_sub2,S2_Grainy_sub3,S2_Grainy_sub4,S2_Painterly_sub1,S2_Painterly_sub2,S2_Painterly_sub3,S2_Painterly_sub4,S2_Pointillistic_sub1,S2_Pointillistic_sub2,S2_Pointillistic_sub3,S2_Pointillistic_sub4,S2_Geometric_sub1,S2_Geometric_sub2,S2_Geometric_sub3,S2_Geometric_sub4,S2_Organic_sub1,S2_Organic_sub2,S2_Organic_sub3,S2_Organic_sub4,S2_Glitch_sub1,S2_Glitch_sub2,S2_Glitch_sub3,S2_Glitch_sub4,S2_Layered_sub1,S2_Layered_sub2,S2_Layered_sub3,S2_Layered_sub4 leaf
-  class S3_Vibrant_sub1,S3_Vibrant_sub2,S3_Vibrant_sub3,S3_Vibrant_sub4,S3_Pastel_sub1,S3_Pastel_sub2,S3_Pastel_sub3,S3_Pastel_sub4,S3_Muted_sub1,S3_Muted_sub2,S3_Muted_sub3,S3_Muted_sub4,S3_Monochrome_sub1,S3_Monochrome_sub2,S3_Monochrome_sub3,S3_Monochrome_sub4,S3_HighContrast_sub1,S3_HighContrast_sub2,S3_HighContrast_sub3,S3_HighContrast_sub4,S3_Neon_sub1,S3_Neon_sub2,S3_Neon_sub3,S3_Neon_sub4,S3_Natural_sub1,S3_Natural_sub2,S3_Natural_sub3,S3_Natural_sub4,S3_Metallic_sub1,S3_Metallic_sub2,S3_Metallic_sub3,S3_Metallic_sub4 leaf
-  class S4_NaturalDay_sub1,S4_NaturalDay_sub2,S4_NaturalDay_sub3,S4_NaturalDay_sub4,S4_GoldenHour_sub1,S4_GoldenHour_sub2,S4_GoldenHour_sub3,S4_GoldenHour_sub4,S4_Dramatic_sub1,S4_Dramatic_sub2,S4_Dramatic_sub3,S4_Dramatic_sub4,S4_Soft_sub1,S4_Soft_sub2,S4_Soft_sub3,S4_Soft_sub4,S4_NeonLight_sub1,S4_NeonLight_sub2,S4_NeonLight_sub3,S4_NeonLight_sub4,S4_Moonlight_sub1,S4_Moonlight_sub2,S4_Moonlight_sub3,S4_Moonlight_sub4,S4_Backlit_sub1,S4_Backlit_sub2,S4_Backlit_sub3,S4_Backlit_sub4,S4_Studio_sub1,S4_Studio_sub2,S4_Studio_sub3,S4_Studio_sub4 leaf
-  class S5_Joyful_sub1,S5_Joyful_sub2,S5_Joyful_sub3,S5_Joyful_sub4,S5_Melancholic_sub1,S5_Melancholic_sub2,S5_Melancholic_sub3,S5_Melancholic_sub4,S5_Contemplative_sub1,S5_Contemplative_sub2,S5_Contemplative_sub3,S5_Contemplative_sub4,S5_EnergeticMood_sub1,S5_EnergeticMood_sub2,S5_EnergeticMood_sub3,S5_EnergeticMood_sub4,S5_MysteriousMood_sub1,S5_MysteriousMood_sub2,S5_MysteriousMood_sub3,S5_MysteriousMood_sub4,S5_Serene_sub1,S5_Serene_sub2,S5_Serene_sub3,S5_Serene_sub4,S5_DramaticMood_sub1,S5_DramaticMood_sub2,S5_DramaticMood_sub3,S5_DramaticMood_sub4,S5_Whimsical_sub1,S5_Whimsical_sub2,S5_Whimsical_sub3,S5_Whimsical_sub4 leaf
-  class S6_Speed_sub1,S6_Speed_sub2,S6_Speed_sub3,S6_Speed_sub4,S6_Frozen_sub1,S6_Frozen_sub2,S6_Frozen_sub3,S6_Frozen_sub4,S6_Flowing_sub1,S6_Flowing_sub2,S6_Flowing_sub3,S6_Flowing_sub4,S6_Static_sub1,S6_Static_sub2,S6_Static_sub3,S6_Static_sub4,S6_Spiral_sub1,S6_Spiral_sub2,S6_Spiral_sub3,S6_Spiral_sub4,S6_Explosive_sub1,S6_Explosive_sub2,S6_Explosive_sub3,S6_Explosive_sub4,S6_Collapsing_sub1,S6_Collapsing_sub2,S6_Collapsing_sub3,S6_Collapsing_sub4,S6_Rhythmic_sub1,S6_Rhythmic_sub2,S6_Rhythmic_sub3,S6_Rhythmic_sub4 leaf
-  class S7_Hyperdetailed_sub1,S7_Hyperdetailed_sub2,S7_Hyperdetailed_sub3,S7_Hyperdetailed_sub4,S7_HighDetail_sub1,S7_HighDetail_sub2,S7_HighDetail_sub3,S7_HighDetail_sub4,S7_Moderate_sub1,S7_Moderate_sub2,S7_Moderate_sub3,S7_Moderate_sub4,S7_LowDetail_sub1,S7_LowDetail_sub2,S7_LowDetail_sub3,S7_LowDetail_sub4,S7_Minimal_sub1,S7_Minimal_sub2,S7_Minimal_sub3,S7_Minimal_sub4,S7_AbstractDetail_sub1,S7_AbstractDetail_sub2,S7_AbstractDetail_sub3,S7_AbstractDetail_sub4,S7_Textural_sub1,S7_Textural_sub2,S7_Textural_sub3,S7_Textural_sub4,S7_Atmospheric_sub1,S7_Atmospheric_sub2,S7_Atmospheric_sub3,S7_Atmospheric_sub4 leaf
+    Start([Start: AI Art Style Discovery]) --> Q1{What's the primary VIBE<br/>you want to communicate?}
+    
+    Q1 -->|Dreamlike & Surreal| D1[Which dreamlike direction calls to you?]
+    Q1 -->|Bold & Striking| B1[What makes it strike?]
+    Q1 -->|Calm & Serene| C1[How does the calm feel?]
+    Q1 -->|Playful & Whimsical| P1[What kind of playful?]
+    Q1 -->|Mysterious & Moody| M1[What flavour of mystery?]
+    Q1 -->|Energetic & Dynamic| E1[How does the energy move?]
+    Q1 -->|Elegant & Refined| R1[What kind of elegance?]
+    Q1 -->|Raw & Authentic| A1[How does authenticity show up?]
+    
+    D1 -->|Slightly Surreal| D1_a[Subtle Dreamlike or<br/>Obvious Fantasy?]
+    D1 -->|Fully Abstract| D1_b[Chaotic Abstract or<br/>Structured Abstract?]
+    B1 -->|Color Impact| B1_a[Neon Vibrant or<br/>High-Contrast?]
+    B1 -->|Scale Impact| B1_b[Macro Details or<br/>Vast Expansive?]
+    C1 -->|Meditative Quiet| C1_a[Empty Space or<br/>Soft Filled?]
+    C1 -->|Nature Inspired| C1_b[Organic Flowing or<br/>Geometric Zen?]
+    P1 -->|Cartoon Fun| P1_a[Flat 2D or<br/>3D Rendered Cute?]
+    P1 -->|Quirky Oddball| P1_b[Weird Charming or<br/>Absurdist Humor?]
+    M1 -->|Dark Atmospheric| M1_a[Gothic Shadows or<br/>Noir Minimal?]
+    M1 -->|Mystical Magical| M1_b[Folklore Symbols or<br/>Cosmic Ethereal?]
+    E1 -->|Explosive Chaos| E1_a[Splatter Energy or<br/>Geometric Kinetic?]
+    E1 -->|Vibrant Lively| E1_b[Pop Art Bright or<br/>Tropical Saturated?]
+    R1 -->|Luxurious Premium| R1_a[Gold Accents or<br/>Minimalist Expensive?]
+    R1 -->|Classic Timeless| R1_b[Renaissance Inspired or<br/>Modern Classic?]
+    A1 -->|Gritty Textured| A1_a[Urban Rough or<br/>Organic Earthy?]
+    A1 -->|Candid Human| A1_b[Portrait Intimate or<br/>Documentary Real?]
+    
+    D1_a --> Q2
+    D1_b --> Q2
+    B1_a --> Q2
+    B1_b --> Q2
+    C1_a --> Q2
+    C1_b --> Q2
+    P1_a --> Q2
+    P1_b --> Q2
+    M1_a --> Q2
+    M1_b --> Q2
+    E1_a --> Q2
+    E1_b --> Q2
+    R1_a --> Q2
+    R1_b --> Q2
+    A1_a --> Q2
+    A1_b --> Q2
+    
+    Q2{How REALISTIC should<br/>the image feel?}
+    
+    Q2 -->|Photorealistic| RE1[What kind of photorealism?]
+    Q2 -->|Illustrated/Painted| RE2[What illustration style?]
+    Q2 -->|3D Rendered| RE3[What 3D rendering style?]
+    Q2 -->|Flat Graphic| RE4[What flat graphic feel?]
+    Q2 -->|Mixed Media| RE5[What mixed media approach?]
+    Q2 -->|Abstract Forms| RE6[What abstract quality?]
+    Q2 -->|Sketch/Line Art| RE7[What line art style?]
+    Q2 -->|Pixel Art| RE8[What pixel art era?]
+    
+    RE1 -->|Perfect Realism| RE1_a[Studio Photography or<br/>Natural Environment?]
+    RE1 -->|Stylized Realism| RE1_b[Enhanced Beauty or<br/>Artistic Interpretation?]
+    RE2 -->|Digital Painting| RE2_a[Smooth Blended or<br/>Visible Brushstrokes?]
+    RE2 -->|Traditional Media| RE2_b[Watercolor Soft or<br/>Oil Painting Rich?]
+    RE3 -->|Hyperreal 3D| RE3_a[Product Render Perfect or<br/>Architectural Precise?]
+    RE3 -->|Stylized 3D| RE3_b[Cartoon Render or<br/>Clay/Toy Aesthetic?]
+    RE4 -->|Vector Clean| RE4_a[Corporate Minimal or<br/>Playful Shapes?]
+    RE4 -->|Poster Art| RE4_b[Vintage Propaganda or<br/>Modern Graphic?]
+    RE5 -->|Collage Layered| RE5_a[Cut Paper Analog or<br/>Digital Composite?]
+    RE5 -->|Photo Manipulation| RE5_b[Seamless Blend or<br/>Obvious Surreal?]
+    RE6 -->|Geometric Abstract| RE6_a[Hard Edge Precise or<br/>Flowing Shapes?]
+    RE6 -->|Organic Abstract| RE6_b[Natural Forms or<br/>Chaotic Expressive?]
+    RE7 -->|Detailed Line Work| RE7_a[Technical Pen or<br/>Cross-hatched?]
+    RE7 -->|Loose Gestural| RE7_b[Quick Sketch or<br/>Expressive Scribble?]
+    RE8 -->|Retro 8-bit| RE8_a[NES/GameBoy Style or<br/>C64 Limited Palette?]
+    RE8 -->|Modern High-res Pixel| RE8_b[Detailed Sprites or<br/>Pixel Painting?]
+    
+    RE1_a --> Q3
+    RE1_b --> Q3
+    RE2_a --> Q3
+    RE2_b --> Q3
+    RE3_a --> Q3
+    RE3_b --> Q3
+    RE4_a --> Q3
+    RE4_b --> Q3
+    RE5_a --> Q3
+    RE5_b --> Q3
+    RE6_a --> Q3
+    RE6_b --> Q3
+    RE7_a --> Q3
+    RE7_b --> Q3
+    RE8_a --> Q3
+    RE8_b --> Q3
+    
+    Q3{What TEXTURE quality<br/>do you prefer?}
+    
+    Q3 -->|Ultra Smooth/Clean| TX1[What smooth finish?]
+    Q3 -->|Grainy/Noisy| TX2[What kind of grain?]
+    Q3 -->|Painterly/Brushed| TX3[What painterly quality?]
+    Q3 -->|Pointillistic/Dotted| TX4[What dot texture?]
+    Q3 -->|Geometric/Patterned| TX5[What pattern type?]
+    Q3 -->|Organic/Natural| TX6[What natural texture?]
+    Q3 -->|Glitch/Digital Artifacts| TX7[How corrupted is it?]
+    Q3 -->|Layered/Dimensional| TX8[How dimensional?]
+    
+    TX1 -->|Glossy Perfect| TX1_a[Mirror Shine or<br/>Wet Reflective?]
+    TX1 -->|Matte Smooth| TX1_b[Powder Soft or<br/>Porcelain Finish?]
+    TX2 -->|Film Grain Subtle| TX2_a[35mm Texture or<br/>Analog Warmth?]
+    TX2 -->|Heavy Noise Texture| TX2_b[High ISO Grit or<br/>Distressed Vintage?]
+    TX3 -->|Visible Strokes| TX3_a[Impasto Thick or<br/>Expressive Marks?]
+    TX3 -->|Blended Soft| TX3_b[Airbrushed Smooth or<br/>Sfumato Subtle?]
+    TX4 -->|Fine Dots| TX4_a[Delicate Stipple or<br/>Halftone Screen?]
+    TX4 -->|Chunky Stippled| TX4_b[Bold Pointillism or<br/>Spray Paint Dots?]
+    TX5 -->|Repeating Patterns| TX5_a[Wallpaper Regular or<br/>Decorative Motifs?]
+    TX5 -->|Tessellated Shapes| TX5_b[Islamic Geometric or<br/>Mosaic Tiles?]
+    TX6 -->|Fabric Weave| TX6_a[Canvas Texture or<br/>Linen Threads?]
+    TX6 -->|Paper Texture| TX6_b[Rough Handmade or<br/>Subtle Grain?]
+    TX7 -->|Subtle Glitch| TX7_a[Slight Distortion or<br/>Digital Artifacts?]
+    TX7 -->|Heavy Corruption| TX7_b[Datamosh Chaos or<br/>Pixel Sorting?]
+    TX8 -->|Subtle Depth| TX8_a[Slight Emboss or<br/>Soft Shadows?]
+    TX8 -->|Obvious Layers| TX8_b[Clear Separation or<br/>3D Paper Craft?]
+    
+    TX1_a --> Q4
+    TX1_b --> Q4
+    TX2_a --> Q4
+    TX2_b --> Q4
+    TX3_a --> Q4
+    TX3_b --> Q4
+    TX4_a --> Q4
+    TX4_b --> Q4
+    TX5_a --> Q4
+    TX5_b --> Q4
+    TX6_a --> Q4
+    TX6_b --> Q4
+    TX7_a --> Q4
+    TX7_b --> Q4
+    TX8_a --> Q4
+    TX8_b --> Q4
+    
+    Q4{What's your COLOR<br/>philosophy?}
+    
+    Q4 -->|Vibrant & Saturated| CO1[How are the colors arranged?]
+    Q4 -->|Pastel & Soft| CO2[Which pastel direction?]
+    Q4 -->|Muted & Desaturated| CO3[What muted palette?]
+    Q4 -->|Monochromatic| CO4[What mono tone?]
+    Q4 -->|High Contrast| CO5[What contrast approach?]
+    Q4 -->|Neon & Fluorescent| CO6[Which neon palette?]
+    Q4 -->|Natural & Organic| CO7[Which natural hue?]
+    Q4 -->|Metallic & Iridescent| CO8[What metallic quality?]
+    
+    CO1 -->|Primary Bold| CO1_a[Red/Yellow/Blue Focus or<br/>Secondary Colors Too?]
+    CO1 -->|Rainbow Spectrum| CO1_b[Even Distribution or<br/>Gradient Flow?]
+    CO2 -->|Cool Pastels| CO2_a[Lavender/Mint/Sky or<br/>Full Cool Range?]
+    CO2 -->|Warm Peachy| CO2_b[Coral/Cream/Blush or<br/>Sunset Warmth?]
+    CO3 -->|Earth Tones| CO3_a[Brown/Beige/Olive or<br/>Terracotta/Rust?]
+    CO3 -->|Washed Vintage| CO3_b[Faded 70s or<br/>Sepia Nostalgic?]
+    CO4 -->|Single Color| CO4_a[Blue Variations or<br/>Warm Tone Variations?]
+    CO4 -->|Black & White| CO4_b[Pure Grayscale or<br/>Tinted Monochrome?]
+    CO5 -->|Complementary Clash| CO5_a[Orange/Blue or<br/>Red/Green Tension?]
+    CO5 -->|Light vs Dark| CO5_b[Stark Contrast or<br/>Chiaroscuro Drama?]
+    CO6 -->|Cyberpunk Neon| CO6_a[Electric Pink/Blue or<br/>Acid Green/Purple?]
+    CO6 -->|80s Bright| CO6_b[Hot Magenta or<br/>Day-glo Pop?]
+    CO7 -->|Forest Greens| CO7_a[Deep Emerald or<br/>Moss Tones?]
+    CO7 -->|Ocean Blues| CO7_b[Aqua Turquoise or<br/>Deep Navy?]
+    CO8 -->|Gold/Silver Luxe| CO8_a[Warm Gold or<br/>Cool Silver?]
+    CO8 -->|Holographic Rainbow| CO8_b[Shifting Colors or<br/>Opalescent Sheen?]
+    
+    CO1_a --> Q5
+    CO1_b --> Q5
+    CO2_a --> Q5
+    CO2_b --> Q5
+    CO3_a --> Q5
+    CO3_b --> Q5
+    CO4_a --> Q5
+    CO4_b --> Q5
+    CO5_a --> Q5
+    CO5_b --> Q5
+    CO6_a --> Q5
+    CO6_b --> Q5
+    CO7_a --> Q5
+    CO7_b --> Q5
+    CO8_a --> Q5
+    CO8_b --> Q5
+    
+    Q5{What LIGHTING sets<br/>the scene?}
+    
+    Q5 -->|Natural Daylight| L1[What natural light quality?]
+    Q5 -->|Golden Hour Warm| L2[How dramatic are the shadows?]
+    Q5 -->|Dramatic Side/Rim| L3[What quality of brightness?]
+    Q5 -->|Soft Diffused| L4[What dim mood?]
+    Q5 -->|Neon/Artificial| L5[What artificial light era?]
+    Q5 -->|Moonlight/Night| L6[How does light cut through dark?]
+    Q5 -->|Backlit/Silhouette| L7[How much detail survives the light?]
+    Q5 -->|Studio Controlled| L8[What ethereal quality?]
+    
+    L1 -->|Golden Hour Warmth| L1_a[Sunrise Glow or<br/>Sunset Amber?]
+    L1 -->|Overcast Even Light| L1_b[Cloud Filtered or<br/>Shade Soft?]
+    L2 -->|Film Noir Contrast| L2_a[Deep Blacks or<br/>Mystery Silhouette?]
+    L2 -->|Rembrandt Classic| L2_b[Triangle Light or<br/>Chiaroscuro Depth?]
+    L3 -->|Sunshine Cheerful| L3_a[Natural Daylight or<br/>Warm Radiance?]
+    L3 -->|Studio Clean| L3_b[Professional Setup or<br/>Controlled Uniform?]
+    L4 -->|Candlelit Intimate| L4_a[Flickering Warmth or<br/>Soft Glow?]
+    L4 -->|Twilight Mystery| L4_b[Dusk Ambiance or<br/>Fading Light?]
+    L5 -->|Cyberpunk Glow| L5_a[Electric Pink/Blue or<br/>Urban Nightscape?]
+    L5 -->|Retro Diner| L5_b[Vintage Signs or<br/>50s Nostalgia?]
+    L6 -->|Direct Harsh| L6_a[Bright Intensity or<br/>Strong Shadows?]
+    L6 -->|Filtered Gentle| L6_b[Through Leaves or<br/>Diffused Soft?]
+    L7 -->|Rim Light Halo| L7_a[Edge Glow or<br/>Outline Luminous?]
+    L7 -->|Full Silhouette| L7_b[Complete Shadow or<br/>Dark Shape?]
+    L8 -->|Glowing Particles| L8_a[Floating Sparkles or<br/>Luminous Dust?]
+    L8 -->|Mystical Rays| L8_b[Light Beams or<br/>Divine Shafts?]
+    
+    L1_a --> Q6
+    L1_b --> Q6
+    L2_a --> Q6
+    L2_b --> Q6
+    L3_a --> Q6
+    L3_b --> Q6
+    L4_a --> Q6
+    L4_b --> Q6
+    L5_a --> Q6
+    L5_b --> Q6
+    L6_a --> Q6
+    L6_b --> Q6
+    L7_a --> Q6
+    L7_b --> Q6
+    L8_a --> Q6
+    L8_b --> Q6
+    
+    Q6{What EMOTIONAL MOOD<br/>should viewers feel?}
+    
+    Q6 -->|Joyful/Uplifting| MO1[What kind of joy?]
+    Q6 -->|Melancholic/Nostalgic| MO2[What shade of melancholy?]
+    Q6 -->|Contemplative/Introspective| MO3[What kind of tension?]
+    Q6 -->|Energetic/Exciting| MO4[What kind of calm energy?]
+    Q6 -->|Mysterious/Enigmatic| MO5[What intensity of power?]
+    Q6 -->|Serene/Peaceful| MO6[What kind of wonder?]
+    Q6 -->|Dramatic/Intense| MO7[What kind of connection?]
+    Q6 -->|Whimsical/Fantastical| MO8[What mysterious quality?]
+    
+    MO1 -->|Celebration Exuberant| MO1_a[Party Festive or<br/>Triumphant Victory?]
+    MO1 -->|Gentle Happiness| MO1_b[Quiet Smile or<br/>Peaceful Contentment?]
+    MO2 -->|Bittersweet Longing| MO2_a[Sweet Sadness or<br/>Aching Nostalgia?]
+    MO2 -->|Wistful Memory| MO2_b[Distant Past or<br/>Faded Remembrance?]
+    MO3 -->|Edge of Seat| MO3_a[Anticipation Building or<br/>Climactic Moment?]
+    MO3 -->|Foreboding Dread| MO3_b[Dark Omen or<br/>Creeping Unease?]
+    MO4 -->|Deep Serenity| MO4_a[Meditative Stillness or<br/>Profound Calm?]
+    MO4 -->|Quiet Contentment| MO4_b[Gentle Satisfaction or<br/>Relaxed Ease?]
+    MO5 -->|Raw Power| MO5_a[Unbridled Energy or<br/>Explosive Strength?]
+    MO5 -->|Controlled Force| MO5_b[Focused Aggression or<br/>Disciplined Power?]
+    MO6 -->|Childlike Amazement| MO6_a[Innocent Discovery or<br/>Wide-eyed Joy?]
+    MO6 -->|Sublime Grandeur| MO6_b[Overwhelming Majesty or<br/>Transcendent Beauty?]
+    MO7 -->|Passionate Fire| MO7_a[Intense Desire or<br/>Burning Love?]
+    MO7 -->|Tender Connection| MO7_b[Gentle Affection or<br/>Intimate Closeness?]
+    MO8 -->|Curious Intrigue| MO8_a[Captivating Puzzle or<br/>Fascinating Secret?]
+    MO8 -->|Unsettling Unknown| MO8_b[Eerie Uncertainty or<br/>Disturbing Ambiguity?]
+    
+    MO1_a --> Q7
+    MO1_b --> Q7
+    MO2_a --> Q7
+    MO2_b --> Q7
+    MO3_a --> Q7
+    MO3_b --> Q7
+    MO4_a --> Q7
+    MO4_b --> Q7
+    MO5_a --> Q7
+    MO5_b --> Q7
+    MO6_a --> Q7
+    MO6_b --> Q7
+    MO7_a --> Q7
+    MO7_b --> Q7
+    MO8_a --> Q7
+    MO8_b --> Q7
+    
+    Q7{How does MOVEMENT feel?}
+    
+    Q7 -->|Speed Lines/Blur| MV1[How is speed captured?]
+    Q7 -->|Frozen Action| MV2[What flows through the stillness?]
+    Q7 -->|Flowing Curves| MV3[How still is the stillness?]
+    Q7 -->|Static Stillness| MV4[How much life is implied?]
+    Q7 -->|Spiral/Vortex| MV5[What spiral energy?]
+    Q7 -->|Explosive/Radiating| MV6[How does it radiate?]
+    Q7 -->|Collapsing/Heavy| MV7[What direction does weight pull?]
+    Q7 -->|Rhythmic/Oscillating| MV8[What rhythm pattern?]
+    
+    MV1 -->|Blur Speed| MV1_a[Motion Trails or<br/>Directional Blur?]
+    MV1 -->|Frozen Action| MV1_b[Peak Moment or<br/>Mid-Action Freeze?]
+    MV2 -->|Water Smooth| MV2_a[Streaming Current or<br/>Ripple Surface?]
+    MV2 -->|Smoke Wispy| MV2_b[Ethereal Tendrils or<br/>Diffusing Vapor?]
+    MV3 -->|Rock Solid| MV3_a[Immovable Weight or<br/>Grounded Permanence?]
+    MV3 -->|Balanced Stillness| MV3_b[Poised Calm or<br/>Centered Equilibrium?]
+    MV4 -->|Almost Moving| MV4_a[Barely Perceptible or<br/>About to Shift?]
+    MV4 -->|Living Still| MV4_b[Breathing Presence or<br/>Quiet Animation?]
+    MV5 -->|Vortex Energy| MV5_a[Swirling Chaos or<br/>Whirlpool Pull?]
+    MV5 -->|Gentle Rotation| MV5_b[Slow Spin or<br/>Orbiting Elements?]
+    MV6 -->|Outward Burst| MV6_a[Explosive Force or<br/>Star Burst?]
+    MV6 -->|Radiating Energy| MV6_b[Emanating Light or<br/>Expanding Rings?]
+    MV7 -->|Imploding Center| MV7_a[Collapsing Inward or<br/>Vacuum Pull?]
+    MV7 -->|Gravitational Pull| MV7_b[Heavy Weight or<br/>Sinking Down?]
+    MV8 -->|Wave Patterns| MV8_a[Undulating Motion or<br/>Ripple Effect?]
+    MV8 -->|Pendulum Swing| MV8_b[Back and Forth or<br/>Rhythmic Pulse?]
+    
+    MV1_a --> Q8
+    MV1_b --> Q8
+    MV2_a --> Q8
+    MV2_b --> Q8
+    MV3_a --> Q8
+    MV3_b --> Q8
+    MV4_a --> Q8
+    MV4_b --> Q8
+    MV5_a --> Q8
+    MV5_b --> Q8
+    MV6_a --> Q8
+    MV6_b --> Q8
+    MV7_a --> Q8
+    MV7_b --> Q8
+    MV8_a --> Q8
+    MV8_b --> Q8
+    
+    Q8{What LEVEL OF DETAIL<br/>is appropriate?}
+    
+    Q8 -->|Hyperdetailed| DT1[What kind of hyper detail?]
+    Q8 -->|High Detail| DT2[What high detail emphasis?]
+    Q8 -->|Moderate Detail| DT3[How is detail balanced?]
+    Q8 -->|Low Detail| DT4[How simplified?]
+    Q8 -->|Minimal Detail| DT5[How minimal?]
+    Q8 -->|Abstract/Suggestive| DT6[How much is left to imagination?]
+    Q8 -->|Textural Detail| DT7[What textural emphasis?]
+    Q8 -->|Atmospheric Detail| DT8[What atmospheric quality?]
+    
+    DT1 -->|Every Texture Visible| DT1_a[Macro Photography Close or<br/>Surface Detail Zoom?]
+    DT1 -->|Intricate Patterns| DT1_b[Lace-like Complexity or<br/>Ornamental Precision?]
+    DT2 -->|Rich Complexity| DT2_a[Layered Depth or<br/>Varied Elements?]
+    DT2 -->|Focused Precision| DT2_b[Sharp Clarity or<br/>Technical Accuracy?]
+    DT3 -->|Balanced Focus| DT3_a[Even Attention or<br/>Distributed Detail?]
+    DT3 -->|Selective Detail| DT3_b[Hero Focus or<br/>Depth of Field Blur?]
+    DT4 -->|Simplified Forms| DT4_a[Basic Shapes or<br/>Clean Reduction?]
+    DT4 -->|Essential Elements| DT4_b[Core Components or<br/>Key Features Only?]
+    DT5 -->|Bare Essentials| DT5_a[Absolute Minimum or<br/>Stripped Down?]
+    DT5 -->|Iconic Reduction| DT5_b[Symbol Simple or<br/>Logo-like?]
+    DT6 -->|Implied Forms| DT6_a[Suggested Shapes or<br/>Partial Rendering?]
+    DT6 -->|Viewer Interpretation| DT6_b[Open Ended or<br/>Imagination Required?]
+    DT7 -->|Surface Emphasis| DT7_a[Material Quality or<br/>Tactile Focus?]
+    DT7 -->|Material Focus| DT7_b[Physical Properties or<br/>Substance Highlight?]
+    DT8 -->|Environmental Mood| DT8_a[Atmosphere Heavy or<br/>Ambient Quality?]
+    DT8 -->|Spatial Depth| DT8_b[Distance Layers or<br/>Perspective Emphasis?]
+    
+    DT1_a --> Final
+    DT1_b --> Final
+    DT2_a --> Final
+    DT2_b --> Final
+    DT3_a --> Final
+    DT3_b --> Final
+    DT4_a --> Final
+    DT4_b --> Final
+    DT5_a --> Final
+    DT5_b --> Final
+    DT6_a --> Final
+    DT6_b --> Final
+    DT7_a --> Final
+    DT7_b --> Final
+    DT8_a --> Final
+    DT8_b --> Final
+    
+    Final([Generate Complete<br/>Style Profile: 12 Canonical Tags<br/>from 8 Visible Stages])
