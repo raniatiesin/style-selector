@@ -34,14 +34,22 @@ export default async function handler(req, res) {
 
   try {
     let body = req.body;
-    console.error('[DEBUG]', JSON.stringify(req.body));
     
-    // Fix unquoted ISO date values in string body before parsing
+    // Vercel failed to parse body, get raw string
+    if (typeof body === 'object' && Object.keys(body).length === 0) {
+      body = await new Promise((resolve) => {
+        let raw = '';
+        req.on('data', chunk => raw += chunk);
+        req.on('end', () => resolve(raw));
+      });
+    }
+    
     if (typeof body === 'string') {
-      // Wrap bare ISO dates in quotes
       body = body.replace(/:\s*([\d]{4}-[\d]{2}-[\d]{2}T[\S]+Z)/g, ': "$1"');
       try { body = JSON.parse(body); } catch(e) { body = {}; }
     }
+    
+    console.error('[DEBUG]', JSON.stringify(req.body));
     
     const payload = req.method === 'DELETE' ? (Object.keys(body || {}).length ? body : req.query) : body;
     let { id, task, status, time, action, inProgressTasks, doneTasks, due_date, dueDate, due } = payload || {};
