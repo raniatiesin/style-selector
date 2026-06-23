@@ -34,6 +34,7 @@ export default async function handler(req, res) {
 
   try {
     let body = req.body;
+    console.error('[DEBUG]', JSON.stringify(req.body));
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch(e) { body = {}; }
     }
@@ -105,9 +106,10 @@ export default async function handler(req, res) {
 
        // Map Twenty CRM statuses to overlay internal statuses
        const twentyToOverlayStatus = {
-          // Waiting states
-          'new': 'waiting',
-          'waiting': 'waiting',
+           // Waiting states
+           'new': 'waiting',
+           'waiting': 'waiting',
+           'todo': 'waiting',
           // In progress states
           'ongoing': 'in_progress',
           'in_progress': 'in_progress',
