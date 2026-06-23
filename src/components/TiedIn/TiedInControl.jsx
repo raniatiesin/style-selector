@@ -16,6 +16,9 @@ export default function TiedInControl() {
   const [inputKey, setInputKey] = useState('');
   const [inputObs, setInputObs] = useState('');
   const [explainTopic, setExplainTopic] = useState('');
+  const [gameTimeInput, setGameTimeInput] = useState('');
+  const [gameTimeUnit, setGameTimeUnit] = useState('seconds');
+  const [isSubmittingGame, setIsSubmittingGame] = useState(false);
   
   const [isLocked, setIsLocked] = useState(!adminKey);
 
@@ -359,6 +362,39 @@ export default function TiedInControl() {
     });
   };
 
+  const submitGameTime = async () => {
+    const raw = gameTimeInput.trim();
+    if (!raw) return;
+    const num = parseFloat(raw);
+    if (isNaN(num) || num <= 0) {
+      addLog("Invalid game time");
+      return;
+    }
+    let ms;
+    if (gameTimeUnit === 'minutes') ms = Math.round(num * 60000);
+    else if (gameTimeUnit === 'hours') ms = Math.round(num * 3600000);
+    else ms = Math.round(num * 1000); // seconds
+
+    setIsSubmittingGame(true);
+    try {
+      const res = await fetch('https://tiesin.me/api/stream/minecraft', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminKey}`
+        },
+        body: JSON.stringify({ timePlayedMs: ms })
+      });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      addLog(`Game recorded: ${raw} ${gameTimeUnit} (${ms}ms)`);
+      setGameTimeInput('');
+    } catch (e) {
+      addLog(`Game submit error: ${e.message}`);
+    } finally {
+      setIsSubmittingGame(false);
+    }
+  };
+
   const resetDay = () => {
     if (window.confirm("Reset entire day overlay clock back to zero and pause the screen? (Accumulated total will NOT be reset)")) {
       pushUpdate({ 
@@ -501,23 +537,62 @@ export default function TiedInControl() {
           </div>
        </div>
 
-       {/* Metrics Box */}
-       <div className="context-pill stack">
-          <div className="side-line panel-row">
+       {/* Metrics Box — switches to game time input when in Play mode */}
+       {state.mode === 'minecraft' ? (
+         <div className="context-pill stack">
+           <div className="side-line panel-row" style={{ marginBottom: '8px' }}>
+             <span>Record Game Time</span>
+           </div>
+           <div className="side-line panel-row">
+             <input
+               type="number"
+               step="any"
+               min="0"
+               placeholder="e.g. 5.5"
+               value={gameTimeInput}
+               onChange={e => setGameTimeInput(e.target.value)}
+               onKeyDown={e => { if (e.key === 'Enter') submitGameTime(); }}
+               className="input-full input-pad"
+               style={{ width: '120px', fontSize: '18px', padding: '8px 12px' }}
+             />
+             <select
+               value={gameTimeUnit}
+               onChange={e => setGameTimeUnit(e.target.value)}
+               className="input-pad"
+               style={{ fontSize: '14px', padding: '8px', margin: '0 8px' }}
+             >
+               <option value="seconds">sec</option>
+               <option value="minutes">min</option>
+               <option value="hours">hrs</option>
+             </select>
+             <button
+               className="mode-btn button-sm"
+               onClick={submitGameTime}
+               disabled={isSubmittingGame || !gameTimeInput.trim()}
+               style={{ minWidth: '80px' }}
+             >
+               {isSubmittingGame ? '...' : 'ADD'}
+             </button>
+           </div>
+         </div>
+       ) : (
+         <div className="context-pill stack">
+           <div className="side-line panel-row">
              <span>Contacted: {state.contactedCount}</span>
              <div className="inline-form">
-                <button className="mode-btn button-xs" onClick={() => handleMetric('contactedCount', -1)}>-</button>
-                <button className="mode-btn button-xs" onClick={() => handleMetric('contactedCount', 1)}>+</button>
+               <button className="mode-btn button-xs" onClick={() => handleMetric('contactedCount', -1)}>-</button>
+               <button className="mode-btn button-xs" onClick={() => handleMetric('contactedCount', 1)}>+</button>
              </div>
-          </div>
-          <div className="side-line panel-row">
+           </div>
+           <div className="side-line panel-row">
              <span>Converted: {state.convertedCount}</span>
              <div className="inline-form">
-                <button className="mode-btn button-xs" onClick={() => handleMetric('convertedCount', -1)}>-</button>
-                <button className="mode-btn button-xs" onClick={() => handleMetric('convertedCount', 1)}>+</button>
+               <button className="mode-btn button-xs" onClick={() => handleMetric('convertedCount', -1)}>-</button>
+               <button className="mode-btn button-xs" onClick={() => handleMetric('convertedCount', 1)}>+</button>
              </div>
-          </div>
-       </div>
+           </div>
+         </div>
+       )}
 
        {/* YouTube Markers Box */}
        <div className="context-pill stack panel-grow">
