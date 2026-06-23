@@ -100,33 +100,52 @@ export default async function handler(req, res) {
          } catch(e) {}
        }
 
-       if (['in progress', 'in_progress', 'up next', 'up_next', 'upnext', 'in review', 'in_review', 'waiting'].includes(rawStatus)) {
+       // Map Twenty CRM statuses to overlay internal statuses
+       const twentyToOverlayStatus = {
+          'new': 'waiting',
+          'ongoing': 'in_progress',
+          'in_progress': 'in_progress',
+          'won': 'done',
+          'lost': 'done',
+          'contacted': 'in_progress',
+          'converted': 'done',
+          'qualified': 'in_progress',
+          'unqualified': 'done'
+       };
+       const overlayStatus = twentyToOverlayStatus[rawStatus] || rawStatus;
+
+       const recognizedStatuses = ['in progress', 'in_progress', 'up next', 'up_next', 'upnext', 'in review', 'in_review', 'waiting', 'done', 'completed', 'active'];
+       if (recognizedStatuses.includes(overlayStatus) || recognizedStatuses.includes(rawStatus)) {
+          // Normalize to overlay format
           let normalizedStatus = 'waiting';
-          if (rawStatus.includes('progress')) normalizedStatus = 'in_progress';
-          else if (rawStatus.includes('next')) normalizedStatus = 'up_next';
-          else if (rawStatus.includes('review')) normalizedStatus = 'in_review';
-   
-          const newTask = {
-            id: taskId,
-            name: String(task || "Untitled Task"),
-            status: normalizedStatus,
-            createdAt: time ? new Date(time).getTime() : Date.now(),
-            completedAt: null
-          };
-   
-          if (normalizedStatus === 'in_progress') inProgress.push(newTask);
-          else if (normalizedStatus === 'in_review') inReview.push(newTask);
-          else if (normalizedStatus === 'up_next') upNext.push(newTask);
-          else upNext.push(newTask); 
-          
-       } else if ((rawStatus === 'done' || rawStatus === 'completed') && (isDueToday)) {
-          done.unshift({
-            id: taskId,
-            name: String(task || "Completed Task"),
-            status: "done",
-            createdAt: Date.now(), 
-            completedAt: time ? new Date(time).getTime() : Date.now()
-          });
+          if (overlayStatus.includes('progress') || rawStatus.includes('progress')) normalizedStatus = 'in_progress';
+          else if (overlayStatus.includes('next') || rawStatus.includes('next')) normalizedStatus = 'up_next';
+          else if (overlayStatus.includes('review') || rawStatus.includes('review')) normalizedStatus = 'in_review';
+          else if (overlayStatus === 'done' || overlayStatus === 'completed' || rawStatus === 'done' || rawStatus === 'completed') normalizedStatus = 'done';
+          else if (overlayStatus === 'active') normalizedStatus = 'in_progress';
+
+          if (normalizedStatus === 'done') {
+             if (isDueToday) {
+               done.unshift({
+                 id: taskId,
+                 name: String(task || "Completed Task"),
+                 status: "done",
+                 createdAt: Date.now(),
+                 completedAt: time ? new Date(time).getTime() : Date.now()
+               });
+             }
+          } else {
+             const newTask = {
+               id: taskId,
+               name: String(task || "Untitled Task"),
+               status: normalizedStatus,
+               createdAt: time ? new Date(time).getTime() : Date.now(),
+               completedAt: null
+             };
+             if (normalizedStatus === 'in_progress') inProgress.push(newTask);
+             else if (normalizedStatus === 'in_review') inReview.push(newTask);
+             else upNext.push(newTask);
+          }
        }
     }
 
