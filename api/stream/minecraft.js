@@ -29,14 +29,25 @@ async function getSupabaseClient() {
 }
 
 function requireWebhookSecret(req) {
-  const expectedSecret = process.env.MINECRAFT_WEBHOOK_SECRET || process.env.OVERLAY_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET;
-  const authHeader = req.headers.authorization;
+  const webhookSecrets = [
+    process.env.MINECRAFT_WEBHOOK_SECRET,
+    process.env.OVERLAY_WEBHOOK_SECRET,
+    process.env.WEBHOOK_SECRET,
+    process.env.STREAM_ADMIN_KEY
+  ].filter(Boolean);
 
-  if (!expectedSecret) {
-    return { ok: false, status: 500, message: 'Missing minecraft webhook secret.' };
+  if (webhookSecrets.length === 0) {
+    return { ok: false, status: 500, message: 'Missing minecraft webhook or admin secret.' };
   }
 
-  if (!authHeader || authHeader !== `Bearer ${expectedSecret}`) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return { ok: false, status: 401, message: 'Unauthorized access blocked.' };
+  }
+
+  const token = authHeader.replace(/^Bearer\s+/i, '');
+  const matched = webhookSecrets.some(secret => token === secret);
+  if (!matched) {
     return { ok: false, status: 401, message: 'Unauthorized access blocked.' };
   }
 

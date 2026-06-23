@@ -557,10 +557,20 @@ export default function TiedInControl() {
              <input
                type="text"
                inputMode="numeric"
-               maxLength={6}
+               maxLength={5}
                placeholder="MM:SS"
-               value={gameTimeInput}
-               onChange={e => setGameTimeInput(e.target.value.replace(/\D/g, '').slice(0, 4))}
+               value={(() => {
+                 const d = gameTimeInput.replace(/\D/g, '');
+                 if (!d) return '';
+                 if (d.length <= 2) return d;
+                 return `${d.slice(0, -2)}:${d.slice(-2)}`;
+               })()}
+               onChange={e => {
+                 const raw = e.target.value;
+                 // If user deleted the colon, just store the cleaned digits
+                 const cleaned = raw.replace(/[^0-9]/g, '').slice(0, 4);
+                 setGameTimeInput(cleaned);
+               }}
                onKeyDown={e => { if (e.key === 'Enter') submitGameTime(); }}
                className="input-full input-pad"
                style={{ width: '160px', fontSize: '24px', padding: '10px 16px', letterSpacing: '0.15em', fontVariantNumeric: 'tabular-nums' }}
