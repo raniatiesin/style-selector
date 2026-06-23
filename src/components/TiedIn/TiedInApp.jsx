@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import './TiedInApp.css?v=20260529o';
 
-const HOURS_TARGET = 2000;
+const HOURS_TARGET = 1000;
 const CONTEXT_WIDTH = 1075.33;
 const EXPLAIN_TOPIC_KEY = 'EXPLAIN_TOPIC';
 const MINECRAFT_OVERLAY_VERSION = 'mc-overlay-v2';
@@ -506,8 +506,8 @@ export default function TiedInApp({ displayMode }) {
                   <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
                 </div>
                 <div className="context-pill stack side-line-counts">
-                  <div className="side-line">Contacted: {counts.contacted}</div>
-                  <div className="side-line">Converted: {counts.converted}</div>
+                  <div className="side-line">Projects: {counts.contacted}</div>
+                  <div className="side-line">Contacts: {counts.converted}</div>
                 </div>
               </div>
               <div className="webcam-col"></div>

@@ -91,8 +91,8 @@ export default async function handler(req, res) {
 
        globalMetrics = {
           mode: data.mode,
-          contactedCount: data.contacted_count,
-          convertedCount: data.converted_count,
+           contactedCount: data.projects_count,
+           convertedCount: data.contacts_count,
           previousDaysSeconds: pastDaysAcc,
           todayWorkSeconds: (data.today_seconds ?? 0) + activeOffset,
           
