@@ -57,9 +57,8 @@ export default function TiedInApp({ displayMode }) {
   const [tasks, setTasks] = useState([]);
   const [counts, setCounts] = useState({ contacted: 0, converted: 0 });
   const [minecraftStats, setMinecraftStats] = useState({
-    totals: { totalRuns: 0, completedRuns: 0 },
-    averages: { avgFinalIgtCompleted: 0, avgEnterNetherIgt: 0, avgEnterEndIgt: 0 },
-    bests: { bestFinalIgt: 0 }
+    today: { totalGames: 0, bestTimeMs: null, totalPlaytimeMs: 0 },
+    totality: { totalGames: 0, bestTimeMs: null, totalPlaytimeMs: 0 }
   });
   const [modeReact, setModeReact] = useState("standby"); // for changing class names
 
@@ -379,7 +378,7 @@ export default function TiedInApp({ displayMode }) {
         <div className="tl-pill current minecraft-run-badge">
           <div className="tl-title">
             Run <br />
-            #{ (Number(minecraftStats.totals?.totalRuns) || 0) + 1 }
+            #{ (Number(minecraftStats.today?.totalGames || minecraftStats.totals?.totalRuns || 0)) + 1 }
           </div>
         </div>
       ) : null}
@@ -426,102 +425,55 @@ export default function TiedInApp({ displayMode }) {
         <div className="context-panel">
           {activeMode === 'minecraft' ? (
             <>
-              {/* TOP LEFT BOX - Normal width (Matches webcam size) */}
-              <div className="minecraft-box">
-                <div className="minecraft-today-grid">
-                  <div className="minecraft-metric">
-                    <span className="tl-meta">Today's Avg IGT</span>
-                    <span className="side-line">
-                      {formatMillis(minecraftStats.averages?.todayAvgIgt || 0)}
-                    </span>
-                  </div>
-                  <div className="minecraft-metric">
-                    <span className="tl-meta">Today's Best IGT</span>
-                    <span className="side-line" style={{ color: 'var(--white-92)' }}>
-                      {formatMillis(minecraftStats.bests?.todayBestIgt || 0)}
-                    </span>
-                  </div>
+              {/* TODAY BOX */}
+              <div className="minecraft-box mc-today-box">
+                <div className="mc-box-header">Today</div>
+                <div className="minecraft-metric mc-stat-row">
+                  <span className="tl-meta">Games Played</span>
+                  <span className="side-line">{minecraftStats.today?.totalGames || 0}</span>
+                </div>
+                <div className="minecraft-metric mc-stat-row">
+                  <span className="tl-meta">Best Time</span>
+                  <span className="side-line" style={{ color: 'var(--white-92)' }}>
+                    {formatMillis(minecraftStats.today?.bestTimeMs || 0)}
+                  </span>
+                </div>
+                <div className="minecraft-metric mc-stat-row">
+                  <span className="tl-meta">Playtime</span>
+                  <span className="side-line">
+                    {Math.floor((minecraftStats.today?.totalPlaytimeMs || 0) / 3600000)}h {Math.floor(((minecraftStats.today?.totalPlaytimeMs || 0) % 3600000) / 60000)}m
+                  </span>
                 </div>
               </div>
 
-              {/* TOP RIGHT BOX - Wide width */}
-              <div className="minecraft-box">
-                <div className="minecraft-total-grid">
-                  <div className="minecraft-metric">
-                    <span className="tl-meta">Avg IGT</span>
-                    <span className="side-line">
-                      {formatMillis(minecraftStats.averages?.avgFinalIgtCompleted || 0)}
-                    </span>
-                  </div>
-                  <div className="minecraft-metric">
-                    <span className="tl-meta">Avg End</span>
-                    <span className="side-line">
-                      {formatMillis(minecraftStats.averages?.avgEnterEndIgt || 0)}
-                    </span>
-                  </div>
-                  <div className="minecraft-metric">
-                    <span className="tl-meta">Avg Nether</span>
-                    <span className="side-line">
-                      {formatMillis(minecraftStats.averages?.avgEnterNetherIgt || 0)}
-                    </span>
-                  </div>
-                  
-                  <div className="minecraft-metric">
-                    <span className="tl-meta">Best IGT</span>
-                    <span className="side-line" style={{ color: 'var(--white-92)' }}>
-                      {formatMillis(minecraftStats.bests?.bestFinalIgt === Infinity ? 0 : minecraftStats.bests?.bestFinalIgt)}
-                    </span>
-                  </div>
-                  <div className="minecraft-metric">
-                    <span className="tl-meta">Best End</span>
-                    <span className="side-line">
-                      {formatMillis(minecraftStats.bests?.bestEnterEndIgt || 0)}
-                    </span>
-                  </div>
-                  <div className="minecraft-metric">
-                    <span className="tl-meta">Best Nether</span>
-                    <span className="side-line">
-                      {formatMillis(minecraftStats.bests?.bestEnterNetherIgt || 0)}
-                    </span>
-                  </div>
+              {/* TOTALITY BOX */}
+              <div className="minecraft-box mc-totality-box">
+                <div className="mc-box-header">Totality</div>
+                <div className="minecraft-metric mc-stat-row">
+                  <span className="tl-meta">Games Played</span>
+                  <span className="side-line">{minecraftStats.totality?.totalGames || 0}</span>
+                </div>
+                <div className="minecraft-metric mc-stat-row">
+                  <span className="tl-meta">Best Time</span>
+                  <span className="side-line" style={{ color: 'var(--white-92)' }}>
+                    {formatMillis(minecraftStats.totality?.bestTimeMs || 0)}
+                  </span>
+                </div>
+                <div className="minecraft-metric mc-stat-row">
+                  <span className="tl-meta">Playtime</span>
+                  <span className="side-line">
+                    {Math.floor((minecraftStats.totality?.totalPlaytimeMs || 0) / 3600000)}h {Math.floor(((minecraftStats.totality?.totalPlaytimeMs || 0) % 3600000) / 60000)}m
+                  </span>
                 </div>
               </div>
 
-              {/* BOTTOM LEFT BOX - Normal width (Session Progress) */}
-              <div className="minecraft-box minecraft-session-progress-box">
-                <div
-                  ref={timerRefs.mcProgressFill}
-                  className="minecraft-session-progress-fill"
-                ></div>
-                <div className="minecraft-session-progress-overlay">
-                  <span className="tl-meta">Today's Playtime</span>
-                  <span className="side-line" ref={timerRefs.mcSessionTime}>00:00:00</span>
-                </div>
+              {/* 2ND MONITOR CAPTURE (16:9) */}
+              <div className="mc-monitor-box">
+                <div className="obs-frame frame-monitor" aria-hidden="true"></div>
               </div>
 
-              {/* BOTTOM RIGHT BOX - Wide width */}
-              <div className="minecraft-box">
-                <div className="minecraft-total-grid bottom-metrics">
-                  <div className="minecraft-metric">
-                    <span className="tl-meta">Playtime</span>
-                    <span className="side-line">
-                      {Math.floor((minecraftStats.totals?.playtimeMs || 0) / 3600000)}h {Math.floor(((minecraftStats.totals?.playtimeMs || 0) % 3600000) / 60000)}m
-                    </span>
-                  </div>
-                  <div className="minecraft-metric">
-                    <span className="tl-meta">Date</span>
-                    <span className="side-line">
-                      {`${new Date().getFullYear().toString().slice(-2)}/${pad(new Date().getMonth() + 1)}/${pad(new Date().getDate())}`}
-                    </span>
-                  </div>
-                  <div className="minecraft-metric">
-                    <span className="tl-meta">Time</span>
-                    <span className="side-line">
-                      {`${new Date().getHours() % 12 || 12}:${pad(new Date().getMinutes())} ${new Date().getHours() >= 12 ? 'PM' : 'AM'}`}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              {/* WEBCAM (already positioned via CSS) */}
+              <div className="mc-webcam-box"></div>
             </>
           ) : (
             <>
