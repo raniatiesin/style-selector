@@ -33,8 +33,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Determine payload between body and query (for DELETE requests)
-    const payload = req.method === 'DELETE' ? (Object.keys(req.body || {}).length ? req.body : req.query) : req.body;
+    let body = req.body;
+    if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch(e) { body = {}; }
+    }
+    const payload = req.method === 'DELETE' ? (Object.keys(body || {}).length ? body : req.query) : body;
     let { id, task, status, time, action, inProgressTasks, doneTasks, due_date, dueDate, due } = payload || {};
 
     // Fallback to headers if n8n forces you to send them there for DELETE requests
@@ -102,15 +105,29 @@ export default async function handler(req, res) {
 
        // Map Twenty CRM statuses to overlay internal statuses
        const twentyToOverlayStatus = {
+          // Waiting states
           'new': 'waiting',
+          'waiting': 'waiting',
+          // In progress states
           'ongoing': 'in_progress',
           'in_progress': 'in_progress',
+          'contacted': 'in_progress',
+          'qualified': 'in_progress',
+          // In review states
+          'in_review': 'in_review',
+          'review': 'in_review',
+          // Up next states
+          'up_next': 'up_next',
+          'upnext': 'up_next',
+          'next': 'up_next',
+          'up next': 'up_next',
+          // Done states
           'won': 'done',
           'lost': 'done',
-          'contacted': 'in_progress',
           'converted': 'done',
-          'qualified': 'in_progress',
-          'unqualified': 'done'
+          'unqualified': 'done',
+          'done': 'done',
+          'completed': 'done'
        };
        const overlayStatus = twentyToOverlayStatus[rawStatus] || rawStatus;
 
