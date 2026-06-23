@@ -45,7 +45,7 @@ export default async function handler(req, res) {
     }
     
     if (typeof body === 'string') {
-      body = body.replace(/:\s*([\d]{4}-[\d]{2}-[\d]{2}T[\S]+Z)/g, ': "$1"');
+      body = body.replace(/:\s*([\d]{4}-[\d]{2}-[\d]{2}T[^\s,}\]]+)/g, ': "$1"');
       try { body = JSON.parse(body); } catch(e) { body = {}; }
     }
     
