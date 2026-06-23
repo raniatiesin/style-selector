@@ -17,7 +17,6 @@ export default function TiedInControl() {
   const [inputObs, setInputObs] = useState('');
   const [explainTopic, setExplainTopic] = useState('');
   const [gameTimeInput, setGameTimeInput] = useState('');
-  const [gameTimeUnit, setGameTimeUnit] = useState('seconds');
   const [isSubmittingGame, setIsSubmittingGame] = useState(false);
   
   const [isLocked, setIsLocked] = useState(!adminKey);
@@ -365,15 +364,26 @@ export default function TiedInControl() {
   const submitGameTime = async () => {
     const raw = gameTimeInput.trim();
     if (!raw) return;
-    const num = parseFloat(raw);
-    if (isNaN(num) || num <= 0) {
-      addLog("Invalid game time");
+    // Parse MM:SS — digits only, auto-format as minutes:seconds
+    // e.g. "1148" → 11 min 48 sec → (11*60 + 48) * 1000 = 708000ms
+    const digits = raw.replace(/\D/g, '');
+    if (digits.length < 3) {
+      addLog("Type at least 3 digits (e.g. 1148 for 11:48)");
       return;
     }
-    let ms;
-    if (gameTimeUnit === 'minutes') ms = Math.round(num * 60000);
-    else if (gameTimeUnit === 'hours') ms = Math.round(num * 3600000);
-    else ms = Math.round(num * 1000); // seconds
+    const secPart = parseInt(digits.slice(-2), 10);
+    const minPart = parseInt(digits.slice(0, -2), 10);
+    if (secPart > 59) {
+      addLog("Seconds must be ≤ 59");
+      return;
+    }
+    const totalSec = minPart * 60 + secPart;
+    if (totalSec <= 0) {
+      addLog("Time must be > 0");
+      return;
+    }
+    const ms = totalSec * 1000;
+    const displayStr = `${String(minPart).padStart(2, '0')}:${String(secPart).padStart(2, '0')}`;
 
     setIsSubmittingGame(true);
     try {
@@ -386,7 +396,7 @@ export default function TiedInControl() {
         body: JSON.stringify({ timePlayedMs: ms })
       });
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      addLog(`Game recorded: ${raw} ${gameTimeUnit} (${ms}ms)`);
+      addLog(`Game recorded: ${displayStr} (${ms}ms)`);
       setGameTimeInput('');
     } catch (e) {
       addLog(`Game submit error: ${e.message}`);
@@ -545,31 +555,21 @@ export default function TiedInControl() {
            </div>
            <div className="side-line panel-row">
              <input
-               type="number"
-               step="any"
-               min="0"
-               placeholder="e.g. 5.5"
+               type="text"
+               inputMode="numeric"
+               maxLength={6}
+               placeholder="MM:SS"
                value={gameTimeInput}
-               onChange={e => setGameTimeInput(e.target.value)}
+               onChange={e => setGameTimeInput(e.target.value.replace(/\D/g, '').slice(0, 4))}
                onKeyDown={e => { if (e.key === 'Enter') submitGameTime(); }}
                className="input-full input-pad"
-               style={{ width: '120px', fontSize: '18px', padding: '8px 12px' }}
+               style={{ width: '160px', fontSize: '24px', padding: '10px 16px', letterSpacing: '0.15em', fontVariantNumeric: 'tabular-nums' }}
              />
-             <select
-               value={gameTimeUnit}
-               onChange={e => setGameTimeUnit(e.target.value)}
-               className="input-pad"
-               style={{ fontSize: '14px', padding: '8px', margin: '0 8px' }}
-             >
-               <option value="seconds">sec</option>
-               <option value="minutes">min</option>
-               <option value="hours">hrs</option>
-             </select>
              <button
                className="mode-btn button-sm"
                onClick={submitGameTime}
                disabled={isSubmittingGame || !gameTimeInput.trim()}
-               style={{ minWidth: '80px' }}
+               style={{ minWidth: '80px', fontSize: '16px', padding: '10px 16px' }}
              >
                {isSubmittingGame ? '...' : 'ADD'}
              </button>
