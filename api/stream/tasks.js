@@ -35,11 +35,31 @@ export default async function handler(req, res) {
   try {
     let body = req.body;
     console.error('[DEBUG]', JSON.stringify(req.body));
+    
+    // Fix unquoted ISO date values in string body before parsing
     if (typeof body === 'string') {
+      // Wrap bare ISO dates in quotes
+      body = body.replace(/:\s*([\d]{4}-[\d]{2}-[\d]{2}T[\S]+Z)/g, ': "$1"');
       try { body = JSON.parse(body); } catch(e) { body = {}; }
     }
+    
     const payload = req.method === 'DELETE' ? (Object.keys(body || {}).length ? body : req.query) : body;
     let { id, task, status, time, action, inProgressTasks, doneTasks, due_date, dueDate, due } = payload || {};
+    
+    // Clean up null/undefined string values
+    if (id === "null" || id === "undefined") id = null;
+    if (task === "null" || task === "undefined") task = null;
+    if (status === "null" || status === "undefined") status = null;
+    if (time === "null" || time === "undefined") time = null;
+    if (due_date === "null" || due_date === "undefined") due_date = null;
+    if (dueDate === "null" || dueDate === "undefined") dueDate = null;
+    if (due === "null" || due === "undefined") due = null;
+    
+    // Task name fallback
+    task = task || payload?.name || payload?.title || payload?.subject;
+    
+    // Status field fallback
+    status = status || payload?.type || payload?.state;
 
     // Fallback to headers if n8n forces you to send them there for DELETE requests
     id = id || req.headers['id'] || req.headers['x-task-id'];
