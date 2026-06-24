@@ -352,14 +352,18 @@ export default function TiedInApp({ displayMode }) {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const displayTasks = [
-    ...tasks.filter(t => t.status === "waiting" && !inProgressIds.has(t.id)).sort((a, b) => a.createdAt - b.createdAt),
-    ...tasks.filter(t => t.status === "up_next" && !inProgressIds.has(t.id)).sort((a, b) => a.createdAt - b.createdAt),
-    ...tasks.filter(t => t.status === "in_progress").sort((a, b) => b.createdAt - a.createdAt),
-    ...tasks.filter(t => t.status === "in_review" && !inProgressIds.has(t.id)).sort((a, b) => b.createdAt - a.createdAt),
-    ...tasks.filter(t => t.status === "done" && !inProgressIds.has(t.id) && (t.completedAt || t.createdAt) >= startOfToday.getTime())
-            .sort((a, b) => (b.completedAt || b.createdAt) - (a.completedAt || a.createdAt))
-  ];
+const waitingUpNext = [
+     ...tasks.filter(t => t.status === "waiting" && !inProgressIds.has(t.id)).sort((a, b) => a.createdAt - b.createdAt),
+     ...tasks.filter(t => t.status === "up_next" && !inProgressIds.has(t.id)).sort((a, b) => a.createdAt - b.createdAt),
+   ];
+
+   const inProgress = tasks.filter(t => t.status === "in_progress").sort((a, b) => b.createdAt - a.createdAt);
+
+   const reviewDone = [
+     ...tasks.filter(t => t.status === "in_review" && !inProgressIds.has(t.id)).sort((a, b) => b.createdAt - a.createdAt),
+     ...tasks.filter(t => t.status === "done" && !inProgressIds.has(t.id) && (t.completedAt || t.createdAt) >= startOfToday.getTime())
+             .sort((a, b) => (b.completedAt || b.createdAt) - (a.completedAt || a.createdAt))
+   ];
 
   return (
     <div className={`overlay-root mode-${activeMode}`}>
@@ -386,37 +390,105 @@ export default function TiedInApp({ displayMode }) {
       <section className="zone-top">
         <aside className="timeline" id="timeline">
           <div className="timeline-list">
-             {displayTasks.map(task => {
-                const isCurrent = inProgressIds.has(task.id);
-                const pillClass = isCurrent ? "tl-pill current" : "tl-pill done";
-                const metaClass = isCurrent ? "tl-meta current" : "tl-meta done";
-                const when = task.status === "done" ? (task.completedAt || task.createdAt) : task.createdAt;
-                
-                let statusStr = "waiting";
-                let dotColor = "#9113A4"; // waiting (purple)
-                
-                if (task.status === "in_progress") { statusStr = "in progress"; dotColor = "#4DAA57"; }
-                else if (task.status === "in_review") { statusStr = "in review"; dotColor = "#FFBA08"; }
-                else if (task.status === "up_next") { statusStr = "up next"; dotColor = "#2F6690"; }
-                else if (task.status === "done") { statusStr = "done"; dotColor = "#F95738"; }
-                
-                let timeStr = "";
-                if (task.status === "in_progress") timeStr = "started " + relativeTime(task.createdAt);
-                else if (task.status === "done" || task.status === "in_review") timeStr = "finished " + relativeTime(when);
-                else timeStr = "added " + relativeTime(task.createdAt);
+             <div className="task-group top">
+                {waitingUpNext.map(task => {
+                   const isCurrent = inProgressIds.has(task.id);
+                   const pillClass = isCurrent ? "tl-pill current" : "tl-pill done";
+                   const metaClass = isCurrent ? "tl-meta current" : "tl-meta done";
+                   const when = task.status === "done" ? (task.completedAt || task.createdAt) : task.createdAt;
+                   
+                   let statusStr = "waiting";
+                   let dotColor = "#9113A4";
+                   
+                   if (task.status === "in_progress") { statusStr = "in progress"; dotColor = "#4DAA57"; }
+                   else if (task.status === "in_review") { statusStr = "in review"; dotColor = "#FFBA08"; }
+                   else if (task.status === "up_next") { statusStr = "up next"; dotColor = "#2F6690"; }
+                   else if (task.status === "done") { statusStr = "done"; dotColor = "#F95738"; }
+                   
+                   let timeStr = "";
+                   if (task.status === "in_progress") timeStr = "started " + relativeTime(task.createdAt);
+                   else if (task.status === "done" || task.status === "in_review") timeStr = "finished " + relativeTime(when);
+                   else timeStr = "added " + relativeTime(task.createdAt);
 
-                return (
-                  <div key={task.id} className="tl-item">
-                    <div className={pillClass}>
-                      <div className="tl-title">{task.name}</div>
-                      <div className={metaClass}>
-                        <span className="status-dot" style={{ color: dotColor }}>&#9679;</span>
-                        &nbsp;&nbsp;{statusStr} &middot; {timeStr}
-                      </div>
-                    </div>
-                  </div>
-                )
-               })}
+                   return (
+                     <div key={task.id} className="tl-item">
+                       <div className={pillClass}>
+                         <div className="tl-title">{task.name}</div>
+                         <div className={metaClass}>
+                           <span className="status-dot" style={{ color: dotColor }}>&#9679;</span>
+                           &nbsp;&nbsp;{statusStr} &middot; {timeStr}
+                         </div>
+                       </div>
+                     </div>
+                   );
+                })}
+             </div>
+             <div className="task-group middle">
+                {inProgress.map(task => {
+                   const isCurrent = inProgressIds.has(task.id);
+                   const pillClass = isCurrent ? "tl-pill current" : "tl-pill done";
+                   const metaClass = isCurrent ? "tl-meta current" : "tl-meta done";
+                   const when = task.status === "done" ? (task.completedAt || task.createdAt) : task.createdAt;
+                   
+                   let statusStr = "waiting";
+                   let dotColor = "#9113A4";
+                   
+                   if (task.status === "in_progress") { statusStr = "in progress"; dotColor = "#4DAA57"; }
+                   else if (task.status === "in_review") { statusStr = "in review"; dotColor = "#FFBA08"; }
+                   else if (task.status === "up_next") { statusStr = "up next"; dotColor = "#2F6690"; }
+                   else if (task.status === "done") { statusStr = "done"; dotColor = "#F95738"; }
+                   
+                   let timeStr = "";
+                   if (task.status === "in_progress") timeStr = "started " + relativeTime(task.createdAt);
+                   else if (task.status === "done" || task.status === "in_review") timeStr = "finished " + relativeTime(when);
+                   else timeStr = "added " + relativeTime(task.createdAt);
+
+                   return (
+                     <div key={task.id} className="tl-item">
+                       <div className={pillClass}>
+                         <div className="tl-title">{task.name}</div>
+                         <div className={metaClass}>
+                           <span className="status-dot" style={{ color: dotColor }}>&#9679;</span>
+                           &nbsp;&nbsp;{statusStr} &middot; {timeStr}
+                         </div>
+                       </div>
+                     </div>
+                   );
+                })}
+             </div>
+             <div className="task-group bottom">
+                {reviewDone.map(task => {
+                   const isCurrent = inProgressIds.has(task.id);
+                   const pillClass = isCurrent ? "tl-pill current" : "tl-pill done";
+                   const metaClass = isCurrent ? "tl-meta current" : "tl-meta done";
+                   const when = task.status === "done" ? (task.completedAt || task.createdAt) : task.createdAt;
+                   
+                   let statusStr = "waiting";
+                   let dotColor = "#9113A4";
+                   
+                   if (task.status === "in_progress") { statusStr = "in progress"; dotColor = "#4DAA57"; }
+                   else if (task.status === "in_review") { statusStr = "in review"; dotColor = "#FFBA08"; }
+                   else if (task.status === "up_next") { statusStr = "up next"; dotColor = "#2F6690"; }
+                   else if (task.status === "done") { statusStr = "done"; dotColor = "#F95738"; }
+                   
+                   let timeStr = "";
+                   if (task.status === "in_progress") timeStr = "started " + relativeTime(task.createdAt);
+                   else if (task.status === "done" || task.status === "in_review") timeStr = "finished " + relativeTime(when);
+                   else timeStr = "added " + relativeTime(task.createdAt);
+
+                   return (
+                     <div key={task.id} className="tl-item">
+                       <div className={pillClass}>
+                         <div className="tl-title">{task.name}</div>
+                         <div className={metaClass}>
+                           <span className="status-dot" style={{ color: dotColor }}>&#9679;</span>
+                           &nbsp;&nbsp;{statusStr} &middot; {timeStr}
+                         </div>
+                       </div>
+                     </div>
+                   );
+                })}
+             </div>
           </div>
         </aside>
       </section>

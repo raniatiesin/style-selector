@@ -112,10 +112,12 @@ html:has(.overlay-root) body {
 .timeline-list {
   height: 100%;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-rows: min-content 1fr min-content;
   gap: 10px;
+}
+.task-group.middle {
+  overflow-y: auto;
 }
 
 .tl-item {
