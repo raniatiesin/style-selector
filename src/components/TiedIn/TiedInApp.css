@@ -111,13 +111,17 @@ html:has(.overlay-root) body {
 
 .timeline-list {
   height: 100%;
-  overflow: hidden;
-  display: grid;
-  grid-template-rows: min-content 1fr min-content;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   gap: 10px;
 }
-.task-group.middle {
-  overflow-y: auto;
+
+.timeline-list::-webkit-scrollbar {
+  display: none;
 }
 
 .tl-item {
