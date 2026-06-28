@@ -4,6 +4,7 @@ import './TiedInApp.css';
 
 const OBS_WS_URL = "ws://localhost:4455";
 const SCENE_WORK = "work";
+const SCENE_PLAY = "play";
 const SCENE_EXPLAIN = "explain";
 const SCENE_BREAK = "break";
 const SCENE_STANDBY = "standby";
@@ -172,7 +173,7 @@ export default function TiedInControl() {
 
         obs.on("CurrentProgramSceneChanged", (event) => {
            addLog(`OBS Scene changed to: ${event.sceneName}`);
-           const map = { [SCENE_WORK]: "work", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby", [SCENE_MINECRAFT]: "minecraft" };
+           const map = { [SCENE_WORK]: "work", [SCENE_PLAY]: "play", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby", [SCENE_MINECRAFT]: "minecraft" };
            const mapped = map[event.sceneName];
            if (mapped) {
              setState(s => {
@@ -196,11 +197,13 @@ export default function TiedInControl() {
                  
                  const isWorkToExplain = (s.mode === 'work' && mapped === 'explain');
                  const isExplainToWork = (s.mode === 'explain' && mapped === 'work');
+                 const isWorkToPlay = (s.mode === 'work' && mapped === 'play');
+                 const isPlayToWork = (s.mode === 'play' && mapped === 'work');
 
-                 if (isWorkToExplain || isExplainToWork) {
+                 if (isWorkToExplain || isExplainToWork || isWorkToPlay || isPlayToWork) {
                     nextAccumulated = s.accumulatedTodaySeconds || 0;
                     nextTimestamp = s.modeTimestamp || Date.now();
-                 } else if (s.mode === 'work') {
+                 } else if (s.mode === 'work' || s.mode === 'play') {
                     if (s.modeTimestamp) {
                        const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
                        nextAccumulated += elapsed;
@@ -219,7 +222,7 @@ export default function TiedInControl() {
                  const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
                  const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
                  const explainText = getExplainMarkerText(s.mode, explainTopic);
-                 addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'break' ? 'break' : mapped === 'minecraft' ? 'minecraft' : 'standby');
+                 addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'play' ? 'play' : mapped === 'break' ? 'break' : mapped === 'minecraft' ? 'minecraft' : 'standby');
                  return newState;
                }
                return s;
@@ -241,17 +244,14 @@ export default function TiedInControl() {
             obs.call("SetCurrentProgramScene", { sceneName: SCENE_STANDBY }).catch(e => addLog(`Scene err: ${e.message}`));
 
             setState(s => {
-               const resetPayload = { 
+               // Switch to standby and update timestamp, but DO NOT reset accumulated time.
+               // This preserves today's already-tracked work/play seconds across multiple stream sessions.
+               const standbyPayload = { 
                   ...s, 
                   mode: "standby", 
-                  todayWorkSeconds: -1,
-                  accumulatedTodaySeconds: -1,
-                  modeTimestamp: now,
-                  contactedCount: 0, 
-                  convertedCount: 0 
+                  modeTimestamp: now
                };
-               pushUpdate(resetPayload);
-               // Return s, let pushUpdate handle the final sanitized React state update
+               pushUpdate(standbyPayload);
                return s;
             });
           }
@@ -441,11 +441,13 @@ export default function TiedInControl() {
     
     const isWorkToExplain = (state.mode === 'work' && isExplainTarget);
     const isExplainToWork = (isExplainCurrent && mode === 'work');
+    const isWorkToPlay = (state.mode === 'work' && mode === 'play');
+    const isPlayToWork = (state.mode === 'play' && mode === 'work');
     
-    if (isWorkToExplain || isExplainToWork) {
+    if (isWorkToExplain || isExplainToWork || isWorkToPlay || isPlayToWork) {
        nextAccumulated = state.accumulatedTodaySeconds || 0;
        nextTimestamp = state.modeTimestamp || Date.now();
-    } else if (state.mode === 'work') {
+    } else if (state.mode === 'work' || state.mode === 'play') {
        if (state.modeTimestamp) {
           const elapsed = Math.max(0, Math.floor((Date.now() - state.modeTimestamp) / 1000));
           nextAccumulated += elapsed;
@@ -462,7 +464,7 @@ export default function TiedInControl() {
 
     if (obsRef.current && obsConnected) {
       addLog(`Telling OBS to switch scene to: ${isExplainTarget ? 'explain' : mode}`);
-      const scene = mode === "work" ? SCENE_WORK : isExplainTarget ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : mode === "minecraft" ? SCENE_MINECRAFT : SCENE_STANDBY;
+      const scene = mode === "work" ? SCENE_WORK : isExplainTarget ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : mode === "minecraft" ? SCENE_MINECRAFT : mode === "play" ? SCENE_PLAY : SCENE_STANDBY;
       obsRef.current.call("SetCurrentProgramScene", { sceneName: scene }).catch(e => {
          addLog(`OBS Scene Change Error: ${e.message}`);
       });
@@ -485,7 +487,7 @@ export default function TiedInControl() {
     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
     const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
    const explainText = getExplainMarkerText(mode, explainTopicTarget);
-   addYtMarker(mode === 'work' ? workText : isExplainTarget ? explainText : mode === 'break' ? 'break' : mode === 'minecraft' ? 'minecraft' : 'standby');
+   addYtMarker(mode === 'work' ? workText : isExplainTarget ? explainText : mode === 'play' ? 'play' : mode === 'break' ? 'break' : mode === 'minecraft' ? 'minecraft' : 'standby');
    };
 
    if (isLocked) {
@@ -543,7 +545,10 @@ export default function TiedInControl() {
           </div>
           <div className="grid-2 grid-gap-top">
              <button className={`mode-btn button-wide ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')}>Standby</button>
-             <button className={`mode-btn button-wide ${state.mode === 'minecraft' ? 'active' : ''}`} onClick={() => setMode('minecraft')}>Play</button>
+             <button className={`mode-btn button-wide ${state.mode === 'play' ? 'active' : ''}`} onClick={() => setMode('play')}>Play</button>
+          </div>
+          <div className="grid-1 grid-gap-top">
+             <button className={`mode-btn button-wide ${state.mode === 'minecraft' ? 'active' : ''}`} onClick={() => setMode('minecraft')}>Minecraft</button>
           </div>
        </div>
 
@@ -609,7 +614,7 @@ export default function TiedInControl() {
           <div className="side-line panel-row">
              <span>Timestamps</span>
              <div className="inline-form">
-                <button className="mode-btn button-sm" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode === 'break' ? 'break' : state.mode === 'minecraft' ? 'minecraft' : 'standby')}>MARK</button>
+                <button className="mode-btn button-sm" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode === 'play' ? 'play' : state.mode === 'break' ? 'break' : state.mode === 'minecraft' ? 'minecraft' : 'standby')}>MARK</button>
                 <button className="mode-btn button-sm" onClick={resetMarkers}>CLEAR</button>
              </div>
           </div>

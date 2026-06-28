@@ -97,7 +97,8 @@ html:has(.overlay-root) body {
   display: block;
 }
 
-.mode-work .timeline {
+.mode-work .timeline,
+.mode-play .timeline {
   display: block;
 }
 .mode-minecraft .timeline {
@@ -200,6 +201,7 @@ html:has(.overlay-root) body {
 }
 
 .mode-work .context-shell,
+.mode-play .context-shell,
 .mode-minecraft .context-shell,
 .mode-explain .context-shell {
   display: block;

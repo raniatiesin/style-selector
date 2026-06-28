@@ -19,6 +19,8 @@ if (rootElement) {
     componentToRender = <TiedInApp displayMode="break" />;
   } else if (path.includes('overlays/work')) {
     componentToRender = <TiedInApp displayMode="work" />;
+  } else if (path.includes('overlays/play')) {
+    componentToRender = <TiedInApp displayMode="play" />;
   } else if (path.includes('overlays/minecraft')) {
     componentToRender = <TiedInApp displayMode="minecraft" />;
   } else if (path.includes('overlays/standby')) {

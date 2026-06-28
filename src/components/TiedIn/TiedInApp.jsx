@@ -128,6 +128,7 @@ export default function TiedInApp({ displayMode }) {
       const ls = liveStateRef.current;
       
       const isWorking = ls.mode === 'work';
+      const isPlay = ls.mode === 'play';
       const isBreak = ls.mode === 'break';
       const isMinecraft = ls.mode === 'minecraft';
       
@@ -136,7 +137,7 @@ export default function TiedInApp({ displayMode }) {
       let breakSecs = 0;
       let mcSessionSecs = 0;
       
-      if (isWorking) {
+      if (isWorking || isPlay) {
         const elapsed = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
         todaySecs += elapsed;
         sessionSecs = elapsed;
@@ -522,8 +523,8 @@ export default function TiedInApp({ displayMode }) {
                   <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
                 </div>
                 <div className="context-pill stack side-line-counts">
-                  <div className="side-line">Projects: {counts.contacted}</div>
-                  <div className="side-line">Contacts: {counts.converted}</div>
+                  <div className="side-line">Sons of the Forest</div>
+                  <div className="side-line">Sons of the Forest</div>
                 </div>
               </div>
               <div className="webcam-col"></div>

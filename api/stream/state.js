@@ -82,7 +82,7 @@ export default async function handler(req, res) {
        // If currently in an active ticking mode, explicitly calculate the un-pushed elapsed time.
        // This guarantees data isn't lost if the stream crashes before a break causes an accumulated log.
        let activeOffset = 0;
-       if (data.mode === 'work') {
+       if (data.mode === 'work' || data.mode === 'play') {
            const timestamp = data.mode_timestamp || Date.now();
            activeOffset = Math.floor((Date.now() - timestamp) / 1000);
            // Fallback to avoid negative values
@@ -90,17 +90,17 @@ export default async function handler(req, res) {
        }
 
        globalMetrics = {
-          mode: data.mode,
-           contactedCount: data.projects_count,
-           convertedCount: data.contacts_count,
-          previousDaysSeconds: pastDaysAcc,
-          todayWorkSeconds: (data.today_seconds ?? 0) + activeOffset,
-          
-          // Pure timestamp states back to frontend
-          accumulatedTodaySeconds: data.today_seconds ?? 0,
-          modeTimestamp: data.mode_timestamp,
+           mode: data.mode,
+            contactedCount: data.projects_count,
+            convertedCount: data.contacts_count,
+           previousDaysSeconds: pastDaysAcc,
+           todayWorkSeconds: (data.today_seconds ?? 0) + activeOffset,
+           
+           // Pure timestamp states back to frontend
+           accumulatedTodaySeconds: data.today_seconds ?? 0,
+           modeTimestamp: data.mode_timestamp,
 
-          totalDays: count || 1
+           totalDays: count || 1
        };
        webhookLogs = data.webhook_logs || [];
        // Combine the arrays for the frontend logic if needed

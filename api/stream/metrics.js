@@ -44,6 +44,7 @@ export default async function handler(req, res) {
     if (Object.hasOwn(payload, 'mode')) updateData.mode = payload.mode;
     if (Object.hasOwn(payload, 'contactedCount')) updateData.projects_count = payload.contactedCount;
     if (Object.hasOwn(payload, 'convertedCount')) updateData.contacts_count = payload.convertedCount;
+    if (Object.hasOwn(payload, 'playSeconds')) updateData.play_seconds = payload.playSeconds;
     
     // NEW: Timestamp logic to fix timer drift and stale UI overwrites
     if (Object.hasOwn(payload, 'accumulatedTodaySeconds')) {
