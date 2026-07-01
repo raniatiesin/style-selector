@@ -523,8 +523,17 @@ export default function TiedInApp({ displayMode }) {
                   <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
                 </div>
                 <div className="context-pill stack side-line-counts">
-                  <div className="side-line">Sons of the Forest</div>
-                  <div className="side-line">Sons of the Forest</div>
+                  {activeMode === 'play' ? (
+                    <>
+                      <div className="side-line">Sons of the Forest</div>
+                      <div className="side-line">Sons of the Forest</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="side-line">Projects: {counts.contacted}</div>
+                      <div className="side-line">Contacts: {counts.converted}</div>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="webcam-col"></div>
