@@ -17,13 +17,6 @@ export default function TiedInControl() {
   const [inputObs, setInputObs] = useState('');
   const [explainTopic, setExplainTopic] = useState('');
   const [selectedGame, setSelectedGame] = useState('Just Playing');
-
-  // Sync selected game to state when dropdown changes
-  useEffect(() => {
-    if (state.gameName !== selectedGame) {
-      setState(s => ({ ...s, gameName: selectedGame }));
-    }
-  }, [selectedGame, state.gameName]);
   
   const [isLocked, setIsLocked] = useState(!adminKey);
 
@@ -36,6 +29,13 @@ export default function TiedInControl() {
     isStreaming: false,
     gameName: 'Just Playing'
   });
+
+  // Sync selected game to state when dropdown changes
+  useEffect(() => {
+    if (state.gameName !== selectedGame) {
+      setState(s => ({ ...s, gameName: selectedGame }));
+    }
+  }, [selectedGame, state.gameName]);
 
   const isSyncingRef = useRef(false);
   const [isSyncing, setIsSyncing] = useState(false);
