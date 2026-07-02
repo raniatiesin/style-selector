@@ -8,7 +8,6 @@ const SCENE_PLAY = "play";
 const SCENE_EXPLAIN = "explain";
 const SCENE_BREAK = "break";
 const SCENE_STANDBY = "standby";
-const SCENE_MINECRAFT = "minecraft";
 
 export default function TiedInControl() {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem('STREAM_ADMIN_KEY') || '');
@@ -17,9 +16,14 @@ export default function TiedInControl() {
   const [inputKey, setInputKey] = useState('');
   const [inputObs, setInputObs] = useState('');
   const [explainTopic, setExplainTopic] = useState('');
-  const [gameTimeInput, setGameTimeInput] = useState('');
-  const [isSubmittingGame, setIsSubmittingGame] = useState(false);
   const [selectedGame, setSelectedGame] = useState('Just Playing');
+
+  // Sync selected game to state when dropdown changes
+  useEffect(() => {
+    if (state.gameName !== selectedGame) {
+      setState(s => ({ ...s, gameName: selectedGame }));
+    }
+  }, [selectedGame, state.gameName]);
   
   const [isLocked, setIsLocked] = useState(!adminKey);
 
@@ -129,6 +133,10 @@ export default function TiedInControl() {
               isStreaming: data.metrics.isStreaming ?? s.isStreaming,
               gameName: data.metrics.gameName ?? s.gameName
            }));
+           // Sync dropdown to state
+           if (data.metrics.gameName && data.metrics.gameName !== selectedGame) {
+              setSelectedGame(data.metrics.gameName);
+           }
         }
 
         if (data?.tasks && Array.isArray(data.tasks)) {
@@ -178,7 +186,7 @@ export default function TiedInControl() {
 
         obs.on("CurrentProgramSceneChanged", (event) => {
            addLog(`OBS Scene changed to: ${event.sceneName}`);
-           const map = { [SCENE_WORK]: "work", [SCENE_PLAY]: "play", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby", [SCENE_MINECRAFT]: "minecraft" };
+           const map = { [SCENE_WORK]: "work", [SCENE_PLAY]: "play", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby" };
            const mapped = map[event.sceneName];
            if (mapped) {
              setState(s => {
@@ -228,7 +236,7 @@ export default function TiedInControl() {
                  const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
                  const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
                  const explainText = getExplainMarkerText(s.mode, explainTopic);
-                 addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'play' ? 'play' : mapped === 'break' ? 'break' : mapped === 'minecraft' ? 'minecraft' : 'standby');
+                 addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'play' ? 'play' : mapped === 'break' ? 'break' : 'standby');
                  return newState;
                }
                return s;
@@ -391,50 +399,6 @@ export default function TiedInControl() {
     });
   };
 
-  const submitGameTime = async () => {
-    const raw = gameTimeInput.trim();
-    if (!raw) return;
-    // Parse MM:SS — digits only, auto-format as minutes:seconds
-    // e.g. "1148" → 11 min 48 sec → (11*60 + 48) * 1000 = 708000ms
-    const digits = raw.replace(/\D/g, '');
-    if (digits.length < 3) {
-      addLog("Type at least 3 digits (e.g. 1148 for 11:48)");
-      return;
-    }
-    const secPart = parseInt(digits.slice(-2), 10);
-    const minPart = parseInt(digits.slice(0, -2), 10);
-    if (secPart > 59) {
-      addLog("Seconds must be ≤ 59");
-      return;
-    }
-    const totalSec = minPart * 60 + secPart;
-    if (totalSec <= 0) {
-      addLog("Time must be > 0");
-      return;
-    }
-    const ms = totalSec * 1000;
-    const displayStr = `${String(minPart).padStart(2, '0')}:${String(secPart).padStart(2, '0')}`;
-
-    setIsSubmittingGame(true);
-    try {
-      const res = await fetch('https://tiesin.me/api/stream/minecraft', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminKey}`
-        },
-        body: JSON.stringify({ timePlayedMs: ms })
-      });
-      if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      addLog(`Game recorded: ${displayStr} (${ms}ms)`);
-      setGameTimeInput('');
-    } catch (e) {
-      addLog(`Game submit error: ${e.message}`);
-    } finally {
-      setIsSubmittingGame(false);
-    }
-  };
-
   const resetDay = () => {
     if (window.confirm("Reset entire day overlay clock back to zero and pause the screen? (Accumulated total will NOT be reset)")) {
       pushUpdate({ 
@@ -489,13 +453,13 @@ export default function TiedInControl() {
       mode,
       accumulatedTodaySeconds: nextAccumulated,
       modeTimestamp: nextTimestamp,
-      gameName: mode === 'play' ? selectedGame : state.gameName,
+      gameName: selectedGame,
       _skipPushCalc: true
     };
 
     if (obsRef.current && obsConnected) {
       addLog(`Telling OBS to switch scene to: ${isExplainTarget ? 'explain' : mode}`);
-      const scene = mode === "work" ? SCENE_WORK : isExplainTarget ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : mode === "minecraft" ? SCENE_MINECRAFT : mode === "play" ? SCENE_PLAY : SCENE_STANDBY;
+      const scene = mode === "work" ? SCENE_WORK : isExplainTarget ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : mode === "play" ? SCENE_PLAY : SCENE_STANDBY;
       obsRef.current.call("SetCurrentProgramScene", { sceneName: scene }).catch(e => {
          addLog(`OBS Scene Change Error: ${e.message}`);
       });
@@ -518,7 +482,7 @@ export default function TiedInControl() {
     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
     const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
    const explainText = getExplainMarkerText(mode, explainTopicTarget);
-   addYtMarker(mode === 'work' ? workText : isExplainTarget ? explainText : mode === 'play' ? 'play' : mode === 'break' ? 'break' : mode === 'minecraft' ? 'minecraft' : 'standby');
+   addYtMarker(mode === 'work' ? workText : isExplainTarget ? explainText : mode === 'play' ? 'play' : mode === 'break' ? 'break' : 'standby');
    };
 
    if (isLocked) {
@@ -576,9 +540,8 @@ export default function TiedInControl() {
           </div>
           <div className="grid-2 grid-gap-top">
              <button className={`mode-btn button-wide ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')}>Standby</button>
-             <button className={`mode-btn button-wide ${state.mode === 'play' ? 'active' : ''}`} onClick={() => setMode('play')}>Play</button>
           </div>
-          <div className="grid-1 grid-gap-top">
+          <div className="grid-2 grid-gap-top">
              <select 
                 value={selectedGame} 
                 onChange={e => setSelectedGame(e.target.value)}
@@ -590,56 +553,16 @@ export default function TiedInControl() {
                 <option value="Sons of the Forest">Sons of the Forest</option>
                 <option value="Minecraft">Minecraft</option>
              </select>
-          </div>
-          <div className="grid-1 grid-gap-top">
-             <button className={`mode-btn button-wide ${state.mode === 'minecraft' ? 'active' : ''}`} onClick={() => setMode('minecraft')}>Minecraft</button>
+             <button className={`mode-btn button-wide ${state.mode === 'play' ? 'active' : ''}`} onClick={() => setMode('play')}>Play</button>
           </div>
        </div>
 
-       {/* Metrics Box — switches to game time input when in Play mode */}
-       {state.mode === 'minecraft' ? (
-         <div className="context-pill stack">
-           <div className="side-line panel-row" style={{ marginBottom: '8px' }}>
-             <span>Record Game Time</span>
-           </div>
-           <div className="side-line panel-row">
-             <input
-               type="text"
-               inputMode="numeric"
-               maxLength={5}
-               placeholder="MM:SS"
-               value={(() => {
-                 const d = gameTimeInput.replace(/\D/g, '');
-                 if (!d) return '';
-                 if (d.length <= 2) return d;
-                 return `${d.slice(0, -2)}:${d.slice(-2)}`;
-               })()}
-               onChange={e => {
-                 const raw = e.target.value;
-                 // If user deleted the colon, just store the cleaned digits
-                 const cleaned = raw.replace(/[^0-9]/g, '').slice(0, 4);
-                 setGameTimeInput(cleaned);
-               }}
-               onKeyDown={e => { if (e.key === 'Enter') submitGameTime(); }}
-               className="input-full input-pad"
-               style={{ width: '160px', fontSize: '24px', padding: '10px 16px', letterSpacing: '0.15em', fontVariantNumeric: 'tabular-nums' }}
-             />
-             <button
-               className="mode-btn button-sm"
-               onClick={submitGameTime}
-               disabled={isSubmittingGame || !gameTimeInput.trim()}
-               style={{ minWidth: '80px', fontSize: '16px', padding: '10px 16px' }}
-             >
-               {isSubmittingGame ? '...' : 'ADD'}
-             </button>
-           </div>
-         </div>
-       ) : (
-         <div className="context-pill stack">
-           <div className="side-line panel-row">
-              <span>Projects: {state.contactedCount}</span>
-             <div className="inline-form">
-               <button className="mode-btn button-xs" onClick={() => handleMetric('contactedCount', -1)}>-</button>
+       {/* Metrics Box */}
+       <div className="context-pill stack">
+         <div className="side-line panel-row">
+            <span>Projects: {state.contactedCount}</span>
+           <div className="inline-form">
+             <button className="mode-btn button-xs" onClick={() => handleMetric('contactedCount', -1)}>-</button>
                <button className="mode-btn button-xs" onClick={() => handleMetric('contactedCount', 1)}>+</button>
              </div>
            </div>
@@ -651,14 +574,13 @@ export default function TiedInControl() {
              </div>
            </div>
          </div>
-       )}
 
        {/* YouTube Markers Box */}
        <div className="context-pill stack panel-grow">
           <div className="side-line panel-row">
              <span>Timestamps</span>
              <div className="inline-form">
-                <button className="mode-btn button-sm" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode === 'play' ? 'play' : state.mode === 'break' ? 'break' : state.mode === 'minecraft' ? 'minecraft' : 'standby')}>MARK</button>
+                <button className="mode-btn button-sm" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode === 'play' ? 'play' : state.mode === 'break' ? 'break' : 'standby')}>MARK</button>
                 <button className="mode-btn button-sm" onClick={resetMarkers}>CLEAR</button>
              </div>
           </div>
