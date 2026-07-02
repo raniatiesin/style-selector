@@ -97,9 +97,7 @@ export default function TiedInApp({ displayMode }) {
     explainTopic: "",
     isStreaming: false,
     gameName: "Just Playing",
-    standbySelection: "Coming Soon",
-    playTopic: "",
-    standbyTopic: ""
+    standbySelection: "Coming Soon"
   });
 
   // Ref for the timeline list container to enable scroll-to-in-progress
@@ -206,23 +204,13 @@ export default function TiedInApp({ displayMode }) {
 
       // Update game name refs in play mode
       if (isPlay) {
-        const rawMode = String(ls.mode || "");
-        let displayText = ls.gameName || "Just Playing";
-        if (rawMode.startsWith('play|') && ls.playTopic) {
-          displayText = `play - ${ls.playTopic}`;
-        }
-        if (timerRefs.gameName1.current) timerRefs.gameName1.current.innerText = displayText;
-        if (timerRefs.gameName2.current) timerRefs.gameName2.current.innerText = displayText;
+        if (timerRefs.gameName1.current) timerRefs.gameName1.current.innerText = ls.gameName || "Just Playing";
+        if (timerRefs.gameName2.current) timerRefs.gameName2.current.innerText = ls.gameName || "Just Playing";
       }
 
       // Update standby title
       if (timerRefs.standbyTitle.current) {
-        const rawMode = String(ls.mode || "");
-        if (rawMode.startsWith('standby|') && ls.standbyTopic) {
-          timerRefs.standbyTitle.current.innerText = `standby - ${ls.standbyTopic}`;
-        } else {
-          timerRefs.standbyTitle.current.innerText = ls.standbySelection || "Coming Soon";
-        }
+        timerRefs.standbyTitle.current.innerText = ls.standbySelection || "Coming Soon";
       }
 
       // Process and update the explain topic text
@@ -294,8 +282,6 @@ export default function TiedInApp({ displayMode }) {
           liveStateRef.current.isStreaming = m.isStreaming ?? false;
           liveStateRef.current.gameName = m.gameName ?? "Just Playing";
           liveStateRef.current.standbySelection = m.standbySelection ?? "Coming Soon";
-          liveStateRef.current.playTopic = m.playTopic ?? "";
-          liveStateRef.current.standbyTopic = m.standbyTopic ?? "";
           const rawMode = String(m.mode || "");
           if (rawMode.startsWith('explain|')) {
             const topic = rawMode.split('|').slice(1).join('|').trim();

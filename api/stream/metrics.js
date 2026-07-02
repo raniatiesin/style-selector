@@ -59,8 +59,6 @@ export default async function handler(req, res) {
     if (Object.hasOwn(payload, 'isStreaming')) updateData.is_streaming = payload.isStreaming;
     if (Object.hasOwn(payload, 'gameName')) updateData.game_name = payload.gameName;
     if (Object.hasOwn(payload, 'standbySelection')) updateData.standby_selection = payload.standbySelection;
-    if (Object.hasOwn(payload, 'playTopic')) updateData.play_topic = payload.playTopic;
-    if (Object.hasOwn(payload, 'standbyTopic')) updateData.standby_topic = payload.standbyTopic;
     if (Object.hasOwn(payload, 'inProgressTasks')) updateData.in_progress_tasks = payload.inProgressTasks;
     if (Object.hasOwn(payload, 'inReviewTasks')) updateData.in_review_tasks = payload.inReviewTasks;
     if (Object.hasOwn(payload, 'upNextTasks')) updateData.up_next_tasks = payload.upNextTasks;

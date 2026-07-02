@@ -100,8 +100,6 @@ export default async function handler(req, res) {
            isStreaming: data.is_streaming ?? false,
            gameName: data.game_name ?? 'Just Playing',
            standbySelection: data.standby_selection ?? 'Coming Soon',
-           playTopic: data.play_topic ?? '',
-           standbyTopic: data.standby_topic ?? '',
            
            // Pure timestamp states back to frontend
            accumulatedTodaySeconds: data.today_seconds ?? 0,
@@ -129,8 +127,6 @@ export default async function handler(req, res) {
             isStreaming: false,
             gameName: 'Just Playing',
             standbySelection: 'Coming Soon',
-            playTopic: '',
-            standbyTopic: '',
             accumulatedTodaySeconds: 0,
             modeTimestamp: Date.now(),
             totalDays: count ? count + 1 : 1
