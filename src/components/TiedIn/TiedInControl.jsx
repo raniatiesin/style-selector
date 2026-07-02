@@ -154,11 +154,12 @@ export default function TiedInControl() {
               gameName: data.metrics.gameName ?? s.gameName,
               standbySelection: data.metrics.standbySelection ?? s.standbySelection
            }));
-           // Sync dropdowns to state
-           if (data.metrics.gameName && data.metrics.gameName !== selectedGame) {
+           // Only sync dropdowns if they're different from current selection
+           // This prevents reverting user selections during API polling
+           if (data.metrics.gameName && data.metrics.gameName !== selectedGame && data.metrics.gameName !== s.gameName) {
               setSelectedGame(data.metrics.gameName);
            }
-           if (data.metrics.standbySelection && data.metrics.standbySelection !== selectedStandby) {
+           if (data.metrics.standbySelection && data.metrics.standbySelection !== selectedStandby && data.metrics.standbySelection !== s.standbySelection) {
               setSelectedStandby(data.metrics.standbySelection);
            }
         }
