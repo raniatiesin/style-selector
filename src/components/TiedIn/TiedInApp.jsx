@@ -83,7 +83,8 @@ export default function TiedInApp({ displayMode }) {
     explainAccumulated: useRef(null),
     explainTopicText: useRef(null),
     gameName1: useRef(null),
-    gameName2: useRef(null)
+    gameName2: useRef(null),
+    standbyTitle: useRef(null)
   };
 
   // Mutable source of truth for the animation loop
@@ -95,7 +96,8 @@ export default function TiedInApp({ displayMode }) {
     totalDays: 1,
     explainTopic: "",
     isStreaming: false,
-    gameName: "Just Playing"
+    gameName: "Just Playing",
+    standbySelection: "Coming Soon"
   });
 
   // Ref for the timeline list container to enable scroll-to-in-progress
@@ -206,6 +208,11 @@ export default function TiedInApp({ displayMode }) {
         if (timerRefs.gameName2.current) timerRefs.gameName2.current.innerText = ls.gameName || "Just Playing";
       }
 
+      // Update standby title
+      if (timerRefs.standbyTitle.current) {
+        timerRefs.standbyTitle.current.innerText = ls.standbySelection || "Coming Soon";
+      }
+
       // Process and update the explain topic text
       const rawModeLocal = String(ls.mode || "");
       let currentTopicText = 'Explain Topic';
@@ -274,6 +281,7 @@ export default function TiedInApp({ displayMode }) {
           liveStateRef.current.totalDays = Number(m.totalDays || 1);
           liveStateRef.current.isStreaming = m.isStreaming ?? false;
           liveStateRef.current.gameName = m.gameName ?? "Just Playing";
+          liveStateRef.current.standbySelection = m.standbySelection ?? "Coming Soon";
           const rawMode = String(m.mode || "");
           if (rawMode.startsWith('explain|')) {
             const topic = rawMode.split('|').slice(1).join('|').trim();
@@ -604,7 +612,7 @@ export default function TiedInApp({ displayMode }) {
       <section className="standby-screen full-screen" id="standbyScreen">
         <div className="screen-stack">
           <div className="screen-block">
-            <div className="standby-title">STANDBY</div>
+            <div className="standby-title" ref={timerRefs.standbyTitle}>Coming Soon</div>
           </div>
 
           <div className="screen-time-stack">

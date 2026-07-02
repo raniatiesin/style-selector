@@ -17,6 +17,7 @@ export default function TiedInControl() {
   const [inputObs, setInputObs] = useState('');
   const [explainTopic, setExplainTopic] = useState('');
   const [selectedGame, setSelectedGame] = useState('Just Playing');
+  const [selectedStandby, setSelectedStandby] = useState('Coming Soon');
   
   const [isLocked, setIsLocked] = useState(!adminKey);
 
@@ -27,7 +28,8 @@ export default function TiedInControl() {
     accumulatedTodaySeconds: 0,
     modeTimestamp: Date.now(),
     isStreaming: false,
-    gameName: 'Just Playing'
+    gameName: 'Just Playing',
+    standbySelection: 'Coming Soon'
   });
 
   // Sync selected game to state when dropdown changes
@@ -36,6 +38,13 @@ export default function TiedInControl() {
       setState(s => ({ ...s, gameName: selectedGame }));
     }
   }, [selectedGame, state.gameName]);
+
+  // Sync selected standby to state when dropdown changes
+  useEffect(() => {
+    if (state.standbySelection !== selectedStandby) {
+      setState(s => ({ ...s, standbySelection: selectedStandby }));
+    }
+  }, [selectedStandby, state.standbySelection]);
 
   const isSyncingRef = useRef(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -131,11 +140,15 @@ export default function TiedInControl() {
               accumulatedTodaySeconds: data.metrics.accumulatedTodaySeconds ?? s.accumulatedTodaySeconds,
               modeTimestamp: data.metrics.modeTimestamp ?? s.modeTimestamp,
               isStreaming: data.metrics.isStreaming ?? s.isStreaming,
-              gameName: data.metrics.gameName ?? s.gameName
+              gameName: data.metrics.gameName ?? s.gameName,
+              standbySelection: data.metrics.standbySelection ?? s.standbySelection
            }));
-           // Sync dropdown to state
+           // Sync dropdowns to state
            if (data.metrics.gameName && data.metrics.gameName !== selectedGame) {
               setSelectedGame(data.metrics.gameName);
+           }
+           if (data.metrics.standbySelection && data.metrics.standbySelection !== selectedStandby) {
+              setSelectedStandby(data.metrics.standbySelection);
            }
         }
 
@@ -454,6 +467,7 @@ export default function TiedInControl() {
       accumulatedTodaySeconds: nextAccumulated,
       modeTimestamp: nextTimestamp,
       gameName: selectedGame,
+      standbySelection: selectedStandby,
       _skipPushCalc: true
     };
 
@@ -539,6 +553,17 @@ export default function TiedInControl() {
              <button className={`mode-btn button-wide ${state.mode.startsWith('explain') ? 'active' : ''}`} onClick={() => setMode('explain|' + explainTopic.trim())}>Explain</button>
           </div>
           <div className="grid-2 grid-gap-top">
+             <select 
+                value={selectedStandby} 
+                onChange={e => setSelectedStandby(e.target.value)}
+                className="input-full input-pad"
+                style={{ cursor: 'pointer' }}
+             >
+                <option value="Beach">Beach</option>
+                <option value="Gym">Gym</option>
+                <option value="Lunch">Lunch</option>
+                <option value="Coming Soon">Coming Soon</option>
+             </select>
              <button className={`mode-btn button-wide ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')}>Standby</button>
           </div>
           <div className="grid-2 grid-gap-top">
