@@ -234,6 +234,7 @@ export default function TiedInControl() {
         });
 
         obs.on("StreamStateChanged", (event) => {
+          addLog(`StreamStateChanged event - outputActive: ${event.outputActive}`);
           if (event.outputActive) {
             addLog("OBS Stream Started! Resetting setup...");
             
@@ -255,6 +256,7 @@ export default function TiedInControl() {
                   modeTimestamp: now,
                   isStreaming: true
                };
+               addLog(`Setting isStreaming to true, pushing update...`);
                pushUpdate(standbyPayload);
                return s;
             });
@@ -262,6 +264,24 @@ export default function TiedInControl() {
             addLog("OBS Stream Stopped!");
             setState(s => {
                // When stream stops, capture any elapsed work/play time and add to accumulated
+               let nextAccumulated = s.accumulatedTodaySeconds || 0;
+               if ((s.mode === 'work' || s.mode === 'play') && s.modeTimestamp) {
+                  const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
+                  nextAccumulated += elapsed;
+                  addLog(`Captured ${elapsed} seconds of elapsed time on stream stop`);
+               }
+               
+               const streamingPayload = {
+                  ...s,
+                  isStreaming: false,
+                  accumulatedTodaySeconds: nextAccumulated,
+                  modeTimestamp: Date.now()
+               };
+               addLog(`Setting isStreaming to false, pushing update...`);
+               pushUpdate(streamingPayload);
+               return s;
+            });
+          }
                let nextAccumulated = s.accumulatedTodaySeconds || 0;
                if ((s.mode === 'work' || s.mode === 'play') && s.modeTimestamp) {
                   const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));

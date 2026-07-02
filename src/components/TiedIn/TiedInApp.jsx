@@ -132,7 +132,7 @@ export default function TiedInApp({ displayMode }) {
       const isPlay = ls.mode === 'play';
       const isBreak = ls.mode === 'break';
       const isMinecraft = ls.mode === 'minecraft';
-      const isStreaming = ls.isStreaming;
+      const isStreaming = ls.isStreaming ?? false;
       
       let todaySecs = ls.accumulatedTodaySeconds || 0;
       let sessionSecs = 0;
