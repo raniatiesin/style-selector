@@ -79,10 +79,10 @@ export default async function handler(req, res) {
     let webhookLogs = [];
 
     if (data) {
-       // If currently in an active ticking mode, explicitly calculate the un-pushed elapsed time.
+       // If currently in an active ticking mode AND streaming, explicitly calculate the un-pushed elapsed time.
        // This guarantees data isn't lost if the stream crashes before a break causes an accumulated log.
        let activeOffset = 0;
-       if (data.mode === 'work' || data.mode === 'play') {
+       if ((data.mode === 'work' || data.mode === 'play') && data.is_streaming) {
            const timestamp = data.mode_timestamp || Date.now();
            activeOffset = Math.floor((Date.now() - timestamp) / 1000);
            // Fallback to avoid negative values
@@ -95,6 +95,7 @@ export default async function handler(req, res) {
             convertedCount: data.contacts_count,
            previousDaysSeconds: pastDaysAcc,
            todayWorkSeconds: (data.today_seconds ?? 0) + activeOffset,
+           isStreaming: data.is_streaming ?? false,
            
            // Pure timestamp states back to frontend
            accumulatedTodaySeconds: data.today_seconds ?? 0,
@@ -118,6 +119,7 @@ export default async function handler(req, res) {
             convertedCount: 0,
             previousDaysSeconds: pastDaysAcc,
             todayWorkSeconds: 0,
+            isStreaming: false,
             accumulatedTodaySeconds: 0,
             modeTimestamp: Date.now(),
             totalDays: count ? count + 1 : 1

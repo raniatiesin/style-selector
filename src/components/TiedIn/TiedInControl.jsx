@@ -27,7 +27,8 @@ export default function TiedInControl() {
     convertedCount: 0,
     mode: 'work',
     accumulatedTodaySeconds: 0,
-    modeTimestamp: Date.now()
+    modeTimestamp: Date.now(),
+    isStreaming: false
   });
 
   const isSyncingRef = useRef(false);
@@ -122,7 +123,8 @@ export default function TiedInControl() {
               convertedCount: data.metrics.convertedCount ?? s.convertedCount,
               mode: data.metrics.mode || s.mode,
               accumulatedTodaySeconds: data.metrics.accumulatedTodaySeconds ?? s.accumulatedTodaySeconds,
-              modeTimestamp: data.metrics.modeTimestamp ?? s.modeTimestamp
+              modeTimestamp: data.metrics.modeTimestamp ?? s.modeTimestamp,
+              isStreaming: data.metrics.isStreaming ?? s.isStreaming
            }));
         }
 
@@ -215,7 +217,8 @@ export default function TiedInControl() {
                     mode: mapped,
                     accumulatedTodaySeconds: nextAccumulated,
                     modeTimestamp: nextTimestamp,
-                    _skipPushCalc: true
+                    _skipPushCalc: true,
+                    isStreaming: s.isStreaming
                  };
 
                  pushUpdate(newState);
@@ -249,9 +252,29 @@ export default function TiedInControl() {
                const standbyPayload = { 
                   ...s, 
                   mode: "standby", 
-                  modeTimestamp: now
+                  modeTimestamp: now,
+                  isStreaming: true
                };
                pushUpdate(standbyPayload);
+               return s;
+            });
+          } else {
+            addLog("OBS Stream Stopped!");
+            setState(s => {
+               // When stream stops, capture any elapsed work/play time and add to accumulated
+               let nextAccumulated = s.accumulatedTodaySeconds || 0;
+               if ((s.mode === 'work' || s.mode === 'play') && s.modeTimestamp) {
+                  const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
+                  nextAccumulated += elapsed;
+               }
+               
+               const streamingPayload = {
+                  ...s,
+                  isStreaming: false,
+                  accumulatedTodaySeconds: nextAccumulated,
+                  modeTimestamp: Date.now()
+               };
+               pushUpdate(streamingPayload);
                return s;
             });
           }

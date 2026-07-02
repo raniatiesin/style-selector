@@ -91,7 +91,8 @@ export default function TiedInApp({ displayMode }) {
     modeTimestamp: 0,
     previousDaysSeconds: 0,
     totalDays: 1,
-    explainTopic: ""
+    explainTopic: "",
+    isStreaming: false
   });
 
   // Ref for the timeline list container to enable scroll-to-in-progress
@@ -131,13 +132,14 @@ export default function TiedInApp({ displayMode }) {
       const isPlay = ls.mode === 'play';
       const isBreak = ls.mode === 'break';
       const isMinecraft = ls.mode === 'minecraft';
+      const isStreaming = ls.isStreaming;
       
       let todaySecs = ls.accumulatedTodaySeconds || 0;
       let sessionSecs = 0;
       let breakSecs = 0;
       let mcSessionSecs = 0;
       
-      if (isWorking || isPlay) {
+      if (isStreaming && (isWorking || isPlay)) {
         const elapsed = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
         todaySecs += elapsed;
         sessionSecs = elapsed;
@@ -256,6 +258,7 @@ export default function TiedInApp({ displayMode }) {
           liveStateRef.current.accumulatedTodaySeconds = acc;
           liveStateRef.current.previousDaysSeconds = Number(m.previousDaysSeconds || 0);
           liveStateRef.current.totalDays = Number(m.totalDays || 1);
+          liveStateRef.current.isStreaming = m.isStreaming ?? false;
           const rawMode = String(m.mode || "");
           if (rawMode.startsWith('explain|')) {
             const topic = rawMode.split('|').slice(1).join('|').trim();
