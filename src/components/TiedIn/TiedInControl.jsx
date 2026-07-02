@@ -19,6 +19,7 @@ export default function TiedInControl() {
   const [explainTopic, setExplainTopic] = useState('');
   const [gameTimeInput, setGameTimeInput] = useState('');
   const [isSubmittingGame, setIsSubmittingGame] = useState(false);
+  const [selectedGame, setSelectedGame] = useState('Just Playing');
   
   const [isLocked, setIsLocked] = useState(!adminKey);
 
@@ -28,7 +29,8 @@ export default function TiedInControl() {
     mode: 'work',
     accumulatedTodaySeconds: 0,
     modeTimestamp: Date.now(),
-    isStreaming: false
+    isStreaming: false,
+    gameName: 'Just Playing'
   });
 
   const isSyncingRef = useRef(false);
@@ -124,7 +126,8 @@ export default function TiedInControl() {
               mode: data.metrics.mode || s.mode,
               accumulatedTodaySeconds: data.metrics.accumulatedTodaySeconds ?? s.accumulatedTodaySeconds,
               modeTimestamp: data.metrics.modeTimestamp ?? s.modeTimestamp,
-              isStreaming: data.metrics.isStreaming ?? s.isStreaming
+              isStreaming: data.metrics.isStreaming ?? s.isStreaming,
+              gameName: data.metrics.gameName ?? s.gameName
            }));
         }
 
@@ -502,6 +505,7 @@ export default function TiedInControl() {
       mode,
       accumulatedTodaySeconds: nextAccumulated,
       modeTimestamp: nextTimestamp,
+      gameName: mode === 'play' ? selectedGame : state.gameName,
       _skipPushCalc: true
     };
 
@@ -589,6 +593,19 @@ export default function TiedInControl() {
           <div className="grid-2 grid-gap-top">
              <button className={`mode-btn button-wide ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')}>Standby</button>
              <button className={`mode-btn button-wide ${state.mode === 'play' ? 'active' : ''}`} onClick={() => setMode('play')}>Play</button>
+          </div>
+          <div className="grid-1 grid-gap-top">
+             <select 
+                value={selectedGame} 
+                onChange={e => setSelectedGame(e.target.value)}
+                className="input-full input-pad"
+                style={{ cursor: 'pointer' }}
+             >
+                <option value="Just Playing">Just Playing</option>
+                <option value="Red Dead Redemption">Red Dead Redemption</option>
+                <option value="Sons of the Forest">Sons of the Forest</option>
+                <option value="Minecraft">Minecraft</option>
+             </select>
           </div>
           <div className="grid-1 grid-gap-top">
              <button className={`mode-btn button-wide ${state.mode === 'minecraft' ? 'active' : ''}`} onClick={() => setMode('minecraft')}>Minecraft</button>

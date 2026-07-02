@@ -57,6 +57,7 @@ export default async function handler(req, res) {
     
     if (Object.hasOwn(payload, 'accumulatedTotalSeconds')) updateData.accumulated_seconds = payload.accumulatedTotalSeconds;
     if (Object.hasOwn(payload, 'isStreaming')) updateData.is_streaming = payload.isStreaming;
+    if (Object.hasOwn(payload, 'gameName')) updateData.game_name = payload.gameName;
     if (Object.hasOwn(payload, 'inProgressTasks')) updateData.in_progress_tasks = payload.inProgressTasks;
     if (Object.hasOwn(payload, 'inReviewTasks')) updateData.in_review_tasks = payload.inReviewTasks;
     if (Object.hasOwn(payload, 'upNextTasks')) updateData.up_next_tasks = payload.upNextTasks;

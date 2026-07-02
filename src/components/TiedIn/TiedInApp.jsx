@@ -81,7 +81,9 @@ export default function TiedInApp({ displayMode }) {
     explainDay: useRef(null),
     explainTime: useRef(null),
     explainAccumulated: useRef(null),
-    explainTopicText: useRef(null)
+    explainTopicText: useRef(null),
+    gameName1: useRef(null),
+    gameName2: useRef(null)
   };
 
   // Mutable source of truth for the animation loop
@@ -92,7 +94,8 @@ export default function TiedInApp({ displayMode }) {
     previousDaysSeconds: 0,
     totalDays: 1,
     explainTopic: "",
-    isStreaming: false
+    isStreaming: false,
+    gameName: "Just Playing"
   });
 
   // Ref for the timeline list container to enable scroll-to-in-progress
@@ -189,7 +192,18 @@ export default function TiedInApp({ displayMode }) {
       
       // Update the hours track for work/standby modes
       if (timerRefs.dayHoursTrack.current) {
-        timerRefs.dayHoursTrack.current.innerText = hoursString;
+        if (isPlay) {
+          // Show game name instead of accumulated hours in play mode
+          timerRefs.dayHoursTrack.current.innerText = ls.gameName || "Just Playing";
+        } else {
+          timerRefs.dayHoursTrack.current.innerText = hoursString;
+        }
+      }
+
+      // Update game name refs in play mode
+      if (isPlay) {
+        if (timerRefs.gameName1.current) timerRefs.gameName1.current.innerText = ls.gameName || "Just Playing";
+        if (timerRefs.gameName2.current) timerRefs.gameName2.current.innerText = ls.gameName || "Just Playing";
       }
 
       // Process and update the explain topic text
@@ -259,6 +273,7 @@ export default function TiedInApp({ displayMode }) {
           liveStateRef.current.previousDaysSeconds = Number(m.previousDaysSeconds || 0);
           liveStateRef.current.totalDays = Number(m.totalDays || 1);
           liveStateRef.current.isStreaming = m.isStreaming ?? false;
+          liveStateRef.current.gameName = m.gameName ?? "Just Playing";
           const rawMode = String(m.mode || "");
           if (rawMode.startsWith('explain|')) {
             const topic = rawMode.split('|').slice(1).join('|').trim();
@@ -528,8 +543,8 @@ export default function TiedInApp({ displayMode }) {
                 <div className="context-pill stack side-line-counts">
                   {activeMode === 'play' ? (
                     <>
-                      <div className="side-line">Sons of the Forest</div>
-                      <div className="side-line">Sons of the Forest</div>
+                      <div className="side-line" ref={timerRefs.gameName1}>{liveStateRef.current.gameName}</div>
+                      <div className="side-line" ref={timerRefs.gameName2}>{liveStateRef.current.gameName}</div>
                     </>
                   ) : (
                     <>

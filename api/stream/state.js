@@ -98,6 +98,7 @@ export default async function handler(req, res) {
            todayWorkSeconds: (data.today_seconds ?? 0) + activeOffset,
            // Default to false - counter only runs when explicitly streaming
            isStreaming: data.is_streaming ?? false,
+           gameName: data.game_name ?? 'Just Playing',
            
            // Pure timestamp states back to frontend
            accumulatedTodaySeconds: data.today_seconds ?? 0,
@@ -123,6 +124,7 @@ export default async function handler(req, res) {
             todayWorkSeconds: 0,
             // Default to false - counter only runs when explicitly streaming
             isStreaming: false,
+            gameName: 'Just Playing',
             accumulatedTodaySeconds: 0,
             modeTimestamp: Date.now(),
             totalDays: count ? count + 1 : 1
