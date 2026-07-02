@@ -75,7 +75,8 @@ export default function TiedInControl() {
      setYtMarkers(prev => {
         const currentStart = Number(localStorage.getItem('YT_STREAM_START')); 
         const m = `${formatYTTime(currentStart)} - ${text}`;
-        if (prev.length > 0 && prev[prev.length - 1].endsWith(`- ${text}`)) return prev;
+        // Check if the exact same marker already exists (same timestamp and text)
+        if (prev.length > 0 && prev[prev.length - 1] === m) return prev;
         const next = [...prev, m];
         localStorage.setItem('YT_MARKERS', JSON.stringify(next));
         return next;
