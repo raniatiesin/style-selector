@@ -16,6 +16,8 @@ export default function TiedInControl() {
   const [inputKey, setInputKey] = useState('');
   const [inputObs, setInputObs] = useState('');
   const [explainTopic, setExplainTopic] = useState('');
+  const [playTopic, setPlayTopic] = useState('');
+  const [standbyTopic, setStandbyTopic] = useState('');
   const [selectedGame, setSelectedGame] = useState('Just Playing');
   const [selectedStandby, setSelectedStandby] = useState('Coming Soon');
   
@@ -29,7 +31,9 @@ export default function TiedInControl() {
     modeTimestamp: Date.now(),
     isStreaming: false,
     gameName: 'Just Playing',
-    standbySelection: 'Coming Soon'
+    standbySelection: 'Coming Soon',
+    playTopic: '',
+    standbyTopic: ''
   });
 
   // Sync selected game to state when dropdown changes
@@ -92,6 +96,26 @@ export default function TiedInControl() {
       return trimmed ? `explain - ${trimmed}` : 'explain';
    };
 
+   const getPlayMarkerText = (modeValue, fallbackTopic = '') => {
+      const raw = String(modeValue || '');
+      if (raw.startsWith('play|')) {
+         const topic = raw.split('|').slice(1).join('|').trim();
+         return topic ? `play - ${topic}` : 'play';
+      }
+      const trimmed = String(fallbackTopic || '').trim();
+      return trimmed ? `play - ${trimmed}` : 'play';
+   };
+
+   const getStandbyMarkerText = (modeValue, fallbackTopic = '') => {
+      const raw = String(modeValue || '');
+      if (raw.startsWith('standby|')) {
+         const topic = raw.split('|').slice(1).join('|').trim();
+         return topic ? `standby - ${topic}` : 'standby';
+      }
+      const trimmed = String(fallbackTopic || '').trim();
+      return trimmed ? `standby - ${trimmed}` : 'standby';
+   };
+
   const resetMarkers = () => {
     if (window.confirm("Start/Reset stream recording timeline from 00:00?")) {
        const now = Date.now();
@@ -141,7 +165,9 @@ export default function TiedInControl() {
               modeTimestamp: data.metrics.modeTimestamp ?? s.modeTimestamp,
               isStreaming: data.metrics.isStreaming ?? s.isStreaming,
               gameName: data.metrics.gameName ?? s.gameName,
-              standbySelection: data.metrics.standbySelection ?? s.standbySelection
+              standbySelection: data.metrics.standbySelection ?? s.standbySelection,
+              playTopic: data.metrics.playTopic ?? s.playTopic,
+              standbyTopic: data.metrics.standbyTopic ?? s.standbyTopic
            }));
            // Sync dropdowns to state
            if (data.metrics.gameName && data.metrics.gameName !== selectedGame) {
@@ -149,6 +175,13 @@ export default function TiedInControl() {
            }
            if (data.metrics.standbySelection && data.metrics.standbySelection !== selectedStandby) {
               setSelectedStandby(data.metrics.standbySelection);
+           }
+           // Sync input fields to state
+           if (data.metrics.playTopic !== undefined && data.metrics.playTopic !== playTopic) {
+              setPlayTopic(data.metrics.playTopic);
+           }
+           if (data.metrics.standbyTopic !== undefined && data.metrics.standbyTopic !== standbyTopic) {
+              setStandbyTopic(data.metrics.standbyTopic);
            }
         }
 
@@ -249,7 +282,9 @@ export default function TiedInControl() {
                  const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
                  const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
                  const explainText = getExplainMarkerText(s.mode, explainTopic);
-                 addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'play' ? 'play' : mapped === 'break' ? 'break' : 'standby');
+                 const playText = getPlayMarkerText(s.mode, playTopic);
+                 const standbyText = getStandbyMarkerText(s.mode, standbyTopic);
+                 addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'play' ? playText : mapped === 'break' ? 'break' : standbyText);
                  return newState;
                }
                return s;
@@ -450,8 +485,10 @@ export default function TiedInControl() {
     const isExplainToWork = (isExplainCurrent && mode === 'work');
     const isWorkToPlay = (state.mode === 'work' && mode === 'play');
     const isPlayToWork = (state.mode === 'play' && mode === 'work');
+    const isWorkToStandby = (state.mode === 'work' && mode === 'standby');
+    const isStandbyToWork = (state.mode === 'standby' && mode === 'work');
     
-    if (isWorkToExplain || isExplainToWork || isWorkToPlay || isPlayToWork) {
+    if (isWorkToExplain || isExplainToWork || isWorkToPlay || isPlayToWork || isWorkToStandby || isStandbyToWork) {
        nextAccumulated = state.accumulatedTodaySeconds || 0;
        nextTimestamp = state.modeTimestamp || Date.now();
     } else if (state.mode === 'work' || state.mode === 'play') {
@@ -468,6 +505,8 @@ export default function TiedInControl() {
       modeTimestamp: nextTimestamp,
       gameName: selectedGame,
       standbySelection: selectedStandby,
+      playTopic: mode.startsWith('play') ? playTopic : state.playTopic,
+      standbyTopic: mode.startsWith('standby') ? standbyTopic : state.standbyTopic,
       _skipPushCalc: true
     };
 
@@ -496,7 +535,9 @@ export default function TiedInControl() {
     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
     const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
    const explainText = getExplainMarkerText(mode, explainTopicTarget);
-   addYtMarker(mode === 'work' ? workText : isExplainTarget ? explainText : mode === 'play' ? 'play' : mode === 'break' ? 'break' : 'standby');
+   const playText = getPlayMarkerText(mode, playTopic);
+   const standbyText = getStandbyMarkerText(mode, standbyTopic);
+   addYtMarker(mode === 'work' ? workText : isExplainTarget ? explainText : mode === 'play' ? playText : mode === 'break' ? 'break' : standbyText);
    };
 
    if (isLocked) {
@@ -553,32 +594,12 @@ export default function TiedInControl() {
              <button className={`mode-btn button-wide ${state.mode.startsWith('explain') ? 'active' : ''}`} onClick={() => setMode('explain|' + explainTopic.trim())}>Explain</button>
           </div>
           <div className="grid-2 grid-gap-top">
-             <select 
-                value={selectedStandby} 
-                onChange={e => setSelectedStandby(e.target.value)}
-                className="input-full input-pad"
-                style={{ cursor: 'pointer' }}
-             >
-                <option value="Beach">Beach</option>
-                <option value="Gym">Gym</option>
-                <option value="Lunch">Lunch</option>
-                <option value="Coming Soon">Coming Soon</option>
-             </select>
-             <button className={`mode-btn button-wide ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')}>Standby</button>
+             <input type="text" placeholder="what are you doing?" value={standbyTopic} onChange={e => setStandbyTopic(e.target.value)} className="input-full input-pad" />
+             <button className={`mode-btn button-wide ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby|' + standbyTopic.trim())}>Standby</button>
           </div>
           <div className="grid-2 grid-gap-top">
-             <select 
-                value={selectedGame} 
-                onChange={e => setSelectedGame(e.target.value)}
-                className="input-full input-pad"
-                style={{ cursor: 'pointer' }}
-             >
-                <option value="Just Playing">Just Playing</option>
-                <option value="Red Dead Redemption">Red Dead Redemption</option>
-                <option value="Sons of the Forest">Sons of the Forest</option>
-                <option value="Minecraft">Minecraft</option>
-             </select>
-             <button className={`mode-btn button-wide ${state.mode === 'play' ? 'active' : ''}`} onClick={() => setMode('play')}>Play</button>
+             <input type="text" placeholder="what are you playing?" value={playTopic} onChange={e => setPlayTopic(e.target.value)} className="input-full input-pad" />
+             <button className={`mode-btn button-wide ${state.mode === 'play' ? 'active' : ''}`} onClick={() => setMode('play|' + playTopic.trim())}>Play</button>
           </div>
        </div>
 
@@ -605,7 +626,7 @@ export default function TiedInControl() {
           <div className="side-line panel-row">
              <span>Timestamps</span>
              <div className="inline-form">
-                <button className="mode-btn button-sm" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode === 'play' ? 'play' : state.mode === 'break' ? 'break' : 'standby')}>MARK</button>
+                <button className="mode-btn button-sm" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode.startsWith('play') ? getPlayMarkerText(state.mode, playTopic) : state.mode.startsWith('standby') ? getStandbyMarkerText(state.mode, standbyTopic) : state.mode === 'break' ? 'break' : 'standby')}>MARK</button>
                 <button className="mode-btn button-sm" onClick={resetMarkers}>CLEAR</button>
              </div>
           </div>
