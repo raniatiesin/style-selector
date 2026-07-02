@@ -285,22 +285,6 @@ export default function TiedInControl() {
                return s;
             });
           }
-               let nextAccumulated = s.accumulatedTodaySeconds || 0;
-               if ((s.mode === 'work' || s.mode === 'play') && s.modeTimestamp) {
-                  const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
-                  nextAccumulated += elapsed;
-               }
-               
-               const streamingPayload = {
-                  ...s,
-                  isStreaming: false,
-                  accumulatedTodaySeconds: nextAccumulated,
-                  modeTimestamp: Date.now()
-               };
-               pushUpdate(streamingPayload);
-               return s;
-            });
-          }
         });
 
         obs.on("ConnectionClosed", () => {
