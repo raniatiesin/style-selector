@@ -97,7 +97,9 @@ export default function TiedInApp({ displayMode }) {
     explainTopic: "",
     isStreaming: false,
     gameName: "Just Playing",
-    standbySelection: "Coming Soon"
+    standbySelection: "Coming Soon",
+    timestamps: "",
+    streamNumber: 1
   });
 
   // Ref for the timeline list container to enable scroll-to-in-progress
@@ -282,6 +284,8 @@ export default function TiedInApp({ displayMode }) {
           liveStateRef.current.isStreaming = m.isStreaming ?? false;
           liveStateRef.current.gameName = m.gameName ?? "Just Playing";
           liveStateRef.current.standbySelection = m.standbySelection ?? "Coming Soon";
+          liveStateRef.current.timestamps = m.timestamps ?? "";
+          liveStateRef.current.streamNumber = m.streamNumber ?? 1;
           const rawMode = String(m.mode || "");
           if (rawMode.startsWith('explain|')) {
             const topic = rawMode.split('|').slice(1).join('|').trim();

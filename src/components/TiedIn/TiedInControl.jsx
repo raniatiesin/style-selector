@@ -29,7 +29,9 @@ export default function TiedInControl() {
     modeTimestamp: Date.now(),
     isStreaming: false,
     gameName: 'Just Playing',
-    standbySelection: 'Coming Soon'
+    standbySelection: 'Coming Soon',
+    streamNumber: 1,
+    timestamps: ''
   });
 
   // Sync selected game to state when dropdown changes
@@ -81,6 +83,13 @@ export default function TiedInControl() {
         localStorage.setItem('YT_MARKERS', JSON.stringify(next));
         return next;
      });
+     
+     // Also add to timestamps string for database
+     setState(s => {
+       const currentTimestamps = s.timestamps || '';
+       const newTimestamps = currentTimestamps ? `${currentTimestamps}\n${m}` : m;
+       return { ...s, timestamps: newTimestamps };
+     });
   };
 
    const getExplainMarkerText = (modeValue, fallbackTopic = '') => {
@@ -111,6 +120,7 @@ export default function TiedInControl() {
        const initial = ["00:00 - Intro"];
        setYtMarkers(initial);
        localStorage.setItem('YT_MARKERS', JSON.stringify(initial));
+       setState(s => ({ ...s, timestamps: `STREAM ${s.streamNumber || 1}` }));
     }
   };
 
@@ -152,7 +162,9 @@ export default function TiedInControl() {
               modeTimestamp: data.metrics.modeTimestamp ?? s.modeTimestamp,
               isStreaming: data.metrics.isStreaming ?? s.isStreaming,
               gameName: data.metrics.gameName ?? s.gameName,
-              standbySelection: data.metrics.standbySelection ?? s.standbySelection
+              standbySelection: data.metrics.standbySelection ?? s.standbySelection,
+              timestamps: data.metrics.timestamps ?? s.timestamps,
+              streamNumber: data.metrics.streamNumber ?? s.streamNumber
            }));
            // Only sync dropdowns if they're different from current selection
            // This prevents reverting user selections during API polling
@@ -288,11 +300,17 @@ export default function TiedInControl() {
             setState(s => {
                // Switch to standby and update timestamp, but DO NOT reset accumulated time.
                // This preserves today's already-tracked work/play seconds across multiple stream sessions.
+               const currentStreamNumber = (s.streamNumber || 1);
+               // Only add stream heading if timestamps is empty (first stream of day)
+               const newTimestamps = s.timestamps ? s.timestamps : `STREAM ${currentStreamNumber}`;
+               
                const standbyPayload = { 
                   ...s, 
                   mode: "standby", 
                   modeTimestamp: now,
-                  isStreaming: true
+                  isStreaming: true,
+                  streamNumber: currentStreamNumber,
+                  timestamps: newTimestamps
                };
                addLog(`Setting isStreaming to true, pushing update...`);
                pushUpdate(standbyPayload);
@@ -309,11 +327,15 @@ export default function TiedInControl() {
                   addLog(`Captured ${elapsed} seconds of elapsed time on stream stop`);
                }
                
+               // Add separator line when stream stops
+               const newTimestamps = s.timestamps ? `${s.timestamps}\n${'—'.repeat(50)}` : '';
+               
                const streamingPayload = {
                   ...s,
                   isStreaming: false,
                   accumulatedTodaySeconds: nextAccumulated,
-                  modeTimestamp: Date.now()
+                  modeTimestamp: Date.now(),
+                  timestamps: newTimestamps
                };
                addLog(`Setting isStreaming to false, pushing update...`);
                pushUpdate(streamingPayload);
@@ -484,6 +506,8 @@ export default function TiedInControl() {
       modeTimestamp: nextTimestamp,
       gameName: selectedGame,
       standbySelection: selectedStandby,
+      timestamps: state.timestamps,
+      streamNumber: state.streamNumber,
       _skipPushCalc: true
     };
 
