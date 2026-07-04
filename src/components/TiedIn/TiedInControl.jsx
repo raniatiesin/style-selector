@@ -74,9 +74,10 @@ export default function TiedInControl() {
   };
 
   const addYtMarker = (text) => {
+     const currentStart = Number(localStorage.getItem('YT_STREAM_START')); 
+     const m = `${formatYTTime(currentStart)} - ${text}`;
+     
      setYtMarkers(prev => {
-        const currentStart = Number(localStorage.getItem('YT_STREAM_START')); 
-        const m = `${formatYTTime(currentStart)} - ${text}`;
         // Check if the exact same marker already exists (same timestamp and text)
         if (prev.length > 0 && prev[prev.length - 1] === m) return prev;
         const next = [...prev, m];
@@ -168,10 +169,10 @@ export default function TiedInControl() {
            }));
            // Only sync dropdowns if they're different from current selection
            // This prevents reverting user selections during API polling
-           if (data.metrics.gameName && data.metrics.gameName !== selectedGame && data.metrics.gameName !== s.gameName) {
+           if (data.metrics.gameName && data.metrics.gameName !== selectedGame) {
               setSelectedGame(data.metrics.gameName);
            }
-           if (data.metrics.standbySelection && data.metrics.standbySelection !== selectedStandby && data.metrics.standbySelection !== s.standbySelection) {
+           if (data.metrics.standbySelection && data.metrics.standbySelection !== selectedStandby) {
               setSelectedStandby(data.metrics.standbySelection);
            }
         }
@@ -231,14 +232,14 @@ export default function TiedInControl() {
                          if (mapped === "explain") {
                             const topic = (s.mode.startsWith('explain|') ? s.mode.split('|').slice(1).join('|') : explainTopic).trim();
                             if (topic) setExplainRecordingName(topic);
-                            obsRef.current.call("StartRecord")
-                              .then(() => addLog("OBS record started (from scene)"))
-                              .catch(e => addLog(`StartRecord failed: ${e.message}`));
-                         } else {
-                            obsRef.current.call("StopRecord")
-                              .then(() => addLog("OBS record stopped (from scene)"))
-                              .catch(e => addLog(`StopRecord failed: ${e.message}`));
-                         }
+                   obsRef.current.call("StartRecord")
+                     .then(() => addLog("OBS record started (from scene)"))
+                     .catch(e => addLog(`StartRecord failed: ${e.message}`));
+                 } else {
+                   obsRef.current.call("StopRecord")
+                     .then(() => addLog("OBS record stopped (from scene)"))
+                     .catch(e => addLog(`StopRecord failed: ${e.message}`));
+                 }
 
                  addLog(`Syncing new mode to Vercel: ${mapped}`);
                  
@@ -295,7 +296,7 @@ export default function TiedInControl() {
             setYtMarkers(initial);
             localStorage.setItem('YT_MARKERS', JSON.stringify(initial));
 
-            obs.call("SetCurrentProgramScene", { sceneName: SCENE_STANDBY }).catch(e => addLog(`Scene err: ${e.message}`));
+            obsRef.current.call("SetCurrentProgramScene", { sceneName: SCENE_STANDBY }).catch(e => addLog(`Scene err: ${e.message}`));
 
             setState(s => {
                // Switch to standby and update timestamp, but DO NOT reset accumulated time.

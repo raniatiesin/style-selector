@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   // 1. Extreme Security Check 
   // This webhook MUST be accompanied by "Authorization: Bearer <WEBHOOK_SECRET>"
   // Add this WEBHOOK_SECRET securely to your Vercel Dashboard Environment Variables
-  const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+  const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || process.env.STREAM_ADMIN_KEY;
 
   if (!WEBHOOK_SECRET) {
     console.error('CRITICAL: Vercel is missing the WEBHOOK_SECRET environment variable!');
