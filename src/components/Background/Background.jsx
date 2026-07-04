@@ -7,8 +7,11 @@ function areImageIdsEqual(prevIds, nextIds) {
   if (prevIds === nextIds) return true;
   if (!Array.isArray(prevIds) || !Array.isArray(nextIds)) return false;
   if (prevIds.length !== nextIds.length) return false;
-  for (let i = 0; i < prevIds.length; i++) {
-    if (prevIds[i] !== nextIds[i]) return false;
+  // Sort both arrays to compare regardless of order
+  const sortedPrev = [...prevIds].sort();
+  const sortedNext = [...nextIds].sort();
+  for (let i = 0; i < sortedPrev.length; i++) {
+    if (sortedPrev[i] !== sortedNext[i]) return false;
   }
   return true;
 }

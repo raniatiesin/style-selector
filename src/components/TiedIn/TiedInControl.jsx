@@ -74,10 +74,9 @@ export default function TiedInControl() {
   };
 
   const addYtMarker = (text) => {
-     const currentStart = Number(localStorage.getItem('YT_STREAM_START')); 
-     const m = `${formatYTTime(currentStart)} - ${text}`;
-     
      setYtMarkers(prev => {
+        const currentStart = Number(localStorage.getItem('YT_STREAM_START')); 
+        const m = `${formatYTTime(currentStart)} - ${text}`;
         // Check if the exact same marker already exists (same timestamp and text)
         if (prev.length > 0 && prev[prev.length - 1] === m) return prev;
         const next = [...prev, m];
@@ -85,11 +84,34 @@ export default function TiedInControl() {
         return next;
      });
      
-     // Also add to timestamps string for database
+     // Also add to timestamps string for database and sync
      setState(s => {
        const currentTimestamps = s.timestamps || '';
        const newTimestamps = currentTimestamps ? `${currentTimestamps}\n${m}` : m;
-       return { ...s, timestamps: newTimestamps };
+       const updatedState = { ...s, timestamps: newTimestamps };
+       // Push to database without triggering sync loop
+       isSyncingRef.current = true;
+       setIsSyncing(true);
+       fetch('https://tiesin.me/api/stream/metrics', {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json',
+           'Authorization': `Bearer ${adminKey}`
+         },
+         body: JSON.stringify({
+           ...updatedState,
+           _skipPushCalc: true
+         })
+       }).then(res => {
+         if (!res.ok) throw new Error(`Server returned ${res.status}`);
+         addLog("Timestamp synced to database");
+       }).catch(e => {
+         addLog(`Timestamp sync error: ${e.message}`);
+       }).finally(() => {
+         isSyncingRef.current = false;
+         setIsSyncing(false);
+       });
+       return updatedState;
      });
   };
 
@@ -169,10 +191,10 @@ export default function TiedInControl() {
            }));
            // Only sync dropdowns if they're different from current selection
            // This prevents reverting user selections during API polling
-           if (data.metrics.gameName && data.metrics.gameName !== selectedGame) {
+           if (data.metrics.gameName && data.metrics.gameName !== selectedGame && data.metrics.gameName !== s.gameName) {
               setSelectedGame(data.metrics.gameName);
            }
-           if (data.metrics.standbySelection && data.metrics.standbySelection !== selectedStandby) {
+           if (data.metrics.standbySelection && data.metrics.standbySelection !== selectedStandby && data.metrics.standbySelection !== s.standbySelection) {
               setSelectedStandby(data.metrics.standbySelection);
            }
         }
@@ -232,11 +254,11 @@ export default function TiedInControl() {
                          if (mapped === "explain") {
                             const topic = (s.mode.startsWith('explain|') ? s.mode.split('|').slice(1).join('|') : explainTopic).trim();
                             if (topic) setExplainRecordingName(topic);
-                   obsRef.current.call("StartRecord")
+                   obs.call("StartRecord")
                      .then(() => addLog("OBS record started (from scene)"))
                      .catch(e => addLog(`StartRecord failed: ${e.message}`));
                  } else {
-                   obsRef.current.call("StopRecord")
+                   obs.call("StopRecord")
                      .then(() => addLog("OBS record stopped (from scene)"))
                      .catch(e => addLog(`StopRecord failed: ${e.message}`));
                  }
@@ -296,7 +318,7 @@ export default function TiedInControl() {
             setYtMarkers(initial);
             localStorage.setItem('YT_MARKERS', JSON.stringify(initial));
 
-            obsRef.current.call("SetCurrentProgramScene", { sceneName: SCENE_STANDBY }).catch(e => addLog(`Scene err: ${e.message}`));
+            obs.call("SetCurrentProgramScene", { sceneName: SCENE_STANDBY }).catch(e => addLog(`Scene err: ${e.message}`));
 
             setState(s => {
                // Switch to standby and update timestamp, but DO NOT reset accumulated time.
@@ -605,6 +627,7 @@ export default function TiedInControl() {
                 <option value="Beach">Beach</option>
                 <option value="Gym">Gym</option>
                 <option value="Lunch">Lunch</option>
+                <option value="Dinner">Dinner</option>
                 <option value="Coming Soon">Coming Soon</option>
              </select>
              <button className={`mode-btn button-wide ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')}>Standby</button>
@@ -684,5 +707,16 @@ export default function TiedInControl() {
 
     </main>
     </div>
+  );
+}
+
+    </main>
+    </div>
+  );
+}
+    </main>
+    </div>
+  );
+}
   );
 }

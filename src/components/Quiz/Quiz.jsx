@@ -75,12 +75,9 @@ export default function Quiz() {
   const contentRef = useRef(null);
   const canvasElementRef = useRef(null);
   const canvasResizeDebounceRef = useRef(null);
-  const tapVersionRef = useRef(0);
-  const deferredWorkTimeoutRef = useRef(null);
   const warmedSeedsRef = useRef(new Set());
   const preloadTimeoutRef = useRef(null);
   const preloadIdleRef = useRef(null);
-  const backgroundRafRef = useRef(null);
 
   const currentStep = useQuizStore(s => s.currentStep);
   const answers = useQuizStore(s => s.answers);
@@ -125,16 +122,6 @@ export default function Quiz() {
 
     preloadImagesPriority(ids.slice(0, 20));
   }, [setActiveImageIds]);
-
-  const queueBackgroundUpdate = useCallback((categoryIndex, catState) => {
-    if (backgroundRafRef.current !== null) {
-      cancelAnimationFrame(backgroundRafRef.current);
-    }
-    backgroundRafRef.current = requestAnimationFrame(() => {
-      backgroundRafRef.current = null;
-      updateBackground(categoryIndex, catState);
-    });
-  }, [updateBackground]);
 
   const preloadCategoryState = useCallback((manifest, categoryIndex, catState, maxImages = 14) => {
     const canonicalStageIndex = getCanonicalStageIndex(categoryIndex);
@@ -218,33 +205,6 @@ export default function Quiz() {
     }, 80);
   }, [clearScheduledUpcomingPreload, preloadUpcomingStages]);
 
-  const queueVersionedDeferredWork = useCallback((version, task) => {
-    if (deferredWorkTimeoutRef.current !== null) {
-      clearTimeout(deferredWorkTimeoutRef.current);
-      deferredWorkTimeoutRef.current = null;
-    }
-
-    deferredWorkTimeoutRef.current = setTimeout(() => {
-      deferredWorkTimeoutRef.current = null;
-      if (tapVersionRef.current !== version) return;
-      task();
-    }, 0);
-  }, []);
-
-  const invalidatePendingBackgroundWork = useCallback(() => {
-    tapVersionRef.current += 1;
-
-    if (deferredWorkTimeoutRef.current !== null) {
-      clearTimeout(deferredWorkTimeoutRef.current);
-      deferredWorkTimeoutRef.current = null;
-    }
-
-    if (backgroundRafRef.current !== null) {
-      cancelAnimationFrame(backgroundRafRef.current);
-      backgroundRafRef.current = null;
-    }
-  }, []);
-
   useEffect(() => {
     const cacheCanvasElement = () => {
       canvasElementRef.current = document.querySelector('[class*="canvas"]');
@@ -275,9 +235,6 @@ export default function Quiz() {
   useEffect(() => {
     return () => {
       clearScheduledUpcomingPreload();
-      if (backgroundRafRef.current !== null) {
-        cancelAnimationFrame(backgroundRafRef.current);
-      }
       if (deferredWorkTimeoutRef.current !== null) {
         clearTimeout(deferredWorkTimeoutRef.current);
         deferredWorkTimeoutRef.current = null;
@@ -289,7 +246,7 @@ export default function Quiz() {
   useEffect(() => {
     const defaultMain = MAINS[0].options[0];
     selectAnswer(0, defaultMain);
-    queueBackgroundUpdate(0, { main: defaultMain, subsub: null });
+    updateBackground(0, { main: defaultMain, subsub: null });
     scheduleUpcomingPreload(0, { 0: defaultMain });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -305,8 +262,8 @@ export default function Quiz() {
   // Keep background deterministic for any step transition, including back navigation.
   useEffect(() => {
     const { categoryIndex, catState } = deriveDeterministicCategoryState(answers, currentStep);
-    queueBackgroundUpdate(categoryIndex, catState);
-  }, [currentStep, answers, queueBackgroundUpdate]);
+    updateBackground(categoryIndex, catState);
+  }, [currentStep, answers, updateBackground]);
 
   const handleSelect = useCallback((value) => {
     const level = currentStep % STEPS_PER_STAGE; // 0=main, 1=leaf
@@ -330,16 +287,11 @@ export default function Quiz() {
 
     // Refilter with the updated category state
     const catState = getCategoryState(updatedAnswers, categoryIndex);
-    const tapVersion = ++tapVersionRef.current;
-    queueVersionedDeferredWork(tapVersion, () => {
-      queueBackgroundUpdate(categoryIndex, catState);
-      scheduleUpcomingPreload(currentStep, updatedAnswers);
-    });
-  }, [currentStep, answers, selectAnswer, queueBackgroundUpdate, scheduleUpcomingPreload, queueVersionedDeferredWork]);
+    updateBackground(categoryIndex, catState);
+    scheduleUpcomingPreload(currentStep, updatedAnswers);
+  }, [currentStep, answers, selectAnswer, updateBackground, scheduleUpcomingPreload]);
 
   const handleNext = useCallback(() => {
-    const tapVersion = ++tapVersionRef.current;
-
     // Auto-commit the visually-displayed default if the user never explicitly clicked an option.
     const { currentStep: cs, answers: ans, selectAnswer: save } = useQuizStore.getState();
     const csAnswerIndex = getAnswerIndexForStep(cs);
@@ -409,10 +361,8 @@ export default function Quiz() {
         if (isNewCategory) {
           const defaultMain = MAINS[newCat].options[0];
           save(getMainAnswerIndex(newCat), defaultMain);
-          queueVersionedDeferredWork(tapVersion, () => {
-            queueBackgroundUpdate(newCat, { main: defaultMain, subsub: null });
-            scheduleUpcomingPreload(newStep, { ...useQuizStore.getState().answers, [getMainAnswerIndex(newCat)]: defaultMain });
-          });
+          updateBackground(newCat, { main: defaultMain, subsub: null });
+          scheduleUpcomingPreload(newStep, { ...useQuizStore.getState().answers, [getMainAnswerIndex(newCat)]: defaultMain });
         } else {
           // Auto-save default for the arriving step so the filter narrows
           const curAns = useQuizStore.getState().answers;
@@ -422,10 +372,8 @@ export default function Quiz() {
             if (stepData?.options[0]) save(nextAnswerIndex, stepData.options[0]);
           }
           const freshAns = useQuizStore.getState().answers;
-          queueVersionedDeferredWork(tapVersion, () => {
-            queueBackgroundUpdate(newCat, getCategoryState(freshAns, newCat));
-            scheduleUpcomingPreload(newStep, freshAns);
-          });
+          updateBackground(newCat, getCategoryState(freshAns, newCat));
+          scheduleUpcomingPreload(newStep, freshAns);
         }
       }
       return;
@@ -449,10 +397,8 @@ export default function Quiz() {
             if (isNewCategory) {
               const defaultMain = MAINS[newCat].options[0];
               freshSave(getMainAnswerIndex(newCat), defaultMain);
-              queueVersionedDeferredWork(tapVersion, () => {
-                queueBackgroundUpdate(newCat, { main: defaultMain, subsub: null });
-                scheduleUpcomingPreload(newCs, { ...useQuizStore.getState().answers, [getMainAnswerIndex(newCat)]: defaultMain });
-              });
+              updateBackground(newCat, { main: defaultMain, subsub: null });
+              scheduleUpcomingPreload(newCs, { ...useQuizStore.getState().answers, [getMainAnswerIndex(newCat)]: defaultMain });
             } else {
               // Auto-save default for the arriving step so the filter narrows
               const nextAnswerIndex = getAnswerIndexForStep(newCs);
@@ -461,10 +407,8 @@ export default function Quiz() {
                 if (stepData?.options[0]) freshSave(nextAnswerIndex, stepData.options[0]);
               }
               const latestAns = useQuizStore.getState().answers;
-              queueVersionedDeferredWork(tapVersion, () => {
-                queueBackgroundUpdate(newCat, getCategoryState(latestAns, newCat));
-                scheduleUpcomingPreload(newCs, latestAns);
-              });
+              updateBackground(newCat, getCategoryState(latestAns, newCat));
+              scheduleUpcomingPreload(newCs, latestAns);
             }
           }
         },
@@ -479,9 +423,8 @@ export default function Quiz() {
   }, [
     advanceStep,
     ensureSession,
-    queueBackgroundUpdate,
+    updateBackground,
     scheduleUpcomingPreload,
-    queueVersionedDeferredWork,
     sessionId,
     updateSessionProgress,
   ]);

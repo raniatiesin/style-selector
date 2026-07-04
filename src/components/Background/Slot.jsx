@@ -90,7 +90,9 @@ const Slot = memo(function Slot({ slot, isOutputVisible = false }) {
       return;
     }
 
-    const newSrc = `/images/rep/${slot.imageId}.webp`;
+    // Add cache-busting timestamp to force reload
+    const cacheBust = Date.now();
+    const newSrc = `/images/rep/${slot.imageId}.webp?t=${cacheBust}`;
 
     // Pre-load before swap
     const loader = new Image();
