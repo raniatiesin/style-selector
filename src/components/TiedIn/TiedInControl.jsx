@@ -231,14 +231,14 @@ export default function TiedInControl() {
                          if (mapped === "explain") {
                             const topic = (s.mode.startsWith('explain|') ? s.mode.split('|').slice(1).join('|') : explainTopic).trim();
                             if (topic) setExplainRecordingName(topic);
-                   obs.call("StartRecord")
-                     .then(() => addLog("OBS record started (from scene)"))
-                     .catch(e => addLog(`StartRecord failed: ${e.message}`));
-                 } else {
-                   obs.call("StopRecord")
-                     .then(() => addLog("OBS record stopped (from scene)"))
-                     .catch(e => addLog(`StopRecord failed: ${e.message}`));
-                 }
+                            obsRef.current.call("StartRecord")
+                              .then(() => addLog("OBS record started (from scene)"))
+                              .catch(e => addLog(`StartRecord failed: ${e.message}`));
+                         } else {
+                            obsRef.current.call("StopRecord")
+                              .then(() => addLog("OBS record stopped (from scene)"))
+                              .catch(e => addLog(`StopRecord failed: ${e.message}`));
+                         }
 
                  addLog(`Syncing new mode to Vercel: ${mapped}`);
                  
