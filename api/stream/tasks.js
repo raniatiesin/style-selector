@@ -100,6 +100,12 @@ export default async function handler(req, res) {
     let done = data?.done_tasks || [];
     let webhookLogs = data?.webhook_logs || [];
 
+    // Ensure all existing tasks have due field
+    inProgress = inProgress.map(t => ({ ...t, due: t.due || null }));
+    inReview = inReview.map(t => ({ ...t, due: t.due || null }));
+    upNext = upNext.map(t => ({ ...t, due: t.due || null }));
+    done = done.map(t => ({ ...t, due: t.due || null }));
+
     const shortTime = new Date().toLocaleTimeString('en-US', { hour12: false });
     const logMsg = `[${shortTime}] Webhook: '${task || 'Unknown Task'}' -> ${status || action || 'ignored'}`;
     webhookLogs.push(logMsg);
@@ -178,7 +184,8 @@ export default async function handler(req, res) {
                  name: String(task || "Completed Task"),
                  status: "done",
                  createdAt: Date.now(),
-                 completedAt: time ? new Date(time).getTime() : Date.now()
+                 completedAt: time ? new Date(time).getTime() : Date.now(),
+                 due: passedDate || null
                });
              }
           } else {
@@ -187,7 +194,8 @@ export default async function handler(req, res) {
                name: String(task || "Untitled Task"),
                status: normalizedStatus,
                createdAt: time ? new Date(time).getTime() : Date.now(),
-               completedAt: null
+               completedAt: null,
+               due: passedDate || null
              };
              if (normalizedStatus === 'in_progress') inProgress.push(newTask);
              else if (normalizedStatus === 'in_review') inReview.push(newTask);

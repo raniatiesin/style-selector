@@ -321,7 +321,8 @@ export default function TiedInApp({ displayMode }) {
               name: String(data.name).trim(),
               status: mappedStatus,
               createdAt: Number(data.createdAt) || Date.now(),
-              completedAt: data.completedAt ? Number(data.completedAt) : null
+              completedAt: data.completedAt ? Number(data.completedAt) : null,
+              due: data.due || data.due_date || data.dueDate || null
             };
           });
           setTasks(updatedTasks);
@@ -399,13 +400,35 @@ export default function TiedInApp({ displayMode }) {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
+  // Get today's date in YYYY-MM-DD format (Europe/Paris timezone to match API)
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
+
   const displayTasks = [
-    ...tasks.filter(t => t.status === "waiting" && !inProgressIds.has(t.id)).sort((a, b) => a.createdAt - b.createdAt),
-    ...tasks.filter(t => t.status === "up_next" && !inProgressIds.has(t.id)).sort((a, b) => a.createdAt - b.createdAt),
-    ...tasks.filter(t => t.status === "in_progress").sort((a, b) => b.createdAt - a.createdAt),
-    ...tasks.filter(t => t.status === "in_review" && !inProgressIds.has(t.id)).sort((a, b) => b.createdAt - a.createdAt),
-    ...tasks.filter(t => t.status === "done" && !inProgressIds.has(t.id) && (t.completedAt || t.createdAt) >= startOfToday.getTime())
-            .sort((a, b) => (b.completedAt || b.createdAt) - (a.completedAt || a.createdAt))
+    ...tasks.filter(t => {
+      const isWaiting = t.status === "waiting" && !inProgressIds.has(t.id);
+      const isDueToday = !t.due || t.due === today;
+      return isWaiting && isDueToday;
+    }).sort((a, b) => a.createdAt - b.createdAt),
+    ...tasks.filter(t => {
+      const isUpNext = t.status === "up_next" && !inProgressIds.has(t.id);
+      const isDueToday = !t.due || t.due === today;
+      return isUpNext && isDueToday;
+    }).sort((a, b) => a.createdAt - b.createdAt),
+    ...tasks.filter(t => {
+      const isInProgress = t.status === "in_progress";
+      const isDueToday = !t.due || t.due === today;
+      return isInProgress && isDueToday;
+    }).sort((a, b) => b.createdAt - a.createdAt),
+    ...tasks.filter(t => {
+      const isInReview = t.status === "in_review" && !inProgressIds.has(t.id);
+      const isDueToday = !t.due || t.due === today;
+      return isInReview && isDueToday;
+    }).sort((a, b) => b.createdAt - a.createdAt),
+    ...tasks.filter(t => {
+      const isDone = t.status === "done" && !inProgressIds.has(t.id) && (t.completedAt || t.createdAt) >= startOfToday.getTime();
+      const isDueToday = !t.due || t.due === today;
+      return isDone && isDueToday;
+    }).sort((a, b) => (b.completedAt || b.createdAt) - (a.completedAt || a.createdAt))
   ];
 
   return (
