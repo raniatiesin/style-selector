@@ -49,10 +49,8 @@ export default function TiedInControl() {
   }, [selectedStandby, state.standbySelection]);
 
   const isSyncingRef = useRef(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [obsConnected, setObsConnected] = useState(false);
   const [logs, setLogs] = useState([]);
-  const [webhookLogs, setWebhookLogs] = useState([]);
   const obsRef = useRef(null);
 
   // --- YouTube Markers ---
@@ -74,9 +72,10 @@ export default function TiedInControl() {
   };
 
   const addYtMarker = (text) => {
+     const currentStart = Number(localStorage.getItem('YT_STREAM_START')); 
+     const m = `${formatYTTime(currentStart)} - ${text}`;
+     
      setYtMarkers(prev => {
-        const currentStart = Number(localStorage.getItem('YT_STREAM_START')); 
-        const m = `${formatYTTime(currentStart)} - ${text}`;
         // Check if the exact same marker already exists (same timestamp and text)
         if (prev.length > 0 && prev[prev.length - 1] === m) return prev;
         const next = [...prev, m];
@@ -91,7 +90,6 @@ export default function TiedInControl() {
        const updatedState = { ...s, timestamps: newTimestamps };
        // Push to database without triggering sync loop
        isSyncingRef.current = true;
-       setIsSyncing(true);
        fetch('https://tiesin.me/api/stream/metrics', {
          method: 'POST',
          headers: {
@@ -105,11 +103,10 @@ export default function TiedInControl() {
        }).then(res => {
          if (!res.ok) throw new Error(`Server returned ${res.status}`);
          addLog("Timestamp synced to database");
-       }).catch(e => {
-         addLog(`Timestamp sync error: ${e.message}`);
+       }).catch(error => {
+         addLog(`Timestamp sync error: ${error.message}`);
        }).finally(() => {
          isSyncingRef.current = false;
-         setIsSyncing(false);
        });
        return updatedState;
      });
@@ -171,8 +168,6 @@ export default function TiedInControl() {
         if (!res.ok) return;
         const data = await res.json();
         
-        if (data?.webhookLogs) setWebhookLogs(data.webhookLogs);
-        
         // Continuously hydrate state from API to avoid stale UI overrides,
         // but temporarily block syncing updates exactly when a manual push is happening
         if (data?.metrics && !isSyncingRef.current) {
@@ -187,14 +182,16 @@ export default function TiedInControl() {
               gameName: data.metrics.gameName ?? s.gameName,
               standbySelection: data.metrics.standbySelection ?? s.standbySelection,
               timestamps: data.metrics.timestamps ?? s.timestamps,
-              streamNumber: data.metrics.streamNumber ?? s.streamNumber
+              streamNumber: data.metrics.streamNumber ?? s.streamNumber,
+              isPaused: data.metrics.isPaused ?? s.isPaused,
+              pausedTimestamp: data.metrics.pausedTimestamp ?? s.pausedTimestamp
            }));
            // Only sync dropdowns if they're different from current selection
            // This prevents reverting user selections during API polling
-           if (data.metrics.gameName && data.metrics.gameName !== selectedGame && data.metrics.gameName !== s.gameName) {
+           if (data.metrics.gameName && data.metrics.gameName !== selectedGame && data.metrics.gameName !== state.gameName) {
               setSelectedGame(data.metrics.gameName);
            }
-           if (data.metrics.standbySelection && data.metrics.standbySelection !== selectedStandby && data.metrics.standbySelection !== s.standbySelection) {
+           if (data.metrics.standbySelection && data.metrics.standbySelection !== selectedStandby && data.metrics.standbySelection !== state.standbySelection) {
               setSelectedStandby(data.metrics.standbySelection);
            }
         }
@@ -214,7 +211,9 @@ export default function TiedInControl() {
               activeTaskRef.current = null;
            }
         }
-      } catch (e) {}
+      } catch {
+        // Silently ignore polling errors
+      }
     }
     loadMetrics();
     intervalId = setInterval(loadMetrics, 2000);
@@ -413,11 +412,10 @@ export default function TiedInControl() {
     }
   };
 
-  const pushUpdate = async (newState, silent = false) => {
+  const pushUpdate = async (newState) => {
     if (!adminKey) return;
     // Always set isSyncing to prevent loadMetrics from overwriting state during push
     isSyncingRef.current = true;
-    setIsSyncing(true);
     
     let payload = { ...newState };
 
@@ -449,7 +447,9 @@ export default function TiedInControl() {
           return;
         }
         let errData;
-        try { errData = await res.json(); } catch(e) {}
+        try { errData = await res.json(); } catch {
+          // Ignore JSON parse errors
+        }
         throw new Error(`Server returned ${res.status}: ${errData?.error || ''} ${errData?.details || ''}`);
       }
       
@@ -460,7 +460,6 @@ export default function TiedInControl() {
       console.error("Failed to sync:", e);
     } finally {
       isSyncingRef.current = false;
-      setIsSyncing(false);
     }
   };
 
@@ -496,7 +495,9 @@ export default function TiedInControl() {
       }
 
       if (isExplainTarget) {
-         try { localStorage.setItem('EXPLAIN_TOPIC', explainTopicTarget); } catch {}
+         try { localStorage.setItem('EXPLAIN_TOPIC', explainTopicTarget); } catch {
+           // Ignore localStorage errors
+         }
       }
 
     
@@ -707,16 +708,5 @@ export default function TiedInControl() {
 
     </main>
     </div>
-  );
-}
-
-    </main>
-    </div>
-  );
-}
-    </main>
-    </div>
-  );
-}
   );
 }

@@ -65,6 +65,8 @@ export default async function handler(req, res) {
     if (Object.hasOwn(payload, 'inReviewTasks')) updateData.in_review_tasks = payload.inReviewTasks;
     if (Object.hasOwn(payload, 'upNextTasks')) updateData.up_next_tasks = payload.upNextTasks;
     if (Object.hasOwn(payload, 'doneTasks')) updateData.done_tasks = payload.doneTasks;
+    if (Object.hasOwn(payload, 'isPaused')) updateData.is_paused = payload.isPaused;
+    if (Object.hasOwn(payload, 'pausedTimestamp')) updateData.paused_timestamp = payload.pausedTimestamp;
 
     const { data, error } = await supabase
       .from('stream_metrics')
@@ -78,20 +80,6 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       message: "Global metrics synced."
-    });
-
-  } catch (error) {
-    console.error('[API Error] /api/stream/metrics:', error);
-    return res.status(500).json({ error: 'Internal Server Error', details: error.message, stack: error.stack });
-  }
-} } catch (error) {
-    console.error('[API Error] /api/stream/metrics:', error);
-    return res.status(500).json({ error: 'Internal Server Error', details: error.message, stack: error.stack });
-  }
-}   return res.status(500).json({ error: 'Internal Server Error', details: error.message, stack: error.stack });
-  }
-} }
-}     message: "Global metrics synced."
     });
 
   } catch (error) {

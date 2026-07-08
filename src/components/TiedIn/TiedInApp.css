@@ -1290,3 +1290,8 @@ html:has(.overlay-root) body {
 }
 .overlay-root.mode-minecraft { --font: 'Minecraft', monospace; font-family: var(--font); }
 @font-face { font-family: 'Minecraft'; src: url('/fonts/minecraft_font.ttf') format('truetype'); font-weight: normal; font-style: normal; font-display: block; }
+
+.paused-text {
+  color: #FFBA08;
+  font-weight: 500;
+}

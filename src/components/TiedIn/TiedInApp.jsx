@@ -99,7 +99,9 @@ export default function TiedInApp({ displayMode }) {
     gameName: "Just Playing",
     standbySelection: "Coming Soon",
     timestamps: "",
-    streamNumber: 1
+    streamNumber: 1,
+    isPaused: false,
+    pausedTimestamp: null
   });
 
   // Ref for the timeline list container to enable scroll-to-in-progress
@@ -140,13 +142,14 @@ export default function TiedInApp({ displayMode }) {
       const isBreak = ls.mode === 'break';
       const isMinecraft = ls.mode === 'minecraft';
       const isStreaming = ls.isStreaming ?? false;
+      const isPaused = ls.isPaused ?? false;
       
       let todaySecs = ls.accumulatedTodaySeconds || 0;
       let sessionSecs = 0;
       let breakSecs = 0;
       let mcSessionSecs = 0;
       
-      if (isStreaming && (isWorking || isPlay)) {
+      if (isStreaming && (isWorking || isPlay) && !isPaused) {
         const elapsed = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
         todaySecs += elapsed;
         sessionSecs = elapsed;
@@ -286,6 +289,8 @@ export default function TiedInApp({ displayMode }) {
           liveStateRef.current.standbySelection = m.standbySelection ?? "Coming Soon";
           liveStateRef.current.timestamps = m.timestamps ?? "";
           liveStateRef.current.streamNumber = m.streamNumber ?? 1;
+          liveStateRef.current.isPaused = m.isPaused ?? false;
+          liveStateRef.current.pausedTimestamp = m.pausedTimestamp ?? null;
           const rawMode = String(m.mode || "");
           if (rawMode.startsWith('explain|')) {
             const topic = rawMode.split('|').slice(1).join('|').trim();

@@ -106,6 +106,8 @@ export default async function handler(req, res) {
            // Pure timestamp states back to frontend
            accumulatedTodaySeconds: data.today_seconds ?? 0,
            modeTimestamp: data.mode_timestamp,
+           isPaused: data.is_paused ?? false,
+           pausedTimestamp: data.paused_timestamp ?? null,
 
            totalDays: count || 1
        };
@@ -133,6 +135,8 @@ export default async function handler(req, res) {
             streamNumber: 1,
             accumulatedTodaySeconds: 0,
             modeTimestamp: Date.now(),
+            isPaused: false,
+            pausedTimestamp: null,
             totalDays: count ? count + 1 : 1
         };
     }
