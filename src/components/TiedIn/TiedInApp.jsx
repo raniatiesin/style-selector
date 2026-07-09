@@ -613,6 +613,20 @@ export default function TiedInApp({ displayMode }) {
                     </>
                   )}
                 </div>
+                {activeMode === 'work' && (
+                  <div className="context-pill stack">
+                    <div className="side-line">Current Task:</div>
+                    {tasks.filter(t => t.status === "in_progress").length > 0 ? (
+                      tasks.filter(t => t.status === "in_progress").map(t => (
+                        <div key={t.id} className="side-line" style={{ color: '#4DAA57' }}>
+                          {t.name}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="side-line" style={{ opacity: 0.6 }}>No active task</div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="webcam-col"></div>
             </>
