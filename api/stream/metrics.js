@@ -68,13 +68,47 @@ export default async function handler(req, res) {
     if (Object.hasOwn(payload, 'isPaused')) updateData.is_paused = payload.isPaused;
     if (Object.hasOwn(payload, 'pausedTimestamp')) updateData.paused_timestamp = payload.pausedTimestamp;
 
-    const { data, error } = await supabase
+    // Check if a record already exists for today
+    const { data: existingRecord, error: checkError } = await supabase
       .from('stream_metrics')
-      .upsert(updateData, { onConflict: 'date' });
+      .select('id')
+      .eq('date', today)
+      .single();
 
-    if (error) {
-      console.error('[Supabase Write Error]', error);
-      throw error;
+    let result;
+    
+    if (checkError && checkError.code !== 'PGRST116') {
+      // Real error (not "no rows returned")
+      throw checkError;
+    }
+
+    if (!existingRecord) {
+      // No record exists for today - only create if this is a stream start
+      if (payload.isStreaming === true) {
+        // Stream start with no record - create new record
+        result = await supabase
+          .from('stream_metrics')
+          .insert(updateData)
+          .select();
+      } else {
+        // Not a stream start - don't create a record
+        return res.status(200).json({
+          success: true,
+          message: "No record created (not a stream start)."
+        });
+      }
+    } else {
+      // Record exists - update it
+      result = await supabase
+        .from('stream_metrics')
+        .update(updateData)
+        .eq('date', today)
+        .select();
+    }
+
+    if (result.error) {
+      console.error('[Supabase Write Error]', result.error);
+      throw result.error;
     }
 
     return res.status(200).json({

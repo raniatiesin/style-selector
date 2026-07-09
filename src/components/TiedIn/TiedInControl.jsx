@@ -483,7 +483,6 @@ export default function TiedInControl() {
     if (state.mode !== 'work') return;
     
     let nextAccumulated = state.accumulatedTodaySeconds || 0;
-    let nextTimestamp = Date.now();
     
     if (!state.isPaused) {
       // Pausing: capture elapsed time before pause
@@ -495,13 +494,13 @@ export default function TiedInControl() {
         ...state,
         isPaused: true,
         pausedTimestamp: new Date().toISOString(),
-        accumulatedTodaySeconds: nextAccumulated,
-        modeTimestamp: nextTimestamp
+        accumulatedTodaySeconds: nextAccumulated
+        // Don't update modeTimestamp - keep it so we can calculate elapsed correctly on resume
       });
       addLog('Timer paused');
       addYtMarker('pause');
     } else {
-      // Resuming: just clear pause state, timestamp will be reset
+      // Resuming: reset modeTimestamp to now so elapsed calculation starts fresh
       pushUpdate({
         ...state,
         isPaused: false,
@@ -556,7 +555,11 @@ export default function TiedInControl() {
     const isWorkToStandby = (state.mode === 'work' && mode === 'standby');
     const isStandbyToWork = (state.mode === 'standby' && mode === 'work');
     
-    if (isWorkToExplain || isExplainToWork || isWorkToPlay || isPlayToWork || isWorkToStandby || isStandbyToWork) {
+    // If paused, don't calculate elapsed time - just keep current accumulated
+    if (state.isPaused) {
+       nextAccumulated = state.accumulatedTodaySeconds || 0;
+       nextTimestamp = state.modeTimestamp || Date.now();
+    } else if (isWorkToExplain || isExplainToWork || isWorkToPlay || isPlayToWork || isWorkToStandby || isStandbyToWork) {
        nextAccumulated = state.accumulatedTodaySeconds || 0;
        nextTimestamp = state.modeTimestamp || Date.now();
     } else if (state.mode === 'work' || state.mode === 'play') {
