@@ -83,15 +83,15 @@ export default async function handler(req, res) {
     }
 
     if (!existingRecord) {
-      // No record exists for today - only create if this is a stream start
-      if (payload.isStreaming === true) {
+      // No record exists for today - only create if this is a stream start OR pause state change
+      if (payload.isStreaming === true || payload.isPaused !== undefined) {
         // Stream start with no record - create new record
         result = await supabase
           .from('stream_metrics')
           .insert(updateData)
           .select();
       } else {
-        // Not a stream start - don't create a record
+        // Not a stream start and no pause state change - don't create a record
         return res.status(200).json({
           success: true,
           message: "No record created (not a stream start)."

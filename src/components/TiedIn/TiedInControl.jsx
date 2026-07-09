@@ -192,8 +192,10 @@ export default function TiedInControl() {
               standbySelection: data.metrics.standbySelection ?? s.standbySelection,
               timestamps: data.metrics.timestamps ?? s.timestamps,
               streamNumber: data.metrics.streamNumber ?? s.streamNumber,
-              isPaused: data.metrics.isPaused ?? s.isPaused,
-              pausedTimestamp: data.metrics.pausedTimestamp ?? s.pausedTimestamp
+              // Only update pause state if it's explicitly set in the API response
+              // This prevents overwriting local pause state when no DB record exists
+              isPaused: data.metrics.isPaused !== undefined ? data.metrics.isPaused : s.isPaused,
+              pausedTimestamp: data.metrics.pausedTimestamp !== undefined ? data.metrics.pausedTimestamp : s.pausedTimestamp
            }));
            // Only sync dropdowns if they're different from current selection
            // This prevents reverting user selections during API polling
