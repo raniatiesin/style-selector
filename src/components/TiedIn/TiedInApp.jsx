@@ -159,7 +159,16 @@ export default function TiedInApp({ displayMode }) {
         mcSessionSecs = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
       }
       
-      if (timerRefs.todayTime.current) timerRefs.todayTime.current.innerText = formatHMS(todaySecs);
+      if (timerRefs.todayTime.current) {
+        timerRefs.todayTime.current.innerText = formatHMS(todaySecs);
+        // Add flicker animation when paused
+        if (isPaused && isWorking && isStreaming) {
+          const opacity = 0.5 + 0.5 * Math.sin(nowMs / 500); // Slow flicker (1 second cycle)
+          timerRefs.todayTime.current.style.opacity = opacity;
+        } else {
+          timerRefs.todayTime.current.style.opacity = 1;
+        }
+      }
       if (timerRefs.sessionTime.current) timerRefs.sessionTime.current.innerText = formatHMS(sessionSecs);
       if (timerRefs.breakTime.current) timerRefs.breakTime.current.innerText = formatHMS(breakSecs);
       if (timerRefs.mcSessionTime.current) timerRefs.mcSessionTime.current.innerText = formatHMS(mcSessionSecs);
@@ -204,6 +213,16 @@ export default function TiedInApp({ displayMode }) {
           timerRefs.dayHoursTrack.current.innerText = ls.gameName || "Just Playing";
         } else {
           timerRefs.dayHoursTrack.current.innerText = hoursString;
+        }
+      }
+
+      // Update session label based on pause state
+      const sessionLabel = document.querySelector('.session-label');
+      if (sessionLabel) {
+        if (isPaused && isWorking && isStreaming) {
+          sessionLabel.innerText = 'Just Chilling Right Now';
+        } else {
+          sessionLabel.innerText = 'since last break';
         }
       }
 

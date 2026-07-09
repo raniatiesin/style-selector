@@ -499,6 +499,7 @@ export default function TiedInControl() {
         modeTimestamp: nextTimestamp
       });
       addLog('Timer paused');
+      addYtMarker('pause');
     } else {
       // Resuming: just clear pause state, timestamp will be reset
       pushUpdate({
@@ -508,6 +509,7 @@ export default function TiedInControl() {
         modeTimestamp: Date.now()
       });
       addLog('Timer resumed');
+      addYtMarker('resume');
     }
   };
 
