@@ -161,15 +161,16 @@ export default function TiedInApp({ displayMode }) {
       
       if (timerRefs.todayTime.current) {
         timerRefs.todayTime.current.innerText = formatHMS(todaySecs);
-        // Add flicker animation when paused
+      }
+      if (timerRefs.sessionTime.current) {
+        // Hide session timer when paused
         if (isPaused && isWorking && isStreaming) {
-          const opacity = 0.5 + 0.5 * Math.sin(nowMs / 500); // Slow flicker (1 second cycle)
-          timerRefs.todayTime.current.style.opacity = opacity;
+          timerRefs.sessionTime.current.style.display = 'none';
         } else {
-          timerRefs.todayTime.current.style.opacity = 1;
+          timerRefs.sessionTime.current.style.display = '';
+          timerRefs.sessionTime.current.innerText = formatHMS(sessionSecs);
         }
       }
-      if (timerRefs.sessionTime.current) timerRefs.sessionTime.current.innerText = formatHMS(sessionSecs);
       if (timerRefs.breakTime.current) timerRefs.breakTime.current.innerText = formatHMS(breakSecs);
       if (timerRefs.mcSessionTime.current) timerRefs.mcSessionTime.current.innerText = formatHMS(mcSessionSecs);
       
