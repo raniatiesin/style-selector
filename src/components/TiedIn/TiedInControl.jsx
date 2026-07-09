@@ -53,6 +53,15 @@ export default function TiedInControl() {
   const [logs, setLogs] = useState([]);
   const obsRef = useRef(null);
 
+  // Auto-dismiss logs after 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setLogs(prevLogs => prevLogs.filter(log => now - log.timestamp < 10000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   // --- YouTube Markers ---
   const [ytMarkers, setYtMarkers] = useState(() => {
     try { return JSON.parse(localStorage.getItem('YT_MARKERS')) || []; }
@@ -144,7 +153,7 @@ export default function TiedInControl() {
     }
   };
 
-  const addLog = (msg) => setLogs(l => [...l, `[${new Date().toLocaleTimeString()}] ${msg}`].slice(-20));
+  const addLog = (msg) => setLogs(l => [...l, { message: `[${new Date().toLocaleTimeString()}] ${msg}`, timestamp: Date.now() }].slice(-20));
 
    const sanitizeFilenamePart = (value) => value.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
    const formatExplainRecordingName = (topic) => {
@@ -485,7 +494,7 @@ export default function TiedInControl() {
       pushUpdate({
         ...state,
         isPaused: true,
-        pausedTimestamp: Date.now(),
+        pausedTimestamp: new Date().toISOString(),
         accumulatedTodaySeconds: nextAccumulated,
         modeTimestamp: nextTimestamp
       });
@@ -748,7 +757,7 @@ export default function TiedInControl() {
        <div className="floating-logs">
            {logs.map((l, i) => (
               <div key={i} className="floating-log">
-                 {l}
+                 {l.message}
               </div>
            ))}
        </div>
