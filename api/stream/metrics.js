@@ -71,7 +71,7 @@ export default async function handler(req, res) {
     // Check if a record already exists for today
     const { data: existingRecord, error: checkError } = await supabase
       .from('stream_metrics')
-      .select('id')
+      .select('*')
       .eq('date', today)
       .single();
 
