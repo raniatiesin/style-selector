@@ -470,6 +470,38 @@ export default function TiedInControl() {
     });
   };
 
+  const togglePause = () => {
+    if (state.mode !== 'work') return;
+    
+    let nextAccumulated = state.accumulatedTodaySeconds || 0;
+    let nextTimestamp = Date.now();
+    
+    if (!state.isPaused) {
+      // Pausing: capture elapsed time before pause
+      if (state.modeTimestamp) {
+        const elapsed = Math.max(0, Math.floor((Date.now() - state.modeTimestamp) / 1000));
+        nextAccumulated += elapsed;
+      }
+      pushUpdate({
+        ...state,
+        isPaused: true,
+        pausedTimestamp: Date.now(),
+        accumulatedTodaySeconds: nextAccumulated,
+        modeTimestamp: nextTimestamp
+      });
+      addLog('Timer paused');
+    } else {
+      // Resuming: just clear pause state, timestamp will be reset
+      pushUpdate({
+        ...state,
+        isPaused: false,
+        pausedTimestamp: null,
+        modeTimestamp: Date.now()
+      });
+      addLog('Timer resumed');
+    }
+  };
+
   const resetDay = () => {
     if (window.confirm("Reset entire day overlay clock back to zero and pause the screen? (Accumulated total will NOT be reset)")) {
       pushUpdate({ 
@@ -665,6 +697,21 @@ export default function TiedInControl() {
                <button className="mode-btn button-xs" onClick={() => handleMetric('convertedCount', 1)}>+</button>
              </div>
            </div>
+           {state.mode === 'work' && (
+             <div className="side-line panel-row">
+                <span className={state.isPaused ? 'paused-text' : ''}>
+                  {state.isPaused ? `Paused since ${new Date(state.pausedTimestamp).toLocaleTimeString()}` : 'Active'}
+                </span>
+                <div className="inline-form">
+                  <button 
+                    className={`mode-btn button-sm ${state.isPaused ? 'active' : ''}`} 
+                    onClick={() => togglePause()}
+                  >
+                    {state.isPaused ? 'Resume' : 'Pause'}
+                  </button>
+                </div>
+             </div>
+           )}
          </div>
 
        {/* YouTube Markers Box */}
