@@ -68,42 +68,61 @@ export default async function handler(req, res) {
     if (Object.hasOwn(payload, 'isPaused')) updateData.is_paused = payload.isPaused;
     if (Object.hasOwn(payload, 'pausedTimestamp')) updateData.paused_timestamp = payload.pausedTimestamp;
 
-    // Check if a record already exists for today
-    const { data: existingRecord, error: checkError } = await supabase
+    // Check if there's an active stream from a previous day
+    const { data: activeStreamData, error: activeStreamError } = await supabase
       .from('stream_metrics')
       .select('*')
-      .eq('date', today)
+      .eq('is_streaming', true)
       .single();
 
     let result;
     
-    if (checkError && checkError.code !== 'PGRST116') {
-      // Real error (not "no rows returned")
-      throw checkError;
-    }
-
-    if (!existingRecord) {
-      // No record exists for today - only create if this is a stream start OR pause state change
-      if (payload.isStreaming === true || payload.isPaused !== undefined) {
-        // Stream start with no record - create new record
-        result = await supabase
-          .from('stream_metrics')
-          .insert(updateData)
-          .select();
-      } else {
-        // Not a stream start and no pause state change - don't create a record
-        return res.status(200).json({
-          success: true,
-          message: "No record created (not a stream start)."
-        });
-      }
-    } else {
-      // Record exists - update it
+    if (activeStreamData) {
+      // Active stream found - update that record regardless of date
+      // Don't change the date field to preserve continuity
+      const updateDataWithoutDate = { ...updateData };
+      delete updateDataWithoutDate.date;
       result = await supabase
         .from('stream_metrics')
-        .update(updateData)
-        .eq('date', today)
+        .update(updateDataWithoutDate)
+        .eq('id', activeStreamData.id)
         .select();
+    } else {
+      // No active stream - check if a record exists for today
+      const { data: existingRecord, error: checkError } = await supabase
+        .from('stream_metrics')
+        .select('*')
+        .eq('date', today)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        // Real error (not "no rows returned")
+        throw checkError;
+      }
+
+      if (!existingRecord) {
+        // No record exists for today - only create if this is a stream start OR pause state change
+        if (payload.isStreaming === true || payload.isPaused !== undefined) {
+          // Stream start with no record - create new record
+          result = await supabase
+            .from('stream_metrics')
+            .insert(updateData)
+            .select();
+        } else {
+          // Not a stream start and no pause state change - don't create a record
+          return res.status(200).json({
+            success: true,
+            message: "No record created (not a stream start)."
+          });
+        }
+      } else {
+        // Record exists - update it
+        result = await supabase
+          .from('stream_metrics')
+          .update(updateData)
+          .eq('date', today)
+          .select();
+      }
     }
 
     if (result.error) {

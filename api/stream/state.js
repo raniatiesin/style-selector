@@ -36,12 +36,30 @@ export default async function handler(req, res) {
     // to strictly prevent roll-overs mismatching your location
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
     
-    // Fetch today's metrics
-    const { data, error } = await supabase
+    // First, check if there's an active stream from a previous day
+    // If so, continue using that record instead of today's
+    const { data: activeStreamData, error: activeStreamError } = await supabase
       .from('stream_metrics')
       .select('*')
-      .eq('date', today)
+      .eq('is_streaming', true)
       .single();
+
+    let data = null;
+    let error = null;
+
+    if (activeStreamData) {
+      // Active stream found - use this record regardless of date
+      data = activeStreamData;
+    } else {
+      // No active stream - fetch today's metrics
+      const result = await supabase
+        .from('stream_metrics')
+        .select('*')
+        .eq('date', today)
+        .single();
+      data = result.data;
+      error = result.error;
+    }
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
       throw error;
