@@ -39,6 +39,35 @@ export default async function handler(req, res) {
     // to strictly prevent roll-overs mismatching your location
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
     
+    // Server-side validation
+    const validationErrors = [];
+    
+    // Validate streaming state
+    if (payload.isStreaming !== undefined && typeof payload.isStreaming !== 'boolean') {
+      validationErrors.push('isStreaming must be a boolean');
+    }
+    
+    // Validate pause state
+    if (payload.isPaused !== undefined && typeof payload.isPaused !== 'boolean') {
+      validationErrors.push('isPaused must be a boolean');
+    }
+    
+    // Validate accumulated time doesn't go negative
+    if (payload.accumulatedTodaySeconds !== undefined && payload.accumulatedTodaySeconds < 0 && payload.accumulatedTodaySeconds !== -1) {
+      validationErrors.push('accumulatedTodaySeconds cannot be negative (except -1 for reset)');
+    }
+    
+    // Validate mode
+    const validModes = ['work', 'play', 'break', 'standby', 'explain'];
+    if (payload.mode !== undefined && !validModes.includes(payload.mode) && !payload.mode.startsWith('explain|')) {
+      validationErrors.push(`Invalid mode: ${payload.mode}`);
+    }
+    
+    if (validationErrors.length > 0) {
+      console.error('[API Validation Error]', validationErrors);
+      return res.status(400).json({ error: 'Validation failed', details: validationErrors });
+    }
+    
     // We only update the fields that the client sends to us.
     const updateData = { date: today, updated_at: new Date().toISOString() };
     if (Object.hasOwn(payload, 'mode')) updateData.mode = payload.mode;
@@ -56,7 +85,10 @@ export default async function handler(req, res) {
     if (Object.hasOwn(payload, 'modeTimestamp')) updateData.mode_timestamp = payload.modeTimestamp;
     
     if (Object.hasOwn(payload, 'accumulatedTotalSeconds')) updateData.accumulated_seconds = payload.accumulatedTotalSeconds;
-    if (Object.hasOwn(payload, 'isStreaming')) updateData.is_streaming = payload.isStreaming;
+    if (Object.hasOwn(payload, 'isStreaming')) {
+      // Use the exact value provided (true or false)
+      updateData.is_streaming = payload.isStreaming;
+    }
     if (Object.hasOwn(payload, 'gameName')) updateData.game_name = payload.gameName;
     if (Object.hasOwn(payload, 'standbySelection')) updateData.standby_selection = payload.standbySelection;
     if (Object.hasOwn(payload, 'timestamps')) updateData.timestamps = payload.timestamps;
@@ -101,18 +133,18 @@ export default async function handler(req, res) {
       }
 
       if (!existingRecord) {
-        // No record exists for today - only create if this is a stream start OR pause state change
-        if (payload.isStreaming === true || payload.isPaused !== undefined) {
-          // Stream start with no record - create new record
+        // No record exists for today - only create if this is a stream start, stop, OR pause state change
+        if (payload.isStreaming === true || payload.isStreaming === false || payload.isPaused !== undefined) {
+          // Stream start/stop with no record - create new record
           result = await supabase
             .from('stream_metrics')
             .insert(updateData)
             .select();
         } else {
-          // Not a stream start and no pause state change - don't create a record
+          // Not a stream start/stop and no pause state change - don't create a record
           return res.status(200).json({
             success: true,
-            message: "No record created (not a stream start)."
+            message: "No record created (not a stream start/stop)."
           });
         }
       } else {

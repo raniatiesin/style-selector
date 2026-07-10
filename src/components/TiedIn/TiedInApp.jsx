@@ -300,17 +300,28 @@ export default function TiedInApp({ displayMode }) {
             liveStateRef.current.modeTimestamp = Number(m.modeTimestamp || Date.now());
           }
 
+          // Only update streaming state if explicitly provided (fixes the "not streaming" bug)
+          if (m.isStreaming !== undefined) {
+            liveStateRef.current.isStreaming = m.isStreaming;
+          }
+          
+          // Only update pause state if explicitly provided (fixes the "paused when not paused" bug)
+          if (m.isPaused !== undefined) {
+            liveStateRef.current.isPaused = m.isPaused;
+          }
+          if (m.pausedTimestamp !== undefined) {
+            liveStateRef.current.pausedTimestamp = m.pausedTimestamp;
+          }
+
           liveStateRef.current.mode = m.mode || "standby";
           liveStateRef.current.accumulatedTodaySeconds = acc;
           liveStateRef.current.previousDaysSeconds = Number(m.previousDaysSeconds || 0);
           liveStateRef.current.totalDays = Number(m.totalDays || 1);
-          liveStateRef.current.isStreaming = m.isStreaming ?? false;
           liveStateRef.current.gameName = m.gameName ?? "Just Playing";
           liveStateRef.current.standbySelection = m.standbySelection ?? "Coming Soon";
           liveStateRef.current.timestamps = m.timestamps ?? "";
           liveStateRef.current.streamNumber = m.streamNumber ?? 1;
-          liveStateRef.current.isPaused = m.isPaused ?? false;
-          liveStateRef.current.pausedTimestamp = m.pausedTimestamp ?? null;
+          
           const rawMode = String(m.mode || "");
           if (rawMode.startsWith('explain|')) {
             const topic = rawMode.split('|').slice(1).join('|').trim();
@@ -328,6 +339,14 @@ export default function TiedInApp({ displayMode }) {
           setCounts({
             contacted: Number(m.contactedCount || 0),
             converted: Number(m.convertedCount || 0)
+          });
+          
+          // Console log for debugging overlay state
+          console.log('[Overlay State Update]', {
+            mode: liveStateRef.current.mode,
+            isStreaming: liveStateRef.current.isStreaming,
+            isPaused: liveStateRef.current.isPaused,
+            accumulatedTodaySeconds: liveStateRef.current.accumulatedTodaySeconds
           });
         }
 

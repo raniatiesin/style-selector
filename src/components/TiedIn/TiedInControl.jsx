@@ -52,6 +52,12 @@ export default function TiedInControl() {
   const [obsConnected, setObsConnected] = useState(false);
   const [logs, setLogs] = useState([]);
   const obsRef = useRef(null);
+  const stateRef = useRef(state); // Track state for sync interval without dependency
+
+  // Keep stateRef synchronized with current state
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   // Auto-dismiss logs after 10 seconds
   useEffect(() => {
@@ -155,6 +161,43 @@ export default function TiedInControl() {
 
   const addLog = (msg) => setLogs(l => [...l, { message: `[${new Date().toLocaleTimeString()}] ${msg}`, timestamp: Date.now() }].slice(-20));
 
+  // State validation function to catch inconsistencies
+  const validateState = (s) => {
+    const issues = [];
+    
+    // Validate streaming state consistency
+    if (s.isStreaming === true && !s.modeTimestamp) {
+      issues.push('Streaming true but no modeTimestamp');
+    }
+    
+    // Validate pause state consistency
+    if (s.isPaused === true && s.mode !== 'work') {
+      issues.push('Paused true but not in work mode');
+    }
+    
+    if (s.isPaused === true && !s.pausedTimestamp) {
+      issues.push('Paused true but no pausedTimestamp');
+    }
+    
+    // Validate accumulated time doesn't go negative
+    if (s.accumulatedTodaySeconds < 0) {
+      issues.push(`Negative accumulatedTodaySeconds: ${s.accumulatedTodaySeconds}`);
+    }
+    
+    // Validate mode is valid
+    const validModes = ['work', 'play', 'break', 'standby', 'explain'];
+    if (!validModes.includes(s.mode) && !s.mode.startsWith('explain|')) {
+      issues.push(`Invalid mode: ${s.mode}`);
+    }
+    
+    if (issues.length > 0) {
+      addLog(`STATE VALIDATION ERROR: ${issues.join(', ')}`);
+      console.error('State validation failed:', issues, s);
+    }
+    
+    return issues.length === 0;
+  };
+
    const sanitizeFilenamePart = (value) => value.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
    const formatExplainRecordingName = (topic) => {
       const safeTopic = sanitizeFilenamePart(topic) || 'Explain';
@@ -180,23 +223,30 @@ export default function TiedInControl() {
         // Continuously hydrate state from API to avoid stale UI overrides,
         // but temporarily block syncing updates exactly when a manual push is happening
         if (data?.metrics && !isSyncingRef.current) {
-           setState(s => ({ 
-              ...s, 
-              contactedCount: data.metrics.contactedCount ?? s.contactedCount,
-              convertedCount: data.metrics.convertedCount ?? s.convertedCount,
-              mode: data.metrics.mode || s.mode,
-              accumulatedTodaySeconds: data.metrics.accumulatedTodaySeconds ?? s.accumulatedTodaySeconds,
-              modeTimestamp: data.metrics.modeTimestamp ?? s.modeTimestamp,
-              isStreaming: data.metrics.isStreaming ?? s.isStreaming,
-              gameName: data.metrics.gameName ?? s.gameName,
-              standbySelection: data.metrics.standbySelection ?? s.standbySelection,
-              timestamps: data.metrics.timestamps ?? s.timestamps,
-              streamNumber: data.metrics.streamNumber ?? s.streamNumber,
-              // Only update pause state if it's explicitly set in the API response
-              // This prevents overwriting local pause state when no DB record exists
-              isPaused: data.metrics.isPaused !== undefined ? data.metrics.isPaused : s.isPaused,
-              pausedTimestamp: data.metrics.pausedTimestamp !== undefined ? data.metrics.pausedTimestamp : s.pausedTimestamp
-           }));
+           setState(s => { 
+              const newState = { 
+                ...s, 
+                contactedCount: data.metrics.contactedCount ?? s.contactedCount,
+                convertedCount: data.metrics.convertedCount ?? s.convertedCount,
+                mode: data.metrics.mode || s.mode,
+                accumulatedTodaySeconds: data.metrics.accumulatedTodaySeconds ?? s.accumulatedTodaySeconds,
+                modeTimestamp: data.metrics.modeTimestamp ?? s.modeTimestamp,
+                isStreaming: data.metrics.isStreaming !== undefined ? data.metrics.isStreaming : s.isStreaming,
+                gameName: data.metrics.gameName ?? s.gameName,
+                standbySelection: data.metrics.standbySelection ?? s.standbySelection,
+                timestamps: data.metrics.timestamps ?? s.timestamps,
+                streamNumber: data.metrics.streamNumber ?? s.streamNumber,
+                // Always update pause state from API to ensure sync
+                // The isSyncingRef prevents overwriting during manual pushes
+                isPaused: data.metrics.isPaused !== undefined ? data.metrics.isPaused : s.isPaused,
+                pausedTimestamp: data.metrics.pausedTimestamp !== undefined ? data.metrics.pausedTimestamp : s.pausedTimestamp
+              };
+              
+              // Validate the new state
+              validateState(newState);
+              
+              return newState;
+           });
            // Only sync dropdowns if they're different from current selection
            // This prevents reverting user selections during API polling
            if (data.metrics.gameName && data.metrics.gameName !== selectedGame && data.metrics.gameName !== state.gameName) {
@@ -259,60 +309,72 @@ export default function TiedInControl() {
            const map = { [SCENE_WORK]: "work", [SCENE_PLAY]: "play", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby" };
            const mapped = map[event.sceneName];
            if (mapped) {
-             setState(s => {
-               if (s.mode !== mapped) {
-                         if (mapped === "explain") {
-                            const topic = (s.mode.startsWith('explain|') ? s.mode.split('|').slice(1).join('|') : explainTopic).trim();
-                            if (topic) setExplainRecordingName(topic);
-                   obs.call("StartRecord")
-                     .then(() => addLog("OBS record started (from scene)"))
-                     .catch(e => addLog(`StartRecord failed: ${e.message}`));
-                 } else {
-                   obs.call("StopRecord")
-                     .then(() => addLog("OBS record stopped (from scene)"))
-                     .catch(e => addLog(`StopRecord failed: ${e.message}`));
-                 }
-
-                 addLog(`Syncing new mode to Vercel: ${mapped}`);
-                 
-                 let nextAccumulated = s.accumulatedTodaySeconds || 0;
-                 let nextTimestamp = Date.now();
-                 
-                 const isWorkToExplain = (s.mode === 'work' && mapped === 'explain');
-                 const isExplainToWork = (s.mode === 'explain' && mapped === 'work');
-                 const isWorkToPlay = (s.mode === 'work' && mapped === 'play');
-                 const isPlayToWork = (s.mode === 'play' && mapped === 'work');
-
-                 if (isWorkToExplain || isExplainToWork || isWorkToPlay || isPlayToWork) {
-                    nextAccumulated = s.accumulatedTodaySeconds || 0;
-                    nextTimestamp = s.modeTimestamp || Date.now();
-                 } else if (s.mode === 'work' || s.mode === 'play') {
-                    if (s.modeTimestamp) {
-                       const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
-                       nextAccumulated += elapsed;
-                    }
+             // Verify this is a real scene change, not a duplicate event
+             obs.call("GetCurrentProgramScene")
+               .then((currentScene) => {
+                 if (currentScene.currentProgramSceneName !== event.sceneName) {
+                   addLog(`Ignoring duplicate scene event. Current: ${currentScene.currentProgramSceneName}, Event: ${event.sceneName}`);
+                   return;
                  }
                  
-                 const newState = { 
-                    ...s, 
-                    mode: mapped,
-                    accumulatedTodaySeconds: nextAccumulated,
-                    modeTimestamp: nextTimestamp,
-                    _skipPushCalc: true,
-                    isStreaming: s.isStreaming
-                 };
+                 setState(s => {
+                   if (s.mode !== mapped) {
+                     addLog(`Processing legitimate scene change: ${s.mode} -> ${mapped}`);
+                         
+                     if (mapped === "explain") {
+                       const topic = (s.mode.startsWith('explain|') ? s.mode.split('|').slice(1).join('|') : explainTopic).trim();
+                       if (topic) setExplainRecordingName(topic);
+                       obs.call("StartRecord")
+                         .then(() => addLog("OBS record started (from scene)"))
+                         .catch(e => addLog(`StartRecord failed: ${e.message}`));
+                     } else {
+                       obs.call("StopRecord")
+                         .then(() => addLog("OBS record stopped (from scene)"))
+                         .catch(e => addLog(`StopRecord failed: ${e.message}`));
+                     }
 
-                 pushUpdate(newState);
-                 const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
-                 const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
-                 const explainText = getExplainMarkerText(s.mode, explainTopic);
-                 const playText = getPlayMarkerText(selectedGame);
-                 const standbyText = getStandbyMarkerText(selectedStandby);
-                 addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'play' ? playText : mapped === 'break' ? 'break' : standbyText);
-                 return newState;
-               }
-               return s;
-             });
+                     addLog(`Syncing new mode to Vercel: ${mapped}`);
+                     
+                     let nextAccumulated = s.accumulatedTodaySeconds || 0;
+                     let nextTimestamp = Date.now();
+                     
+                     const isWorkToExplain = (s.mode === 'work' && mapped === 'explain');
+                     const isExplainToWork = (s.mode === 'explain' && mapped === 'work');
+                     const isWorkToPlay = (s.mode === 'work' && mapped === 'play');
+                     const isPlayToWork = (s.mode === 'play' && mapped === 'work');
+
+                     if (isWorkToExplain || isExplainToWork || isWorkToPlay || isPlayToWork) {
+                        nextAccumulated = s.accumulatedTodaySeconds || 0;
+                        nextTimestamp = s.modeTimestamp || Date.now();
+                     } else if (s.mode === 'work' || s.mode === 'play') {
+                        if (s.modeTimestamp) {
+                           const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
+                           nextAccumulated += elapsed;
+                        }
+                     }
+                     
+                     const newState = { 
+                        ...s, 
+                        mode: mapped,
+                        accumulatedTodaySeconds: nextAccumulated,
+                        modeTimestamp: nextTimestamp,
+                        _skipPushCalc: true,
+                        isStreaming: s.isStreaming
+                     };
+
+                     pushUpdate(newState);
+                     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
+                     const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
+                     const explainText = getExplainMarkerText(s.mode, explainTopic);
+                     const playText = getPlayMarkerText(selectedGame);
+                     const standbyText = getStandbyMarkerText(selectedStandby);
+                     addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'play' ? playText : mapped === 'break' ? 'break' : standbyText);
+                     return newState;
+                   }
+                   return s;
+                 });
+               })
+               .catch(e => addLog(`Scene verification failed: ${e.message}`));
            }
         });
 
@@ -384,6 +446,53 @@ export default function TiedInControl() {
           fallbackConnectTimer = setTimeout(connect, 5000);
         });
 
+        // Periodic scene sync verification to catch drift
+        const syncInterval = setInterval(async () => {
+          if (!keepConnecting || !obsConnected) return;
+          
+          try {
+            const currentScene = await obs.call("GetCurrentProgramScene");
+            const sceneName = currentScene.currentProgramSceneName;
+            const map = { [SCENE_WORK]: "work", [SCENE_PLAY]: "play", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby" };
+            const expectedMode = map[sceneName];
+            const currentState = stateRef.current;
+            
+            if (expectedMode && currentState.mode !== expectedMode) {
+              addLog(`Scene drift detected! UI mode: ${currentState.mode}, OBS scene: ${sceneName} (${expectedMode}). Syncing UI to OBS...`);
+              
+              // Update local state immediately
+              setState(s => ({ ...s, mode: expectedMode }));
+              
+              // Also sync to database to ensure overlay matches
+              isSyncingRef.current = true;
+              fetch('https://tiesin.me/api/stream/metrics', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${adminKey}`
+                },
+                body: JSON.stringify({
+                  ...currentState,
+                  mode: expectedMode,
+                  _skipPushCalc: true
+                })
+              }).then(res => {
+                if (!res.ok) throw new Error(`Server returned ${res.status}`);
+                addLog("Scene sync corrected in database");
+              }).catch(error => {
+                addLog(`Scene sync error: ${error.message}`);
+              }).finally(() => {
+                isSyncingRef.current = false;
+              });
+            }
+          } catch (e) {
+            // Silently ignore sync check errors
+          }
+        }, 5000); // Check every 5 seconds
+
+        // Store sync interval reference for cleanup
+        obsRef.current._syncInterval = syncInterval;
+
       } catch (err) {
         if (!keepConnecting) return;
         addLog(`OBS Connection Error: ${err.message || err.code || err}`);
@@ -393,9 +502,14 @@ export default function TiedInControl() {
     }
 
     connect();
+    
+    // Cleanup function
     return () => { 
         keepConnecting = false; 
         clearTimeout(fallbackConnectTimer);
+        if (obsRef.current?._syncInterval) {
+          clearInterval(obsRef.current._syncInterval);
+        }
         obs.disconnect().catch(() => {});
     };
   }, [isLocked, obsPassword]);
@@ -425,6 +539,13 @@ export default function TiedInControl() {
 
   const pushUpdate = async (newState) => {
     if (!adminKey) return;
+    
+    // Validate state before pushing
+    if (!validateState(newState)) {
+      addLog('State validation failed - not pushing to database');
+      return;
+    }
+    
     // Always set isSyncing to prevent loadMetrics from overwriting state during push
     isSyncingRef.current = true;
     
@@ -440,7 +561,7 @@ export default function TiedInControl() {
     delete payload._skipPushCalc;
 
     try {
-      addLog(`Pushing state update...`);
+      addLog(`Pushing state update: mode=${payload.mode}, streaming=${payload.isStreaming}, paused=${payload.isPaused}`);
       const res = await fetch('https://tiesin.me/api/stream/metrics', {
         method: 'POST',
         headers: {
@@ -464,7 +585,7 @@ export default function TiedInControl() {
         throw new Error(`Server returned ${res.status}: ${errData?.error || ''} ${errData?.details || ''}`);
       }
       
-      addLog("State update synced.");
+      addLog("State update synced successfully.");
       setState(payload);
     } catch (e) {
       addLog(`Sync error: ${e.message}`);
@@ -492,25 +613,35 @@ export default function TiedInControl() {
         const elapsed = Math.max(0, Math.floor((Date.now() - state.modeTimestamp) / 1000));
         nextAccumulated += elapsed;
       }
-      pushUpdate({
+      const pauseState = {
         ...state,
         isPaused: true,
         pausedTimestamp: new Date().toISOString(),
-        accumulatedTodaySeconds: nextAccumulated
-        // Don't update modeTimestamp - keep it so we can calculate elapsed correctly on resume
-      });
-      addLog('Timer paused');
+        accumulatedTodaySeconds: nextAccumulated,
+        modeTimestamp: state.modeTimestamp // Keep original timestamp for resume calculation
+      };
+      
+      addLog('Timer paused - pushing to database...');
+      pushUpdate(pauseState);
       addYtMarker('pause');
+      
+      // Force local state update immediately for UI responsiveness
+      setState(pauseState);
     } else {
       // Resuming: reset modeTimestamp to now so elapsed calculation starts fresh
-      pushUpdate({
+      const resumeState = {
         ...state,
         isPaused: false,
         pausedTimestamp: null,
         modeTimestamp: Date.now()
-      });
-      addLog('Timer resumed');
+      };
+      
+      addLog('Timer resumed - pushing to database...');
+      pushUpdate(resumeState);
       addYtMarker('resume');
+      
+      // Force local state update immediately for UI responsiveness
+      setState(resumeState);
     }
   };
 
@@ -584,18 +715,45 @@ export default function TiedInControl() {
     };
 
     if (obsRef.current && obsConnected) {
-      addLog(`Telling OBS to switch scene to: ${isExplainTarget ? 'explain' : mode}`);
       const scene = mode === "work" ? SCENE_WORK : isExplainTarget ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : mode === "play" ? SCENE_PLAY : SCENE_STANDBY;
-      obsRef.current.call("SetCurrentProgramScene", { sceneName: scene }).catch(e => {
-         addLog(`OBS Scene Change Error: ${e.message}`);
-      });
-
-         if (isExplainTarget) {
+      addLog(`Telling OBS to switch scene to: ${scene}`);
+      
+      obsRef.current.call("SetCurrentProgramScene", { sceneName: scene })
+        .then(() => {
+          addLog(`OBS scene changed successfully to: ${scene}`);
+          
+          // Verify the scene change by checking current scene
+          return obsRef.current.call("GetCurrentProgramScene");
+        })
+        .then((currentScene) => {
+          if (currentScene.currentProgramSceneName !== scene) {
+            addLog(`WARNING: OBS scene mismatch! Expected: ${scene}, Got: ${currentScene.currentProgramSceneName}`);
+            // Force sync to actual OBS state
+            const reverseMap = { "work": "work", "play": "play", "explain": "explain", "break": "break", "standby": "standby" };
+            const actualMode = reverseMap[currentScene.currentProgramSceneName] || mode;
+            if (actualMode !== mode) {
+              addLog(`Forcing mode sync to actual OBS state: ${actualMode}`);
+              // Update state to match OBS reality
+              setState(s => ({ ...s, mode: actualMode }));
+            }
+          }
+          
+          // Handle recording based on scene
+          if (isExplainTarget) {
             setExplainRecordingName(explainTopicTarget);
-        obsRef.current.call("StartRecord").catch(e => addLog(`obs err: ${e.message}`));
-      } else if (mode === "standby") {
-        obsRef.current.call("StopRecord").catch(e => addLog(`obs err: ${e.message}`));
-      }
+            return obsRef.current.call("StartRecord");
+          } else if (mode === "standby") {
+            return obsRef.current.call("StopRecord");
+          }
+        })
+        .then(() => {
+          if (isExplainTarget || mode === "standby") {
+            addLog(`Recording ${isExplainTarget ? 'started' : 'stopped'} successfully`);
+          }
+        })
+        .catch(e => {
+          addLog(`OBS Scene/Record Error: ${e.message}`);
+        });
     }
 
    // pushUpdate will now always update local state and set isSyncing

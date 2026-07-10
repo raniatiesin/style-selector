@@ -100,7 +100,7 @@ export default async function handler(req, res) {
        // If currently in an active ticking mode AND streaming, explicitly calculate the un-pushed elapsed time.
        // This guarantees data isn't lost if the stream crashes before a break causes an accumulated log.
        let activeOffset = 0;
-       const isStreaming = data.is_streaming ?? false; // Handle missing field gracefully
+       const isStreaming = data.is_streaming === true; // Only true if explicitly true, not missing/null
        if ((data.mode === 'work' || data.mode === 'play') && isStreaming) {
            const timestamp = data.mode_timestamp || Date.now();
            activeOffset = Math.floor((Date.now() - timestamp) / 1000);
@@ -114,8 +114,8 @@ export default async function handler(req, res) {
             convertedCount: data.contacts_count,
            previousDaysSeconds: pastDaysAcc,
            todayWorkSeconds: (data.today_seconds ?? 0) + activeOffset,
-           // Default to false - counter only runs when explicitly streaming
-           isStreaming: data.is_streaming ?? false,
+           // Only true if explicitly set to true in database
+           isStreaming: data.is_streaming === true,
            gameName: data.game_name ?? 'Just Playing',
            standbySelection: data.standby_selection ?? 'Coming Soon',
            timestamps: data.timestamps ?? '',
@@ -124,7 +124,8 @@ export default async function handler(req, res) {
            // Pure timestamp states back to frontend
            accumulatedTodaySeconds: data.today_seconds ?? 0,
            modeTimestamp: data.mode_timestamp,
-           isPaused: data.is_paused ?? false,
+           // Only update pause state if explicitly set in database
+           isPaused: data.is_paused === true ? true : (data.is_paused === false ? false : undefined),
            pausedTimestamp: data.paused_timestamp ?? null,
 
            totalDays: count || 1
