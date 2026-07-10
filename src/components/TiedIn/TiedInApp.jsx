@@ -431,28 +431,23 @@ export default function TiedInApp({ displayMode }) {
   const displayTasks = [
     ...tasks.filter(t => {
       const isWaiting = t.status === "waiting" && !inProgressIds.has(t.id);
-      const isDueToday = !t.due || t.due === today;
-      return isWaiting && isDueToday;
+      return isWaiting;
     }).sort((a, b) => a.createdAt - b.createdAt),
     ...tasks.filter(t => {
       const isUpNext = t.status === "up_next" && !inProgressIds.has(t.id);
-      const isDueToday = !t.due || t.due === today;
-      return isUpNext && isDueToday;
+      return isUpNext;
     }).sort((a, b) => a.createdAt - b.createdAt),
     ...tasks.filter(t => {
       const isInProgress = t.status === "in_progress";
-      const isDueToday = !t.due || t.due === today;
-      return isInProgress && isDueToday;
+      return isInProgress;
     }).sort((a, b) => b.createdAt - a.createdAt),
     ...tasks.filter(t => {
       const isInReview = t.status === "in_review" && !inProgressIds.has(t.id);
-      const isDueToday = !t.due || t.due === today;
-      return isInReview && isDueToday;
+      return isInReview;
     }).sort((a, b) => b.createdAt - a.createdAt),
     ...tasks.filter(t => {
       const isDone = t.status === "done" && !inProgressIds.has(t.id) && (t.completedAt || t.createdAt) >= startOfToday.getTime();
-      const isDueToday = !t.due || t.due === today;
-      return isDone && isDueToday;
+      return isDone;
     }).sort((a, b) => (b.completedAt || b.createdAt) - (a.completedAt || a.createdAt))
   ];
 
