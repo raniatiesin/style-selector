@@ -69,8 +69,6 @@ export default function TiedInApp({ displayMode }) {
     mcSessionTime: useRef(null),
     mcProgressFill: useRef(null),
     dayHoursTrack: useRef(null),
-    nowDateMain: useRef(null),
-    nowTimeMain: useRef(null),
     progressFill: useRef(null),
     breakTime: useRef(null),
     nowTimeBreak: useRef(null),
@@ -82,8 +80,6 @@ export default function TiedInApp({ displayMode }) {
     explainTime: useRef(null),
     explainAccumulated: useRef(null),
     explainTopicText: useRef(null),
-    gameName1: useRef(null),
-    gameName2: useRef(null),
     standbyTitle: useRef(null)
   };
 
@@ -186,9 +182,6 @@ export default function TiedInApp({ displayMode }) {
       const weekdayShort = d.toLocaleDateString("en-US", { weekday: "short" });
       const sideDate = `${weekdayShort} - ${time12}`;
 
-      if (timerRefs.nowTimeMain.current) timerRefs.nowTimeMain.current.innerText = sideDate;
-      if (timerRefs.nowDateMain.current) timerRefs.nowDateMain.current.innerText = shortDate;
-      
       if (timerRefs.nowTimeBreak.current) timerRefs.nowTimeBreak.current.innerText = time12;
       if (timerRefs.nowDateBreak.current) timerRefs.nowDateBreak.current.innerText = ldate;
       
@@ -227,11 +220,7 @@ export default function TiedInApp({ displayMode }) {
         }
       }
 
-      // Update game name refs in play mode
-      if (isPlay) {
-        if (timerRefs.gameName1.current) timerRefs.gameName1.current.innerText = ls.gameName || "Just Playing";
-        if (timerRefs.gameName2.current) timerRefs.gameName2.current.innerText = ls.gameName || "Just Playing";
-      }
+
 
       // Update standby title
       if (timerRefs.standbyTitle.current) {
@@ -610,18 +599,9 @@ export default function TiedInApp({ displayMode }) {
                 )}
               </div>
               <div className="side-col">
-                {activeMode !== 'play' && (
-                  <div className="context-pill stack">
-                    <div className="side-line" ref={timerRefs.nowDateMain}>--/--/----</div>
-                    <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
-                  </div>
-                )}
                 <div className="context-pill stack side-line-counts">
                   {activeMode === 'play' ? (
-                    <>
-                      <div className="side-line" ref={timerRefs.gameName1}>{liveStateRef.current.gameName}</div>
-                      <div className="side-line" ref={timerRefs.gameName2}>{liveStateRef.current.gameName}</div>
-                    </>
+                    <div className="side-line">--</div>
                   ) : (
                     <>
                       <div className="side-line">Projects: {counts.contacted}</div>
