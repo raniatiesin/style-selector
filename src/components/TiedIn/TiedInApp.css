@@ -309,10 +309,6 @@ html:has(.overlay-root) body {
   display: none !important;
 }
 
-.mode-play .side-col {
-  display: none !important;
-}
-
 .minecraft-run-badge {
   position: absolute;
   top: calc(10px + var(--context-gap));
@@ -543,10 +539,6 @@ html:has(.overlay-root) body {
   grid-template-columns: minmax(0, 1fr) 293.33px 334.67px;
   gap: var(--context-gap);
   padding: var(--context-gap);
-}
-
-.mode-play .context-panel {
-  grid-template-columns: minmax(0, 1fr) 334.67px;
 }
 
 .hero-col {
