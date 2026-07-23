@@ -857,63 +857,53 @@ export default function TiedInControl() {
 
        {/* YouTube Markers Box */}
        <div className="context-pill stack panel-grow">
-         <div className="side-line panel-header">
+         <div className="side-line panel-row">
             <span>Timestamps</span>
             <div className="inline-form">
-               <button className="mode-btn button-xs" onClick={() => addYtMarker('manual')}>MARK</button>
-               <button className="mode-btn button-xs" onClick={resetMarkers}>CLEAR</button>
+               <button className="mode-btn button-sm" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode === 'play' ? getPlayMarkerText(selectedGame) : state.mode === 'standby' ? getStandbyMarkerText(selectedStandby) : state.mode === 'break' ? 'break' : 'standby')}>MARK</button>
+               <button className="mode-btn button-sm" onClick={resetMarkers}>CLEAR</button>
             </div>
          </div>
          {streamStart && (
-           <div className="panel-row" style={{ fontSize: '0.9em', color: '#888' }}>
-              Stream time: {formatYTTime(streamStart)}
-           </div>
+            <div className="side-line yt-live">
+               Live: {formatYTTime(streamStart)}
+            </div>
          )}
-         {!streamStart && ytMarkers.length === 0 && (
-           <div className="panel-row" style={{ fontSize: '0.9em', color: '#666', fontStyle: 'italic' }}>
-              No stream active. Click CLEAR to start recording timeline.
-           </div>
-         )}
+         {ytMarkers.length === 0 ? <div className="side-line yt-empty">No markers yet</div> : null}
          <textarea
-            className="input-full input-pad"
-            style={{ 
-               minHeight: '120px', 
-               fontFamily: 'monospace', 
-               fontSize: '0.85em',
-               resize: 'vertical'
-            }}
-            value={state.timestamps || ''}
+            value={ytMarkers.join('\n')}
             onChange={(e) => {
-               const newTimestamps = e.target.value;
-               setState(s => ({ ...s, timestamps: newTimestamps }));
-               // Sync to localStorage
-               try {
-                  localStorage.setItem('STREAM_TIMESTAMPS', newTimestamps);
-               } catch (err) {
-                  // Ignore localStorage errors
-               }
-               // Sync to database
-               isSyncingRef.current = true;
-               fetch('https://tiesin.me/api/stream/metrics', {
-                  method: 'POST',
-                  headers: {
+               const newMarkers = e.target.value.split('\n').filter(line => line.trim() !== '');
+               setYtMarkers(newMarkers);
+               localStorage.setItem('YT_MARKERS', JSON.stringify(newMarkers));
+               
+               // Also update the timestamps string for database sync
+               setState(s => {
+                 const newTimestamps = newMarkers.join('\n');
+                 const updatedState = { ...s, timestamps: newTimestamps };
+                 // Push to database without triggering sync loop
+                 isSyncingRef.current = true;
+                 fetch('https://tiesin.me/api/stream/metrics', {
+                   method: 'POST',
+                   headers: {
                      'Content-Type': 'application/json',
                      'Authorization': `Bearer ${adminKey}`
-                  },
-                  body: JSON.stringify({
-                     ...state,
-                     timestamps: newTimestamps,
+                   },
+                   body: JSON.stringify({
+                     ...updatedState,
                      _skipPushCalc: true
-                  })
-               }).then(res => {
-                  if (!res.ok) throw new Error(`Server returned ${res.status}`);
-               }).catch(error => {
-                  addLog(`Timestamp sync error: ${error.message}`);
-               }).finally(() => {
-                  isSyncingRef.current = false;
+                   })
+                 }).then(res => {
+                   if (!res.ok) throw new Error(`Server returned ${res.status}`);
+                 }).catch(error => {
+                   addLog(`Timestamp sync error: ${error.message}`);
+                 }).finally(() => {
+                   isSyncingRef.current = false;
+                 });
+                 return updatedState;
                });
             }}
-            placeholder="Timestamps will appear here..."
+            className="yt-textarea"
          />
        </div>
 
