@@ -904,8 +904,38 @@ export default function TiedInControl() {
           )}
           {ytMarkers.length === 0 ? <div className="side-line yt-empty">No markers yet</div> : null}
           <textarea
-             readOnly
              value={ytMarkers.join('\n')}
+             onChange={(e) => {
+                const newMarkers = e.target.value.split('\n').filter(line => line.trim() !== '');
+                setYtMarkers(newMarkers);
+                localStorage.setItem('YT_MARKERS', JSON.stringify(newMarkers));
+                
+                // Also update the timestamps string for database sync
+                setState(s => {
+                  const newTimestamps = newMarkers.join('\n');
+                  const updatedState = { ...s, timestamps: newTimestamps };
+                  // Push to database without triggering sync loop
+                  isSyncingRef.current = true;
+                  fetch('https://tiesin.me/api/stream/metrics', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${adminKey}`
+                    },
+                    body: JSON.stringify({
+                      ...updatedState,
+                      _skipPushCalc: true
+                    })
+                  }).then(res => {
+                    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+                  }).catch(error => {
+                    addLog(`Timestamp sync error: ${error.message}`);
+                  }).finally(() => {
+                    isSyncingRef.current = false;
+                  });
+                  return updatedState;
+                });
+             }}
              className="yt-textarea"
           />
        </div>

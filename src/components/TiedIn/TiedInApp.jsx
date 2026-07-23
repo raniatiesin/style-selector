@@ -610,10 +610,12 @@ export default function TiedInApp({ displayMode }) {
                 )}
               </div>
               <div className="side-col">
-                <div className="context-pill stack">
-                  <div className="side-line" ref={timerRefs.nowDateMain}>--/--/----</div>
-                  <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
-                </div>
+                {activeMode !== 'play' && (
+                  <div className="context-pill stack">
+                    <div className="side-line" ref={timerRefs.nowDateMain}>--/--/----</div>
+                    <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
+                  </div>
+                )}
                 <div className="context-pill stack side-line-counts">
                   {activeMode === 'play' ? (
                     <>
