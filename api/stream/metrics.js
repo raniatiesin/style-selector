@@ -121,7 +121,7 @@ export default async function handler(req, res) {
       result = await supabase
         .from('stream_metrics')
         .update(updateDataWithoutDate)
-        .eq('id', activeStreamData.id)
+        .eq('date', activeStreamData.date)
         .select();
     } else {
       // No active stream - check if a record exists for the active date
