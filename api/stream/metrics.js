@@ -39,6 +39,16 @@ export default async function handler(req, res) {
     // to strictly prevent roll-overs mismatching your location
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
     
+    // Check if there's an active stream from any day
+    const { data: activeStreamData, error: activeStreamError } = await supabase
+      .from('stream_metrics')
+      .select('*')
+      .eq('is_streaming', true)
+      .single();
+    
+    // Determine which date to use - active stream's date if exists, otherwise today
+    const activeDate = activeStreamData ? activeStreamData.date : today;
+    
     // Server-side validation
     const validationErrors = [];
     
@@ -69,7 +79,8 @@ export default async function handler(req, res) {
     }
     
     // We only update the fields that the client sends to us.
-    const updateData = { date: today, updated_at: new Date().toISOString() };
+    // Use activeDate if there's an active stream, otherwise use today
+    const updateData = { date: activeDate, updated_at: new Date().toISOString() };
     if (Object.hasOwn(payload, 'mode')) updateData.mode = payload.mode;
     if (Object.hasOwn(payload, 'contactedCount')) updateData.projects_count = payload.contactedCount;
     if (Object.hasOwn(payload, 'convertedCount')) updateData.contacts_count = payload.convertedCount;
@@ -100,18 +111,11 @@ export default async function handler(req, res) {
     if (Object.hasOwn(payload, 'isPaused')) updateData.is_paused = payload.isPaused;
     if (Object.hasOwn(payload, 'pausedTimestamp')) updateData.paused_timestamp = payload.pausedTimestamp;
 
-    // Check if there's an active stream from a previous day
-    const { data: activeStreamData, error: activeStreamError } = await supabase
-      .from('stream_metrics')
-      .select('*')
-      .eq('is_streaming', true)
-      .single();
-
     let result;
     
     if (activeStreamData) {
       // Active stream found - update that record regardless of date
-      // Don't change the date field to preserve continuity
+      // Don't change the date field to preserve continuity across midnight
       const updateDataWithoutDate = { ...updateData };
       delete updateDataWithoutDate.date;
       result = await supabase
@@ -120,11 +124,11 @@ export default async function handler(req, res) {
         .eq('id', activeStreamData.id)
         .select();
     } else {
-      // No active stream - check if a record exists for today
+      // No active stream - check if a record exists for the active date
       const { data: existingRecord, error: checkError } = await supabase
         .from('stream_metrics')
         .select('*')
-        .eq('date', today)
+        .eq('date', activeDate)
         .single();
 
       if (checkError && checkError.code !== 'PGRST116') {
@@ -133,7 +137,7 @@ export default async function handler(req, res) {
       }
 
       if (!existingRecord) {
-        // No record exists for today - only create if this is a stream start, stop, OR pause state change
+        // No record exists for active date - only create if this is a stream start, stop, OR pause state change
         if (payload.isStreaming === true || payload.isStreaming === false || payload.isPaused !== undefined) {
           // Stream start/stop with no record - create new record
           result = await supabase
@@ -152,7 +156,7 @@ export default async function handler(req, res) {
         result = await supabase
           .from('stream_metrics')
           .update(updateData)
-          .eq('date', today)
+          .eq('date', activeDate)
           .select();
       }
     }

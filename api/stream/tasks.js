@@ -81,12 +81,22 @@ export default async function handler(req, res) {
 
     // FIX: Align the database 'date' string format calculation with the state poll 
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
+    
+    // Check if there's an active stream from any day
+    const { data: activeStreamData, error: activeStreamError } = await supabase
+      .from('stream_metrics')
+      .select('*')
+      .eq('is_streaming', true)
+      .single();
+    
+    // Determine which date to use - active stream's date if exists, otherwise today
+    const activeDate = activeStreamData ? activeStreamData.date : today;
 
     // Fetch the current task arrays so we can dynamically modify them
     const { data, error: fetchError } = await supabase
       .from('stream_metrics')
       .select('in_progress_tasks, in_review_tasks, up_next_tasks, done_tasks, webhook_logs')
-      .eq('date', today)
+      .eq('date', activeDate)
       .single();
 
     // Ignore PGRST116 (No rows) because we are about to upsert
@@ -208,7 +218,7 @@ export default async function handler(req, res) {
     const { error: updateErr } = await supabase
       .from('stream_metrics')
       .upsert({
-         date: today,
+         date: activeDate,
          in_progress_tasks: inProgress,
          in_review_tasks: inReview,
          up_next_tasks: upNext,

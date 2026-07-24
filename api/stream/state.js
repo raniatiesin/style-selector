@@ -36,8 +36,8 @@ export default async function handler(req, res) {
     // to strictly prevent roll-overs mismatching your location
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
     
-    // First, check if there's an active stream from a previous day
-    // If so, continue using that record instead of today's
+    // First, check if there's an active stream from any day
+    // If so, continue using that record regardless of date change
     const { data: activeStreamData, error: activeStreamError } = await supabase
       .from('stream_metrics')
       .select('*')

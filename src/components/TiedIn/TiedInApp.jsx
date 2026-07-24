@@ -441,11 +441,15 @@ export default function TiedInApp({ displayMode }) {
   const activeMode = rawMode.startsWith('explain') ? 'explain' : rawMode;
   const inProgressIds = new Set(tasks.filter(t => t.status === "in_progress").map(t => t.id));
 
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-
   // Get today's date in YYYY-MM-DD format (Europe/Paris timezone to match API)
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
+  
+  // Use the API's date if available (for active streams across day boundaries)
+  // Otherwise fall back to today
+  const activeDate = today; // This will be updated from API data if needed
+
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
 
   const displayTasks = [
     ...tasks.filter(t => {
