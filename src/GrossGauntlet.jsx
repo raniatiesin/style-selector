@@ -4,48 +4,39 @@ import TasksOverlay from './components/GrossGauntlet/TasksOverlay';
 import GrossGauntletApp from './components/GrossGauntlet/GrossGauntletApp';
 import GrossGauntletControl from './components/GrossGauntlet/GrossGauntletControl';
 
-const rootElement = document.getElementById('root');
+function dismissLoadingScreen() {
+  const el = document.getElementById('app-loading');
+  if (!el) return;
+  // Simple CSS transition — no gsap dependency needed here
+  el.style.transition = 'opacity 0.3s ease';
+  el.style.opacity = '0';
+  setTimeout(() => el.remove(), 350);
+}
 
-if (rootElement) {
-  const path = window.location.pathname;
-
-  if (path.includes('overlays/explain')) {
-    createRoot(rootElement).render(
-      <StrictMode>
-        <GrossGauntletApp displayMode="explain" />
-      </StrictMode>
-    );
-  } else if (path.includes('overlays/break')) {
-    createRoot(rootElement).render(
-      <StrictMode>
-        <GrossGauntletApp displayMode="break" />
-      </StrictMode>
-    );
-  } else if (path.includes('overlays/work')) {
-    createRoot(rootElement).render(
-      <StrictMode>
-        <GrossGauntletApp displayMode="work" />
-      </StrictMode>
-    );
-  } else if (path.includes('overlays/standby')) {
-    createRoot(rootElement).render(
-      <StrictMode>
-        <GrossGauntletApp displayMode="standby" />
-      </StrictMode>
-    );
-  } else if (path.includes('overlays/tasks')) {
-    createRoot(rootElement).render(
-      <StrictMode>
-        <TasksOverlay />
-      </StrictMode>
-    );
-  } else if (path.includes('/controls') || window.location.search.includes('controls')) {
-    createRoot(rootElement).render(
-      <StrictMode>
-        <GrossGauntletControl />
-      </StrictMode>
-    );
+function renderOverlay(element) {
+  const rootElement = document.getElementById('root');
+  if (!rootElement) {
+    console.error('Failed to find root element');
+    return;
   }
-} else {
-  console.error('Failed to find root element');
+  createRoot(rootElement).render(
+    <StrictMode>{element}</StrictMode>
+  );
+  setTimeout(dismissLoadingScreen, 100);
+}
+
+const path = window.location.pathname;
+
+if (path.includes('overlays/explain')) {
+  renderOverlay(<GrossGauntletApp displayMode="explain" />);
+} else if (path.includes('overlays/break')) {
+  renderOverlay(<GrossGauntletApp displayMode="break" />);
+} else if (path.includes('overlays/work')) {
+  renderOverlay(<GrossGauntletApp displayMode="work" />);
+} else if (path.includes('overlays/standby')) {
+  renderOverlay(<GrossGauntletApp displayMode="standby" />);
+} else if (path.includes('overlays/tasks')) {
+  renderOverlay(<TasksOverlay />);
+} else if (path.includes('/controls') || window.location.search.includes('controls')) {
+  renderOverlay(<GrossGauntletControl />);
 }
