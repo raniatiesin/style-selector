@@ -36,7 +36,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        GrossGauntlet: resolve(__dirname, 'GrossGauntlet/index.html'),
       },
       output: {
         manualChunks: {
