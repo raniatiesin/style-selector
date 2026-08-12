@@ -18,6 +18,8 @@ function vercelRewritesPlugin() {
           req.url = '/GrossGauntlet/index.html';
         } else if (req.url.startsWith('/GrossGauntlet')) {
           req.url = '/GrossGauntlet/index.html';
+        } else if (req.url.startsWith('/Logs')) {
+          req.url = '/index.html';
         }
         next();
       });

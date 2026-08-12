@@ -1,11 +1,5 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import LogIndex from './components/GrossGauntlet/LogIndex';
-import LogView from './components/GrossGauntlet/LogView';
-import SessionView from './components/GrossGauntlet/SessionView';
-import TasksEditor from './components/GrossGauntlet/TasksEditor';
-import ReplayScrubber from './components/GrossGauntlet/ReplayScrubber';
 import TasksOverlay from './components/GrossGauntlet/TasksOverlay';
 import GrossGauntletApp from './components/GrossGauntlet/GrossGauntletApp';
 import GrossGauntletControl from './components/GrossGauntlet/GrossGauntletControl';
@@ -15,7 +9,6 @@ const rootElement = document.getElementById('root');
 if (rootElement) {
   const path = window.location.pathname;
 
-  // Legacy OBS overlay paths — render the original GrossGauntletApp
   if (path.includes('overlays/explain')) {
     createRoot(rootElement).render(
       <StrictMode>
@@ -40,25 +33,16 @@ if (rootElement) {
         <GrossGauntletApp displayMode="standby" />
       </StrictMode>
     );
+  } else if (path.includes('overlays/tasks')) {
+    createRoot(rootElement).render(
+      <StrictMode>
+        <TasksOverlay />
+      </StrictMode>
+    );
   } else if (path.includes('/controls') || window.location.search.includes('controls')) {
     createRoot(rootElement).render(
       <StrictMode>
         <GrossGauntletControl />
-      </StrictMode>
-    );
-  } else {
-    // New router-based paths — render all new routes
-    createRoot(rootElement).render(
-      <StrictMode>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/Logs" element={<LogIndex />} />
-            <Route path="/Logs/:n" element={<LogView />} />
-            <Route path="/Logs/:n/:slug" element={<SessionView />} />
-            <Route path="/overlays/tasks" element={<TasksOverlay />} />
-            <Route path="*" element={<Navigate to="/Logs" replace />} />
-          </Routes>
-        </BrowserRouter>
       </StrictMode>
     );
   }
