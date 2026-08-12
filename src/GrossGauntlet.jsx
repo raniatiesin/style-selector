@@ -52,13 +52,11 @@ if (rootElement) {
       <StrictMode>
         <BrowserRouter>
           <Routes>
-            <Route path="/grossgauntlet" element={<LogIndex />} />
-            <Route path="/grossgauntlet/log:logNumber" element={<LogView />} />
-            <Route path="/grossgauntlet/log:logNumber/:slug" element={<SessionView />} />
-            <Route path="/tasks" element={<TasksEditor />} />
-            <Route path="/tasks/:slug/replay" element={<ReplayScrubber />} />
-            <Route path="/overlay/tasks" element={<TasksOverlay />} />
-            <Route path="*" element={<Navigate to="/grossgauntlet" replace />} />
+            <Route path="/Logs" element={<LogIndex />} />
+            <Route path="/Logs/:n" element={<LogView />} />
+            <Route path="/Logs/:n/:slug" element={<SessionView />} />
+            <Route path="/overlays/tasks" element={<TasksOverlay />} />
+            <Route path="*" element={<Navigate to="/Logs" replace />} />
           </Routes>
         </BrowserRouter>
       </StrictMode>

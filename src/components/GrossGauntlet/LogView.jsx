@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { API } from '../../config/api';
 import { generateSlug } from '../../utils/slug';
 import './GrossGauntletPages.css';
@@ -17,17 +17,18 @@ function deriveSubtitle(streamTitle) {
 }
 
 export default function LogView() {
-  const { logNumber } = useParams();
+  const { n } = useParams();
   const [log, setLog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
 
     async function fetchLog() {
       try {
-        const res = await fetch(API.getLogByIndex(logNumber));
+        const res = await fetch(API.getLogByIndex(n));
         if (!res.ok) throw new Error(`Server returned ${res.status}`);
         const data = await res.json();
         if (cancelled) return;
@@ -42,14 +43,26 @@ export default function LogView() {
 
     fetchLog();
     return () => { cancelled = true; };
-  }, [logNumber]);
+  }, [n]);
+
+  // Auto-open if only one session exists on day n
+  useEffect(() => {
+    if (!log || loading) return;
+    const sessions = Array.isArray(log.sessions) && log.sessions.length > 0
+      ? log.sessions
+      : [{ stream_number: 1, title: log.title || log.name || `Log ${n}`, subtitle: log.subtitle || null }];
+    if (sessions.length === 1) {
+      const slug = generateSlug(sessions[0].title || log.title || log.name || `Log ${n}`);
+      navigate(`/Logs/${n}/${slug}`, { replace: true });
+    }
+  }, [log, loading, n, navigate]);
 
   if (loading) {
     return (
       <div className="gg-page">
         <div className="gg-log-view">
-          <Link to="/grossgauntlet" className="gg-back-link">← GrossGauntlet</Link>
-          <p className="gg-page-subtitle">Loading Log {logNumber}…</p>
+          <Link to="/Logs" className="gg-back-link">← Logs</Link>
+          <p className="gg-page-subtitle">Loading Log {n}…</p>
         </div>
       </div>
     );
@@ -59,8 +72,8 @@ export default function LogView() {
     return (
       <div className="gg-page">
         <div className="gg-log-view">
-          <Link to="/grossgauntlet" className="gg-back-link">← GrossGauntlet</Link>
-          <h1 className="gg-page-title">Log {logNumber}</h1>
+          <Link to="/Logs" className="gg-back-link">← Logs</Link>
+          <h1 className="gg-page-title">Log {n}</h1>
           <p className="gg-page-subtitle gg-error">{error || 'Log not found.'}</p>
         </div>
       </div>
@@ -69,39 +82,18 @@ export default function LogView() {
 
   const sessions = Array.isArray(log.sessions) && log.sessions.length > 0
     ? log.sessions
-    : [{ stream_number: 1, title: log.title || log.name || `Log ${logNumber}`, subtitle: log.subtitle || null }];
+    : [{ stream_number: 1, title: log.title || log.name || `Log ${n}`, subtitle: log.subtitle || null }];
 
-  const title = log.title || log.name || `Log ${logNumber}`;
+  const title = log.title || log.name || `Log ${n}`;
   const subtitle = log.subtitle || log.timestamps || '';
-
-  // Single-session logic: render the session directly
-  if (sessions.length === 1) {
-    const slug = generateSlug(sessions[0].title || title);
-    return (
-      <div className="gg-page">
-        <div className="gg-log-view">
-          <Link to="/grossgauntlet" className="gg-back-link">← GrossGauntlet</Link>
-          <div className="gg-session-meta">
-            <div className="gg-log-card-number">Log {logNumber}</div>
-            <h1 className="gg-page-title">{title}</h1>
-            <p className="gg-page-subtitle">{subtitle}</p>
-            <p className="gg-session-date">{formatDate(log.date || log.created_at)}</p>
-          </div>
-          <Link to={`/grossgauntlet/log${logNumber}/${slug}`} className="gg-primary-link">
-            View Session →
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   // Multi-session logic: render a session selector
   return (
     <div className="gg-page">
       <div className="gg-log-view">
-        <Link to="/grossgauntlet" className="gg-back-link">← GrossGauntlet</Link>
+        <Link to="/Logs" className="gg-back-link">← Logs</Link>
         <div className="gg-session-meta">
-          <div className="gg-log-card-number">Log {logNumber}</div>
+          <div className="gg-log-card-number">Log {n}</div>
           <h1 className="gg-page-title">{title}</h1>
           <p className="gg-page-subtitle">{subtitle}</p>
           <p className="gg-session-date">{formatDate(log.date || log.created_at)}</p>
@@ -116,7 +108,7 @@ export default function LogView() {
             return (
               <Link
                 key={`${session.stream_number}-${slug}`}
-                to={`/grossgauntlet/log${logNumber}/${slug}`}
+                to={`/Logs/${n}/${slug}`}
                 className="gg-session-card"
               >
                 <div className="gg-session-card-stream">Stream {session.stream_number}</div>

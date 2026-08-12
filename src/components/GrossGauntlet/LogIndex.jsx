@@ -76,7 +76,7 @@ export default function LogIndex() {
             return (
               <Link
                 key={log.id ?? logNumber}
-                to={`/grossgauntlet/log${logNumber}`}
+                to={`/Logs/${logNumber}`}
                 className="gg-log-card"
               >
                 <div className="gg-log-card-number">Log {logNumber}</div>

@@ -31,6 +31,15 @@ export default defineConfig({
     { enforce: 'pre', ...mdx({ extension: /\.mdx?$/ }) },
     react()
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://tiesin.me',
+        changeOrigin: true,
+        secure: true,
+      }
+    }
+  },
   build: {
     target: 'es2020',
     rollupOptions: {

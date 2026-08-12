@@ -11,7 +11,7 @@ import GrossGauntletRouter from './components/GrossGauntlet/GrossGauntletRouter'
 import { WELCOME_IMAGE_IDS } from './config/welcome-images';
 
 // GrossGauntlet route paths that should render the router instead of the quiz
-const GROSSGAUNTLET_ROUTES = ['/grossgauntlet', '/tasks', '/overlay'];
+const GROSSGAUNTLET_ROUTES = ['/Logs'];
 
 function isGrossGauntletRoute(pathname) {
   return GROSSGAUNTLET_ROUTES.some((route) => pathname.startsWith(route));

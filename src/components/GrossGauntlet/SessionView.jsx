@@ -16,7 +16,7 @@ function formatTime(value) {
 }
 
 export default function SessionView() {
-  const { logNumber, slug } = useParams();
+  const { n: logNumber, slug } = useParams();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -49,7 +49,7 @@ export default function SessionView() {
     return (
       <div className="gg-page">
         <div className="gg-session-view">
-          <Link to={`/grossgauntlet/log${logNumber}`} className="gg-back-link">← Log {logNumber}</Link>
+          <Link to={`/Logs/${logNumber}`} className="gg-back-link">← Log {logNumber}</Link>
           <p className="gg-page-subtitle">Loading session…</p>
         </div>
       </div>
@@ -60,7 +60,7 @@ export default function SessionView() {
     return (
       <div className="gg-page">
         <div className="gg-session-view">
-          <Link to={`/grossgauntlet/log${logNumber}`} className="gg-back-link">← Log {logNumber}</Link>
+          <Link to={`/Logs/${logNumber}`} className="gg-back-link">← Log {logNumber}</Link>
           <h1 className="gg-page-title">Session not found</h1>
           <p className="gg-page-subtitle gg-error">{error || 'The requested session could not be loaded.'}</p>
         </div>
@@ -75,7 +75,7 @@ export default function SessionView() {
   return (
     <div className="gg-page">
       <div className="gg-session-view">
-        <Link to={`/grossgauntlet/log${logNumber}`} className="gg-back-link">← Log {logNumber}</Link>
+        <Link to={`/Logs/${logNumber}`} className="gg-back-link">← Log {logNumber}</Link>
 
         <div className="gg-session-header">
           <div className="gg-log-card-number">Log {logNumber}</div>

@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/refs, react-hooks/exhaustive-deps */
 
 import { useState, useEffect, useRef } from 'react';
+import { API } from '../../config/api';
 import './GrossGauntletApp.css?v=20260529o';
 
 const HOURS_TARGET = 1000;
@@ -250,7 +251,7 @@ export default function GrossGauntletApp({ displayMode }) {
     let pollingInterval;
     async function fetchState() {
       try {
-        const response = await fetch("https://tiesin.me/api/stream/state");
+        const response = await fetch(API.getStreamState());
         if (!response.ok) return;
 
         const stateData = await response.json();

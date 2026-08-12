@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import OBSWebSocket from 'obs-websocket-js';
+import { API } from '../../config/api';
 import './GrossGauntletApp.css';
 
 const OBS_WS_URL = "ws://localhost:4455";
@@ -96,7 +97,7 @@ export default function GrossGauntletControl() {
        const updatedState = { ...s, timestamps: newTimestamps };
        // Push to database without triggering sync loop
        isSyncingRef.current = true;
-       fetch('https://tiesin.me/api/stream/metrics', {
+       fetch(API.postMetrics(), {
          method: 'POST',
          headers: {
            'Content-Type': 'application/json',
@@ -207,7 +208,7 @@ export default function GrossGauntletControl() {
     let intervalId;
     async function loadMetrics() {
       try {
-        const res = await fetch(`https://tiesin.me/api/stream/state`);
+        const res = await fetch(API.getStreamState());
         if (!res.ok) return;
         const data = await res.json();
         
@@ -479,7 +480,7 @@ export default function GrossGauntletControl() {
               
               // Also sync to database to ensure overlay matches
               isSyncingRef.current = true;
-              fetch('https://tiesin.me/api/stream/metrics', {
+              fetch(API.postMetrics(), {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -584,7 +585,7 @@ export default function GrossGauntletControl() {
 
     try {
       addLog(`Pushing state update: mode=${payload.mode}, streaming=${payload.isStreaming}, paused=${payload.isPaused}`);
-      const res = await fetch('https://tiesin.me/api/stream/metrics', {
+      const res = await fetch(API.postMetrics(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -898,7 +899,7 @@ export default function GrossGauntletControl() {
                  const updatedState = { ...s, timestamps: newTimestamps };
                  // Push to database without triggering sync loop
                  isSyncingRef.current = true;
-                 fetch('https://tiesin.me/api/stream/metrics', {
+                 fetch(API.postMetrics(), {
                    method: 'POST',
                    headers: {
                      'Content-Type': 'application/json',
