@@ -265,7 +265,7 @@ export default function TiedInApp({ displayMode }) {
             acc = 0;
             liveStateRef.current.modeTimestamp = Date.now();
           } else {
-            liveStateRef.current.modeTimestamp = Number(m.modeTimestamp || Date.now());
+            liveStateRef.current.modeTimestamp = Number(m.sessionStartTimestamp ?? m.modeTimestamp || Date.now());
           }
 
           // Only update streaming state if explicitly provided (fixes the "not streaming" bug)

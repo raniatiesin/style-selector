@@ -95,6 +95,9 @@ export default async function handler(req, res) {
     }
 
     if (Object.hasOwn(payload, 'modeTimestamp')) updateData.mode_timestamp = payload.modeTimestamp;
+    // Optional explicit session start timestamp - used to preserve live session
+    // timing across day-boundary inserts without resetting the visible timer.
+    if (Object.hasOwn(payload, 'sessionStartTimestamp')) updateData.session_start_timestamp = payload.sessionStartTimestamp;
     
     if (Object.hasOwn(payload, 'accumulatedTotalSeconds')) updateData.accumulated_seconds = payload.accumulatedTotalSeconds;
     if (Object.hasOwn(payload, 'isStreaming')) {
@@ -139,6 +142,11 @@ export default async function handler(req, res) {
       if (!existingRecord) {
         // No record exists for active date - only create if this is a stream start, stop, OR pause state change
         if (payload.isStreaming === true || payload.isStreaming === false || payload.isPaused !== undefined) {
+          // Server-side guard: when creating a NEW daily record, always
+          // force today's counter to zero and normalize the mode timestamp
+          // to prevent client-sent stale values from seeding a new day's row.
+          updateData.today_seconds = 0;
+          updateData.mode_timestamp = Date.now();
           // Stream start/stop with no record - create new record
           result = await supabase
             .from('stream_metrics')

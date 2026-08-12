@@ -102,8 +102,10 @@ export default async function handler(req, res) {
        let activeOffset = 0;
        const isStreaming = data.is_streaming === true; // Only true if explicitly true, not missing/null
        const normalizedMode = data.mode === 'play' || data.mode === 'minecraft' ? 'work' : data.mode;
-       if (normalizedMode === 'work' && isStreaming) {
-           const timestamp = data.mode_timestamp || Date.now();
+         if (normalizedMode === 'work' && isStreaming) {
+           // Prefer explicit session start timestamp to avoid day-boundary resets.
+           // Fall back to mode_timestamp for back-compat.
+           const timestamp = data.session_start_timestamp || data.mode_timestamp || Date.now();
            activeOffset = Math.floor((Date.now() - timestamp) / 1000);
            // Fallback to avoid negative values
            if (activeOffset < 0) activeOffset = 0;
@@ -123,7 +125,7 @@ export default async function handler(req, res) {
            
            // Pure timestamp states back to frontend
            accumulatedTodaySeconds: data.today_seconds ?? 0,
-           modeTimestamp: data.mode_timestamp,
+           modeTimestamp: data.session_start_timestamp ?? data.mode_timestamp,
            // Only update pause state if explicitly set in database
            isPaused: data.is_paused === true ? true : (data.is_paused === false ? false : undefined),
            pausedTimestamp: data.paused_timestamp ?? null,

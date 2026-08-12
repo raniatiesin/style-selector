@@ -10,6 +10,12 @@ async function run() {
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
   console.log("Inserting row for date:", today);
   
+  // IMPORTANT: Do NOT set `session_start_timestamp` here —
+  // it must only be set by the OBS stream-start handler.
+  // This upsert intentionally only writes daily logging fields
+  // (today_seconds, mode_timestamp, counts). It must not
+  // overwrite or initialize `session_start_timestamp` for an
+  // active streaming session.
   const { data, error } = await supabase
     .from('stream_metrics')
     .upsert({ 

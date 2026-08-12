@@ -412,7 +412,8 @@ export default function TiedInControl() {
                const standbyPayload = { 
                   ...s, 
                   mode: "standby", 
-                  modeTimestamp: now,
+                modeTimestamp: now,
+                sessionStartTimestamp: s.session_start_timestamp || now,
                   isStreaming: true,
                   streamNumber: currentStreamNumber,
                   timestamps: newTimestamps
