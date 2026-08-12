@@ -35,7 +35,7 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/api': {
+      '/api/stream': {
         target: 'https://tiesin.me',
         changeOrigin: true,
         secure: true,

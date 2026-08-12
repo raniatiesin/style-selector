@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://tiesin.me/api/:path*" },
+    { "source": "/api/stream/:path*", "destination": "https://tiesin.me/api/stream/:path*" },
     { "source": "/GrossGauntlet/controls", "destination": "/GrossGauntlet/index.html" },
     { "source": "/GrossGauntlet/overlays/:path*", "destination": "/GrossGauntlet/index.html" },
     { "source": "/GrossGauntlet", "destination": "/GrossGauntlet/index.html" },

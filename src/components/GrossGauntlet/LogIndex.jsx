@@ -19,17 +19,16 @@ export default function LogIndex() {
 
     async function fetchLogs() {
       try {
-        // Fetch all records from GrossGauntlet table ordered by created_at / id
-        // TODO: Replace with real endpoint
         const res = await fetch(API.getAllLogs());
-        if (!res.ok) throw new Error(`Server returned ${res.status}`);
-
-        const data = await res.json();
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
         if (cancelled) return;
-        setLogs(Array.isArray(data) ? data : data?.data || []);
+        const records = Array.isArray(json) ? json : (json?.data || []);
+        setLogs(records);
         setError(null);
       } catch (e) {
         if (!cancelled) setError(e.message || 'Failed to load logs');
+        if (!cancelled) setLogs([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
