@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import gsap from 'gsap';
 import { useQuizStore } from './store/quizStore';
 import Background from './components/Background/Background';
@@ -6,9 +7,18 @@ import Welcome from './components/Welcome/Welcome';
 import Quiz from './components/Quiz/Quiz';
 import OutputScreen from './components/Output/OutputScreen';
 import Confirmation from './components/Confirmation/Confirmation';
+import GrossGauntletRouter from './components/GrossGauntlet/GrossGauntletRouter';
 import { WELCOME_IMAGE_IDS } from './config/welcome-images';
 
+// GrossGauntlet route paths that should render the router instead of the quiz
+const GROSSGAUNTLET_ROUTES = ['/grossgauntlet', '/tasks', '/overlay'];
+
+function isGrossGauntletRoute(pathname) {
+  return GROSSGAUNTLET_ROUTES.some((route) => pathname.startsWith(route));
+}
+
 export default function App() {
+  const location = useLocation();
   const canvasRef = useRef(null);
   const didBootstrapRef = useRef(false);
   const screen = useQuizStore(s => s.screen);
@@ -26,6 +36,9 @@ export default function App() {
   const showCard1 = screen === 'quiz' && currentStep === 0;
   const showCard2 = screen === 'quiz' && currentStep === 1;
   const showCard3 = screen === 'quiz' && currentStep === 2;
+
+  // Check if we're on a GrossGauntlet route
+  const isGGRoute = isGrossGauntletRoute(location.pathname);
 
   useEffect(() => {
     const el = document.getElementById('app-loading');
@@ -45,6 +58,12 @@ export default function App() {
     bootstrapSession(extractedHandle);
   }, [bootstrapSession]);
 
+  // Render GrossGauntlet router for /grossgauntlet, /tasks, /overlay paths
+  if (isGGRoute) {
+    return <GrossGauntletRouter />;
+  }
+
+  // Render the existing style quiz flow for all other paths
   return (
     <>
       <Background

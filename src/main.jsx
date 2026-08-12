@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import { loadAllData } from './utils/dataCache';
 import { preloadImagesAsync } from './utils/preloader';
 import { WELCOME_IMAGE_IDS } from './config/welcome-images';
@@ -14,7 +15,11 @@ function preloadWelcomeImages() {
   return preloadImagesAsync(toPreload, { threshold: 1.0, maxMs: 2500 });
 }
 
-createRoot(document.getElementById('root')).render(<App />);
+createRoot(document.getElementById('root')).render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
+);
 
 Promise.all([
   loadAllData(),

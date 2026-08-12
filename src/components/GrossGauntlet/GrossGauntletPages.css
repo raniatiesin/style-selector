@@ -1,0 +1,455 @@
+/* ============================================================
+   GrossGauntlet Pages – Log Index, Log View, Session View,
+   Tasks Editor, Replay Scrubber, Tasks Overlay
+   Reuses visual patterns from GrossGauntletApp.css
+   ============================================================ */
+
+/* --- Page Shell --- */
+.gg-page {
+  min-height: 100dvh;
+  width: 100%;
+  background: #0a0a0a;
+  font-family: var(--font, "Space Grotesk", system-ui, -apple-system, sans-serif);
+  color: var(--white-92, rgba(173, 181, 189, 0.92));
+  padding: 40px 24px;
+  overflow-y: auto;
+}
+
+.gg-page-title {
+  font-size: 36px;
+  font-weight: 300;
+  line-height: 1.04;
+  letter-spacing: -0.006em;
+  color: var(--white-100, rgba(173, 181, 189, 1));
+  margin: 0 0 4px 0;
+}
+
+.gg-page-subtitle {
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white-45, rgba(173, 181, 189, 0.45));
+  margin: 0 0 24px 0;
+}
+
+.gg-error {
+  color: #F95738;
+}
+
+.gg-empty {
+  color: var(--white-35, rgba(173, 181, 189, 0.35));
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  font-style: italic;
+  padding: 24px 0;
+}
+
+/* --- Back Link --- */
+.gg-back-link {
+  display: inline-block;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white-55, rgba(173, 181, 189, 0.55));
+  text-decoration: none;
+  margin-bottom: 24px;
+  transition: color 0.18s ease;
+}
+
+.gg-back-link:hover {
+  color: var(--white-92, rgba(173, 181, 189, 0.92));
+}
+
+/* --- Index Header --- */
+.gg-index-header {
+  margin-bottom: 32px;
+}
+
+/* --- Log Grid (Index) --- */
+.gg-log-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.gg-log-card {
+  display: block;
+  border: 1px solid var(--white-25, rgba(173, 181, 189, 0.25));
+  padding: 20px 24px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.gg-log-card:hover {
+  border-color: var(--white-55, rgba(173, 181, 189, 0.55));
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.gg-log-card-number {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white-45, rgba(173, 181, 189, 0.45));
+  margin-bottom: 8px;
+}
+
+.gg-log-card-title {
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1.1;
+  color: var(--white-92, rgba(173, 181, 189, 0.92));
+  margin-bottom: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gg-log-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--white-35, rgba(173, 181, 189, 0.35));
+}
+
+/* --- Log View / Session Meta --- */
+.gg-session-meta {
+  margin-bottom: 32px;
+}
+
+.gg-session-meta .gg-log-card-number {
+  margin-bottom: 12px;
+}
+
+.gg-session-date {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--white-45, rgba(173, 181, 189, 0.45));
+  margin-top: 8px;
+}
+
+/* --- Primary Link --- */
+.gg-primary-link {
+  display: inline-block;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white-82, rgba(173, 181, 189, 0.82));
+  text-decoration: none;
+  border: 1px solid var(--white-35, rgba(173, 181, 189, 0.35));
+  padding: 12px 24px;
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+
+.gg-primary-link:hover {
+  border-color: var(--white-70, rgba(173, 181, 189, 0.70));
+  color: var(--white-100, rgba(173, 181, 189, 1));
+}
+
+/* --- Section Title --- */
+.gg-section-title {
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white-55, rgba(173, 181, 189, 0.55));
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--white-12, rgba(173, 181, 189, 0.12));
+}
+
+/* --- Session List (Multi-Session Selector) --- */
+.gg-session-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.gg-session-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--white-25, rgba(173, 181, 189, 0.25));
+  padding: 16px 20px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.18s ease;
+}
+
+.gg-session-card:hover {
+  border-color: var(--white-55, rgba(173, 181, 189, 0.55));
+}
+
+.gg-session-card-stream {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white-35, rgba(173, 181, 189, 0.35));
+}
+
+.gg-session-card-title {
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1.1;
+  color: var(--white-92, rgba(173, 181, 189, 0.92));
+}
+
+.gg-session-card-slug {
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--white-45, rgba(173, 181, 189, 0.45));
+}
+
+.gg-session-card-arrow {
+  align-self: flex-end;
+  font-size: 12px;
+  color: var(--white-35, rgba(173, 181, 189, 0.35));
+}
+
+/* --- Session View --- */
+.gg-session-header {
+  margin-bottom: 24px;
+}
+
+.gg-session-slug {
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--white-45, rgba(173, 181, 189, 0.45));
+  margin-top: 8px;
+}
+
+.gg-session-notice {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--white-55, rgba(173, 181, 189, 0.55));
+  border: 1px solid var(--white-12, rgba(173, 181, 189, 0.12));
+  padding: 12px 16px;
+  margin-bottom: 24px;
+}
+
+/* --- Task List --- */
+.gg-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.gg-task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--white-12, rgba(173, 181, 189, 0.12));
+  padding: 10px 16px;
+}
+
+.gg-task-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--white-35, rgba(173, 181, 189, 0.35));
+  flex-shrink: 0;
+}
+
+.gg-task-in_progress .gg-task-status-dot { background: #4DAA57; }
+.gg-task-up_next .gg-task-status-dot { background: #2F6690; }
+.gg-task-in_review .gg-task-status-dot { background: #FFBA08; }
+.gg-task-done .gg-task-status-dot { background: #F95738; }
+
+.gg-task-name {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--white-92, rgba(173, 181, 189, 0.92));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gg-task-status {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white-45, rgba(173, 181, 189, 0.45));
+  flex-shrink: 0;
+}
+
+/* --- Metrics Grid --- */
+.gg-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.gg-metric-card {
+  border: 1px solid var(--white-12, rgba(173, 181, 189, 0.12));
+  padding: 16px;
+}
+
+.gg-metric-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white-45, rgba(173, 181, 189, 0.45));
+  margin-bottom: 8px;
+}
+
+.gg-metric-value {
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--white-92, rgba(173, 181, 189, 0.92));
+}
+
+/* --- Tasks Editor --- */
+.gg-tasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.gg-mode-badge {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white-55, rgba(173, 181, 189, 0.55));
+  border: 1px solid var(--white-25, rgba(173, 181, 189, 0.25));
+  padding: 6px 12px;
+}
+
+.gg-task-list-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* --- Replay Scrubber --- */
+.gg-replay-placeholder {
+  border: 1px dashed var(--white-25, rgba(173, 181, 189, 0.25));
+  padding: 40px 24px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.gg-replay-placeholder p {
+  font-size: 14px;
+  color: var(--white-55, rgba(173, 181, 189, 0.55));
+  margin-bottom: 8px;
+}
+
+.gg-replay-note {
+  font-size: 11px;
+  color: var(--white-35, rgba(173, 181, 189, 0.35));
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+/* ============================================================
+   Tasks Overlay (OBS Browser Source)
+   MUST NOT rely on dnd-kit or any drag-and-drop deps.
+   ============================================================ */
+
+.gg-overlay-root {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  font-family: var(--font, "Space Grotesk", system-ui, -apple-system, sans-serif);
+  color: var(--white-92, rgba(173, 181, 189, 0.92));
+  pointer-events: none;
+  user-select: none;
+}
+
+.gg-overlay-container {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  width: 320px;
+  max-height: calc(100vh - 32px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gg-overlay-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid var(--white-25, rgba(173, 181, 189, 0.25));
+}
+
+.gg-overlay-title {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white-55, rgba(173, 181, 189, 0.55));
+}
+
+.gg-overlay-stale-indicator {
+  font-size: 12px;
+  color: #FFBA08;
+  animation: overlay-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes overlay-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.gg-overlay-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  max-height: calc(100vh - 80px);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.gg-overlay-tasks::-webkit-scrollbar {
+  display: none;
+}
+
+.gg-overlay-task {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid var(--white-12, rgba(173, 181, 189, 0.12));
+}
+
+.gg-overlay-task-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--white-35, rgba(173, 181, 189, 0.35));
+  flex-shrink: 0;
+}
+
+.gg-overlay-task-in_progress .gg-overlay-task-dot { background: #4DAA57; }
+.gg-overlay-task-up_next .gg-overlay-task-dot { background: #2F6690; }
+.gg-overlay-task-in_review .gg-overlay-task-dot { background: #FFBA08; }
+.gg-overlay-task-done .gg-overlay-task-dot { background: #F95738; }
+
+.gg-overlay-task-name {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--white-92, rgba(173, 181, 189, 0.92));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gg-overlay-empty {
+  font-size: 11px;
+  color: var(--white-35, rgba(173, 181, 189, 0.35));
+  text-align: center;
+  padding: 16px;
+  font-style: italic;
+}
