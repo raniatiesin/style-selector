@@ -10,11 +10,11 @@
     },
     {
       "source": "/GrossGauntlet",
-      "destination": "/documentation/index.html"
+      "destination": "/GrossGauntlet/index.html"
     },
     {
       "source": "/GrossGauntlet/(.*)",
-      "destination": "/documentation/index.html"
+      "destination": "/GrossGauntlet/index.html"
     },
     {
       "source": "/((?!api/).*)",

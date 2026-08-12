@@ -17,7 +17,7 @@ function vercelRewritesPlugin() {
         } else if (req.url.startsWith('/GrossGauntlet/overlays')) {
           req.url = '/GrossGauntlet/index.html';
         } else if (req.url.startsWith('/GrossGauntlet')) {
-          req.url = '/documentation/index.html';
+          req.url = '/GrossGauntlet/index.html';
         }
         next();
       });
@@ -37,7 +37,6 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         GrossGauntlet: resolve(__dirname, 'GrossGauntlet/index.html'),
-        documentation: resolve(__dirname, 'documentation/index.html'),
       },
       output: {
         manualChunks: {
