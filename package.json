@@ -14,6 +14,9 @@
     "perf:probe": "node scripts/perf-probe.mjs"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@mdx-js/react": "^3.1.1",
     "@mdx-js/rollup": "^3.1.1",
     "@supabase/supabase-js": "^2.98.0",
@@ -22,7 +25,8 @@
     "obs-websocket-js": "^5.0.8",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "zustand": "^5.0.11"
+    "react-router-dom": "^7.18.2",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

@@ -1,5 +1,3 @@
-import { resolveStreamTable } from './table.js';
-
 export default async function handler(req, res) {
   // CORS Security
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -80,14 +78,13 @@ export default async function handler(req, res) {
 
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const streamTable = await resolveStreamTable(supabase);
 
     // FIX: Align the database 'date' string format calculation with the state poll 
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
     
     // Check if there's an active stream from any day
     const { data: activeStreamData, error: activeStreamError } = await supabase
-      .from(streamTable)
+      .from('GrossGauntlet')
       .select('*')
       .eq('is_streaming', true)
       .single();
@@ -97,7 +94,7 @@ export default async function handler(req, res) {
 
     // Fetch the current task arrays so we can dynamically modify them
     const { data, error: fetchError } = await supabase
-      .from(streamTable)
+      .from('GrossGauntlet')
       .select('in_progress_tasks, in_review_tasks, up_next_tasks, done_tasks, webhook_logs')
       .eq('date', activeDate)
       .single();
@@ -219,7 +216,7 @@ export default async function handler(req, res) {
 
     // Save the modified arrays back to Supabase
     const { error: updateErr } = await supabase
-      .from(streamTable)
+      .from('GrossGauntlet')
       .upsert({
          date: activeDate,
          in_progress_tasks: inProgress,

@@ -1,5 +1,3 @@
-import { resolveStreamTable } from './table.js';
-
 export default async function handler(req, res) {
   // CORS Security
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -36,7 +34,6 @@ export default async function handler(req, res) {
 
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const streamTable = await resolveStreamTable(supabase);
 
     // Use local timezone (e.g. 'Europe/Paris') for day bounds
     // to strictly prevent roll-overs mismatching your location
@@ -44,7 +41,7 @@ export default async function handler(req, res) {
     
     // Check if there's an active stream from any day
     const { data: activeStreamData, error: activeStreamError } = await supabase
-      .from(streamTable)
+      .from('GrossGauntlet')
       .select('*')
       .eq('is_streaming', true)
       .single();
@@ -125,7 +122,7 @@ export default async function handler(req, res) {
       const updateDataWithoutDate = { ...updateData };
       delete updateDataWithoutDate.date;
       result = await supabase
-        .from(streamTable)
+        .from('GrossGauntlet')
         .update(updateDataWithoutDate)
         .eq('date', activeStreamData.date)
         .select();
@@ -152,7 +149,7 @@ export default async function handler(req, res) {
           updateData.mode_timestamp = Date.now();
           // Stream start/stop with no record - create new record
           result = await supabase
-            .from(streamTable)
+            .from('GrossGauntlet')
             .insert(updateData)
             .select();
         } else {
@@ -165,7 +162,7 @@ export default async function handler(req, res) {
       } else {
         // Record exists - update it
         result = await supabase
-          .from(streamTable)
+          .from('GrossGauntlet')
           .update(updateData)
           .eq('date', activeDate)
           .select();
