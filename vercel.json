@@ -7,7 +7,7 @@
     { "source": "/GrossGauntlet/:path*", "destination": "/GrossGauntlet/index.html" },
     { "source": "/Logs", "destination": "/index.html" },
     { "source": "/Logs/:path*", "destination": "/index.html" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/((?!api|GrossGauntlet|Logs|assets|images).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
