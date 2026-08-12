@@ -101,7 +101,8 @@ export default async function handler(req, res) {
        // This guarantees data isn't lost if the stream crashes before a break causes an accumulated log.
        let activeOffset = 0;
        const isStreaming = data.is_streaming === true; // Only true if explicitly true, not missing/null
-       if ((data.mode === 'work' || data.mode === 'play') && isStreaming) {
+       const normalizedMode = data.mode === 'play' || data.mode === 'minecraft' ? 'work' : data.mode;
+       if (normalizedMode === 'work' && isStreaming) {
            const timestamp = data.mode_timestamp || Date.now();
            activeOffset = Math.floor((Date.now() - timestamp) / 1000);
            // Fallback to avoid negative values
@@ -109,14 +110,13 @@ export default async function handler(req, res) {
        }
 
        globalMetrics = {
-           mode: data.mode,
-            contactedCount: data.projects_count,
-            convertedCount: data.contacts_count,
+           mode: normalizedMode,
+           contentCount: data.content_count ?? data.projects_count ?? 0,
+           salesCount: data.sales_count ?? data.contacts_count ?? 0,
            previousDaysSeconds: pastDaysAcc,
            todayWorkSeconds: (data.today_seconds ?? 0) + activeOffset,
            // Only true if explicitly set to true in database
            isStreaming: data.is_streaming === true,
-           gameName: data.game_name ?? 'Just Playing',
            standbySelection: data.standby_selection ?? 'Coming Soon',
            timestamps: data.timestamps ?? '',
            streamNumber: data.stream_number ?? 1,
@@ -142,13 +142,12 @@ export default async function handler(req, res) {
         // If no rows for today, still return the global accumulations
         globalMetrics = {
             mode: 'work',
-            contactedCount: 0,
-            convertedCount: 0,
+            contentCount: 0,
+            salesCount: 0,
             previousDaysSeconds: pastDaysAcc,
             todayWorkSeconds: 0,
             // Default to false - counter only runs when explicitly streaming
             isStreaming: false,
-            gameName: 'Just Playing',
             standbySelection: 'Coming Soon',
             timestamps: '',
             streamNumber: 1,

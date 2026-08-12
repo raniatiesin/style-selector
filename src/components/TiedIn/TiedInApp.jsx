@@ -6,8 +6,6 @@ import './TiedInApp.css?v=20260529o';
 const HOURS_TARGET = 1000;
 const CONTEXT_WIDTH = 1075.33;
 const EXPLAIN_TOPIC_KEY = 'EXPLAIN_TOPIC';
-const MINECRAFT_OVERLAY_VERSION = 'mc-overlay-v2';
-const MINECRAFT_API_URL = import.meta.env.VITE_MINECRAFT_API_URL?.trim() || '';
 
 function clamp(number, min, max) { return Math.min(max, Math.max(min, number)); }
 function pad(value) { return String(value).padStart(2, "0"); }
@@ -55,11 +53,7 @@ function relativeTime(timestamp) {
 export default function TiedInApp({ displayMode }) {
   // Purely data-driven state for UI lists (tasks, counts)
   const [tasks, setTasks] = useState([]);
-  const [counts, setCounts] = useState({ contacted: 0, converted: 0 });
-  const [minecraftStats, setMinecraftStats] = useState({
-    today: { totalGames: 0, bestTimeMs: null, totalPlaytimeMs: 0 },
-    totality: { totalGames: 0, bestTimeMs: null, totalPlaytimeMs: 0 }
-  });
+  const [counts, setCounts] = useState({ content: 0, sales: 0 });
   const [modeReact, setModeReact] = useState("standby"); // for changing class names
 
   // Refs for requestAnimationFrame clock updates
@@ -77,7 +71,6 @@ export default function TiedInApp({ displayMode }) {
     nowDateStandby: useRef(null),
     nowDateMain: useRef(null),
     nowTimeMain: useRef(null),
-    gameName1: useRef(null),
     explainDate: useRef(null),
     explainDay: useRef(null),
     explainTime: useRef(null),
@@ -95,7 +88,6 @@ export default function TiedInApp({ displayMode }) {
     totalDays: 1,
     explainTopic: "",
     isStreaming: false,
-    gameName: "Just Playing",
     standbySelection: "Coming Soon",
     timestamps: "",
     streamNumber: 1,
@@ -137,25 +129,20 @@ export default function TiedInApp({ displayMode }) {
       const ls = liveStateRef.current;
       
       const isWorking = ls.mode === 'work';
-      const isPlay = ls.mode === 'play';
       const isBreak = ls.mode === 'break';
-      const isMinecraft = ls.mode === 'minecraft';
       const isStreaming = ls.isStreaming ?? false;
       const isPaused = ls.isPaused ?? false;
       
       let todaySecs = ls.accumulatedTodaySeconds || 0;
       let sessionSecs = 0;
       let breakSecs = 0;
-      let mcSessionSecs = 0;
       
-      if (isStreaming && (isWorking || isPlay) && !isPaused) {
+      if (isStreaming && isWorking && !isPaused) {
         const elapsed = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
         todaySecs += elapsed;
         sessionSecs = elapsed;
       } else if (isBreak) {
         breakSecs = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
-      } else if (isMinecraft) {
-        mcSessionSecs = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
       }
       
       if (timerRefs.todayTime.current) {
@@ -171,14 +158,6 @@ export default function TiedInApp({ displayMode }) {
         }
       }
       if (timerRefs.breakTime.current) timerRefs.breakTime.current.innerText = formatHMS(breakSecs);
-      if (timerRefs.mcSessionTime.current) timerRefs.mcSessionTime.current.innerText = formatHMS(mcSessionSecs);
-      
-      if (timerRefs.mcProgressFill.current) {
-        let mcProgress = mcSessionSecs / 3600; // reaches end at 1 hour
-        if (mcProgress > 1) mcProgress = 1;
-        timerRefs.mcProgressFill.current.style.width = `${(mcProgress * 100).toFixed(2)}%`;
-      }
-      
       const time12 = formatTime12(d);
       const ldate = toLongDate(d);
       const shortDate = `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
@@ -208,12 +187,7 @@ export default function TiedInApp({ displayMode }) {
       
       // Update the hours track for work/standby modes
       if (timerRefs.dayHoursTrack.current) {
-        if (isPlay) {
-          // Show game name instead of accumulated hours in play mode
-          timerRefs.dayHoursTrack.current.innerText = ls.gameName || "Just Playing";
-        } else {
-          timerRefs.dayHoursTrack.current.innerText = hoursString;
-        }
+        timerRefs.dayHoursTrack.current.innerText = hoursString;
       }
 
       // Update session label based on pause state
@@ -231,11 +205,6 @@ export default function TiedInApp({ displayMode }) {
       // Update standby title
       if (timerRefs.standbyTitle.current) {
         timerRefs.standbyTitle.current.innerText = ls.standbySelection || "Coming Soon";
-      }
-
-      // Update game name refs in play mode
-      if (isPlay) {
-        if (timerRefs.gameName1.current) timerRefs.gameName1.current.innerText = ls.gameName || "Just Playing";
       }
 
       // Process and update the explain topic text
@@ -278,7 +247,6 @@ export default function TiedInApp({ displayMode }) {
 
   // API Polling Loop
   useEffect(() => {
-    if (displayMode === 'minecraft') return;
     let pollingInterval;
     async function fetchState() {
       try {
@@ -317,7 +285,6 @@ export default function TiedInApp({ displayMode }) {
           liveStateRef.current.accumulatedTodaySeconds = acc;
           liveStateRef.current.previousDaysSeconds = Number(m.previousDaysSeconds || 0);
           liveStateRef.current.totalDays = Number(m.totalDays || 1);
-          liveStateRef.current.gameName = m.gameName ?? "Just Playing";
           liveStateRef.current.standbySelection = m.standbySelection ?? "Coming Soon";
           liveStateRef.current.timestamps = m.timestamps ?? "";
           liveStateRef.current.streamNumber = m.streamNumber ?? 1;
@@ -337,8 +304,8 @@ export default function TiedInApp({ displayMode }) {
           setModeReact(m.mode || "standby");
 
           setCounts({
-            contacted: Number(m.contactedCount || 0),
-            converted: Number(m.convertedCount || 0)
+            content: Number(m.contentCount ?? m.contactedCount ?? 0),
+            sales: Number(m.salesCount ?? m.convertedCount ?? 0)
           });
           
           // Console log for debugging overlay state
@@ -382,63 +349,10 @@ export default function TiedInApp({ displayMode }) {
     return () => clearInterval(pollingInterval);
   }, [displayMode]);
 
-  useEffect(() => {
-    const rawMode = displayMode || modeReact;
-    const activeMode = rawMode.startsWith('explain') ? 'explain' : rawMode;
-    if (activeMode !== 'minecraft') return;
-
-    const useServerApi = Boolean(MINECRAFT_API_URL) || window.location.hostname !== 'localhost';
-
-    if (useServerApi) {
-      let cancelled = false;
-
-      const fetchMinecraftStats = async () => {
-        try {
-          const response = await fetch(MINECRAFT_API_URL || '/api/stream/minecraft', { cache: 'no-store' });
-          if (!response.ok) return;
-
-          const payload = await response.json();
-          if (!cancelled) {
-            setMinecraftStats(payload.stats || payload);
-          }
-        } catch (error) {
-          console.error('Minecraft stats fetch failed', error);
-        }
-      };
-
-      fetchMinecraftStats();
-      const interval = setInterval(fetchMinecraftStats, 10000);
-
-      return () => {
-        cancelled = true;
-        clearInterval(interval);
-      };
-    }
-
-    const source = new EventSource('http://localhost:2026/events');
-    const handleStats = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        setMinecraftStats(payload.stats || payload);
-      } catch (error) {
-        console.error('Minecraft stats parse failed', error);
-      }
-    };
-
-    source.addEventListener('stats', handleStats);
-    source.onerror = () => {
-      // Let EventSource handle reconnects.
-    };
-
-    return () => {
-      source.removeEventListener('stats', handleStats);
-      source.close();
-    };
-  }, [displayMode, modeReact]);
-
   // --- Render Mappings ---
   const rawMode = displayMode || modeReact;
-  const activeMode = rawMode.startsWith('explain') ? 'explain' : rawMode;
+  const normalizedMode = rawMode === 'play' || rawMode === 'minecraft' ? 'work' : rawMode;
+  const activeMode = normalizedMode.startsWith('explain') ? 'explain' : normalizedMode;
   const inProgressIds = new Set(tasks.filter(t => t.status === "in_progress").map(t => t.id));
 
   // Get today's date in YYYY-MM-DD format (Europe/Paris timezone to match API)
@@ -487,14 +401,6 @@ export default function TiedInApp({ displayMode }) {
       <div className="obs-frame frame-display" aria-hidden="true"></div>
       <div className="obs-frame frame-webcam" aria-hidden="true"></div>
       <div className="obs-frame frame-context" aria-hidden="true"></div>
-      {activeMode === 'minecraft' ? (
-        <div className="tl-pill current minecraft-run-badge">
-          <div className="tl-title">
-            Run <br />
-            #{ (Number(minecraftStats.today?.totalGames || minecraftStats.totals?.totalRuns || 0)) + 1 }
-          </div>
-        </div>
-      ) : null}
 
       <section className="zone-top">
         <aside className="timeline" id="timeline">
@@ -536,115 +442,40 @@ export default function TiedInApp({ displayMode }) {
 
       <section className="context-shell" id="contextShell" aria-label="Work and explain context panel">
         <div className="context-panel">
-          {activeMode === 'minecraft' ? (
-            <>
-              {/* TODAY BOX */}
-              <div className="minecraft-box mc-today-box">
-                <div className="mc-box-header">Today</div>
-                <div className="minecraft-metric mc-stat-row">
-                  <span className="tl-meta">Games Played</span>
-                  <span className="side-line">{minecraftStats.today?.totalGames || 0}</span>
+          <div className="hero-col">
+            <div className="context-pill stack hero-timer-pill">
+              <div className="today-time" ref={timerRefs.todayTime}>00:00:00</div>
+              <div className="session-line">
+                <span className="session-label">since last break</span>
+                <span ref={timerRefs.sessionTime}>00:00:00</span>
+              </div>
+            </div>
+            {activeMode === 'explain' ? (
+              <div className="explain-pill-stack">
+                <div className="context-pill explain-pill">
+                  <div className="side-line" ref={timerRefs.explainTopicText}>Explain Topic</div>
                 </div>
-                <div className="minecraft-metric mc-stat-row">
-                  <span className="tl-meta">Best Time</span>
-                  <span className="side-line" style={{ color: 'var(--white-92)' }}>
-                    {formatMillis(minecraftStats.today?.bestTimeMs || 0)}
-                  </span>
-                </div>
-                <div className="minecraft-metric mc-stat-row">
-                  <span className="tl-meta">Playtime</span>
-                  <span className="side-line">
-                    {Math.floor((minecraftStats.today?.totalPlaytimeMs || 0) / 3600000)}h {Math.floor(((minecraftStats.today?.totalPlaytimeMs || 0) % 3600000) / 60000)}m
-                  </span>
+                <div className="context-pill explain-pill">
+                  <div className="side-line" ref={timerRefs.explainAccumulated}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>
                 </div>
               </div>
-
-              {/* TOTALITY BOX */}
-              <div className="minecraft-box mc-totality-box">
-                <div className="mc-box-header">Totality</div>
-                <div className="minecraft-metric mc-stat-row">
-                  <span className="tl-meta">Games Played</span>
-                  <span className="side-line">{minecraftStats.totality?.totalGames || 0}</span>
-                </div>
-                <div className="minecraft-metric mc-stat-row">
-                  <span className="tl-meta">Best Time</span>
-                  <span className="side-line" style={{ color: 'var(--white-92)' }}>
-                    {formatMillis(minecraftStats.totality?.bestTimeMs || 0)}
-                  </span>
-                </div>
-                <div className="minecraft-metric mc-stat-row">
-                  <span className="tl-meta">Playtime</span>
-                  <span className="side-line">
-                    {Math.floor((minecraftStats.totality?.totalPlaytimeMs || 0) / 3600000)}h {Math.floor(((minecraftStats.totality?.totalPlaytimeMs || 0) % 3600000) / 60000)}m
-                  </span>
-                </div>
+            ) : (
+              <div className="context-pill hero-pill">
+                <div className="side-line" ref={timerRefs.dayHoursTrack}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>
               </div>
-
-              {/* 2ND MONITOR CAPTURE (16:9) */}
-              <div className="mc-monitor-box">
-                <div className="obs-frame frame-monitor" aria-hidden="true"></div>
-              </div>
-
-              {/* WEBCAM (already positioned via CSS) */}
-              <div className="mc-webcam-box"></div>
-            </>
-          ) : (
-            <>
-              <div className="hero-col">
-                <div className="context-pill stack hero-timer-pill">
-                  <div className="today-time" ref={timerRefs.todayTime}>00:00:00</div>
-                  <div className="session-line">
-                    <span className="session-label">since last break</span>
-                    <span ref={timerRefs.sessionTime}>00:00:00</span>
-                  </div>
-                </div>
-                {activeMode === 'explain' ? (
-                  <div className="explain-pill-stack">
-                    <div className="context-pill explain-pill">
-                      <div className="side-line" ref={timerRefs.explainTopicText}>Explain Topic</div>
-                    </div>
-                    <div className="context-pill explain-pill">
-                      <div className="side-line" ref={timerRefs.explainAccumulated}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="context-pill hero-pill">
-                    <div className="side-line" ref={timerRefs.dayHoursTrack}>Day 1 - 0.0/{HOURS_TARGET} Hours Accumulated</div>
-                  </div>
-                )}
-              </div>
-              <div className="side-col">
-                {activeMode === 'play' ? (
-                  <>
-                    <div className="context-pill stack side-line-counts">
-                      <div className="side-line" ref={timerRefs.gameName1}>{liveStateRef.current.gameName}</div>
-                    </div>
-                    <div className="context-pill stack">
-                      <div className="side-line panel-row">
-                        <span>--</span>
-                        <div className="inline-form">
-                          <div className="side-line" ref={timerRefs.nowDateMain}>--/--/----</div>
-                          <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="context-pill stack">
-                      <div className="side-line" ref={timerRefs.nowDateMain}>--/--/----</div>
-                      <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
-                    </div>
-                    <div className="context-pill stack side-line-counts">
-                      <div className="side-line">Projects: {counts.contacted}</div>
-                      <div className="side-line">Contacts: {counts.converted}</div>
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className="webcam-col"></div>
-            </>
-          )}
+            )}
+          </div>
+          <div className="side-col">
+            <div className="context-pill stack">
+              <div className="side-line" ref={timerRefs.nowDateMain}>--/--/----</div>
+              <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
+            </div>
+            <div className="context-pill stack side-line-counts">
+              <div className="side-line">CONTENT: {counts.content}</div>
+              <div className="side-line">SALES: {counts.sales}</div>
+            </div>
+          </div>
+          <div className="webcam-col"></div>
         </div>
       </section>
 

@@ -68,7 +68,7 @@ export default async function handler(req, res) {
     }
     
     // Validate mode
-    const validModes = ['work', 'play', 'break', 'standby', 'explain'];
+    const validModes = ['work', 'break', 'standby', 'explain'];
     if (payload.mode !== undefined && !validModes.includes(payload.mode) && !payload.mode.startsWith('explain|')) {
       validationErrors.push(`Invalid mode: ${payload.mode}`);
     }
@@ -82,11 +82,12 @@ export default async function handler(req, res) {
     // Use activeDate if there's an active stream, otherwise use today
     const updateData = { date: activeDate, updated_at: new Date().toISOString() };
     if (Object.hasOwn(payload, 'mode')) updateData.mode = payload.mode;
-    if (Object.hasOwn(payload, 'contactedCount')) updateData.projects_count = payload.contactedCount;
-    if (Object.hasOwn(payload, 'convertedCount')) updateData.contacts_count = payload.convertedCount;
-    if (Object.hasOwn(payload, 'playSeconds')) updateData.play_seconds = payload.playSeconds;
-    
-    // NEW: Timestamp logic to fix timer drift and stale UI overwrites
+    if (Object.hasOwn(payload, 'contentCount')) updateData.content_count = payload.contentCount;
+    else if (Object.hasOwn(payload, 'contactedCount')) updateData.content_count = payload.contactedCount;
+    if (Object.hasOwn(payload, 'salesCount')) updateData.sales_count = payload.salesCount;
+    else if (Object.hasOwn(payload, 'convertedCount')) updateData.sales_count = payload.convertedCount;
+
+    // Timestamp logic to fix timer drift and stale UI overwrites
     if (Object.hasOwn(payload, 'accumulatedTodaySeconds')) {
       updateData.today_seconds = payload.accumulatedTodaySeconds;
     } else if (Object.hasOwn(payload, 'todayWorkSeconds')) {
@@ -100,7 +101,6 @@ export default async function handler(req, res) {
       // Use the exact value provided (true or false)
       updateData.is_streaming = payload.isStreaming;
     }
-    if (Object.hasOwn(payload, 'gameName')) updateData.game_name = payload.gameName;
     if (Object.hasOwn(payload, 'standbySelection')) updateData.standby_selection = payload.standbySelection;
     if (Object.hasOwn(payload, 'timestamps')) updateData.timestamps = payload.timestamps;
     if (Object.hasOwn(payload, 'streamNumber')) updateData.stream_number = payload.streamNumber;

@@ -4,7 +4,6 @@ import './TiedInApp.css';
 
 const OBS_WS_URL = "ws://localhost:4455";
 const SCENE_WORK = "work";
-const SCENE_PLAY = "play";
 const SCENE_EXPLAIN = "explain";
 const SCENE_BREAK = "break";
 const SCENE_STANDBY = "standby";
@@ -16,30 +15,21 @@ export default function TiedInControl() {
   const [inputKey, setInputKey] = useState('');
   const [inputObs, setInputObs] = useState('');
   const [explainTopic, setExplainTopic] = useState('');
-  const [selectedGame, setSelectedGame] = useState('Just Playing');
   const [selectedStandby, setSelectedStandby] = useState('Coming Soon');
   
   const [isLocked, setIsLocked] = useState(!adminKey);
 
   const [state, setState] = useState({
-    contactedCount: 0,
-    convertedCount: 0,
+    contentCount: 0,
+    salesCount: 0,
     mode: 'work',
     accumulatedTodaySeconds: 0,
     modeTimestamp: Date.now(),
     isStreaming: false,
-    gameName: 'Just Playing',
     standbySelection: 'Coming Soon',
     streamNumber: 1,
     timestamps: ''
   });
-
-  // Sync selected game to state when dropdown changes
-  useEffect(() => {
-    if (state.gameName !== selectedGame) {
-      setState(s => ({ ...s, gameName: selectedGame }));
-    }
-  }, [selectedGame, state.gameName]);
 
   // Sync selected standby to state when dropdown changes
   useEffect(() => {
@@ -138,11 +128,6 @@ export default function TiedInControl() {
       return trimmed ? `explain - ${trimmed}` : 'explain';
    };
 
-   const getPlayMarkerText = (fallbackGame = '') => {
-      const trimmed = String(fallbackGame || '').trim();
-      return trimmed ? `play - ${trimmed}` : 'play';
-   };
-
    const getStandbyMarkerText = (fallbackSelection = '') => {
       const trimmed = String(fallbackSelection || '').trim();
       return trimmed ? `standby - ${trimmed}` : 'standby';
@@ -186,7 +171,7 @@ export default function TiedInControl() {
     }
     
     // Validate mode is valid
-    const validModes = ['work', 'play', 'break', 'standby', 'explain'];
+    const validModes = ['work', 'break', 'standby', 'explain'];
     if (!validModes.includes(s.mode) && !s.mode.startsWith('explain|')) {
       issues.push(`Invalid mode: ${s.mode}`);
     }
@@ -232,8 +217,8 @@ export default function TiedInControl() {
            setState(s => { 
               // Check if state actually changed to prevent unnecessary re-renders
               const metricsChanged = (
-                (data.metrics.contactedCount !== undefined && data.metrics.contactedCount !== s.contactedCount) ||
-                (data.metrics.convertedCount !== undefined && data.metrics.convertedCount !== s.convertedCount) ||
+                (data.metrics.contentCount !== undefined && data.metrics.contentCount !== s.contentCount) ||
+                (data.metrics.salesCount !== undefined && data.metrics.salesCount !== s.salesCount) ||
                 (data.metrics.mode && data.metrics.mode !== s.mode) ||
                 (data.metrics.accumulatedTodaySeconds !== undefined && data.metrics.accumulatedTodaySeconds !== s.accumulatedTodaySeconds) ||
                 (data.metrics.modeTimestamp !== undefined && data.metrics.modeTimestamp !== s.modeTimestamp) ||
@@ -247,13 +232,12 @@ export default function TiedInControl() {
               
               const newState = { 
                 ...s, 
-                contactedCount: data.metrics.contactedCount ?? s.contactedCount,
-                convertedCount: data.metrics.convertedCount ?? s.convertedCount,
+                contentCount: data.metrics.contentCount ?? data.metrics.contactedCount ?? s.contentCount,
+                salesCount: data.metrics.salesCount ?? data.metrics.convertedCount ?? s.salesCount,
                 mode: data.metrics.mode || s.mode,
                 accumulatedTodaySeconds: data.metrics.accumulatedTodaySeconds ?? s.accumulatedTodaySeconds,
                 modeTimestamp: data.metrics.modeTimestamp ?? s.modeTimestamp,
                 isStreaming: data.metrics.isStreaming !== undefined ? data.metrics.isStreaming : s.isStreaming,
-                gameName: data.metrics.gameName ?? s.gameName,
                 standbySelection: data.metrics.standbySelection ?? s.standbySelection,
                 timestamps: data.metrics.timestamps ?? s.timestamps,
                 streamNumber: data.metrics.streamNumber ?? s.streamNumber,
@@ -270,9 +254,6 @@ export default function TiedInControl() {
            });
            // Only sync dropdowns if they're different from current selection
            // This prevents reverting user selections during API polling
-           if (data.metrics.gameName && data.metrics.gameName !== selectedGame && data.metrics.gameName !== state.gameName) {
-              setSelectedGame(data.metrics.gameName);
-           }
            if (data.metrics.standbySelection && data.metrics.standbySelection !== selectedStandby && data.metrics.standbySelection !== state.standbySelection) {
               setSelectedStandby(data.metrics.standbySelection);
            }
@@ -327,7 +308,7 @@ export default function TiedInControl() {
 
         obs.on("CurrentProgramSceneChanged", (event) => {
            addLog(`OBS Scene changed to: ${event.sceneName}`);
-           const map = { [SCENE_WORK]: "work", [SCENE_PLAY]: "play", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby" };
+           const map = { [SCENE_WORK]: "work", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby" };
            const mapped = map[event.sceneName];
            if (mapped) {
              // Mark this as an OBS-initiated change to prevent circular updates
@@ -365,13 +346,11 @@ export default function TiedInControl() {
                      
                      const isWorkToExplain = (s.mode === 'work' && mapped === 'explain');
                      const isExplainToWork = (s.mode === 'explain' && mapped === 'work');
-                     const isWorkToPlay = (s.mode === 'work' && mapped === 'play');
-                     const isPlayToWork = (s.mode === 'play' && mapped === 'work');
 
-                     if (isWorkToExplain || isExplainToWork || isWorkToPlay || isPlayToWork) {
+                     if (isWorkToExplain || isExplainToWork) {
                         nextAccumulated = s.accumulatedTodaySeconds || 0;
                         nextTimestamp = s.modeTimestamp || Date.now();
-                     } else if (s.mode === 'work' || s.mode === 'play') {
+                     } else if (s.mode === 'work') {
                         if (s.modeTimestamp) {
                            const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
                            nextAccumulated += elapsed;
@@ -391,9 +370,8 @@ export default function TiedInControl() {
                      const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
                      const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
                      const explainText = getExplainMarkerText(s.mode, explainTopic);
-                     const playText = getPlayMarkerText(selectedGame);
                      const standbyText = getStandbyMarkerText(selectedStandby);
-                     addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'play' ? playText : mapped === 'break' ? 'break' : standbyText);
+                     addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'break' ? 'break' : standbyText);
                      
                      // Clear the flag after a short delay to allow subsequent changes
                      setTimeout(() => { obsSceneChangeRef.current = false; }, 1000);
@@ -426,7 +404,7 @@ export default function TiedInControl() {
 
             setState(s => {
                // Switch to standby and update timestamp, but DO NOT reset accumulated time.
-               // This preserves today's already-tracked work/play seconds across multiple stream sessions.
+               // This preserves today's already-tracked work seconds across multiple stream sessions.
                const currentStreamNumber = (s.streamNumber || 1);
                // Only add stream heading if timestamps is empty (first stream of day)
                const newTimestamps = s.timestamps ? s.timestamps : `STREAM ${currentStreamNumber}`;
@@ -446,9 +424,9 @@ export default function TiedInControl() {
           } else {
             addLog("OBS Stream Stopped!");
             setState(s => {
-               // When stream stops, capture any elapsed work/play time and add to accumulated
+               // When stream stops, capture any elapsed work time and add to accumulated
                let nextAccumulated = s.accumulatedTodaySeconds || 0;
-               if ((s.mode === 'work' || s.mode === 'play') && s.modeTimestamp) {
+               if (s.mode === 'work' && s.modeTimestamp) {
                   const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
                   nextAccumulated += elapsed;
                   addLog(`Captured ${elapsed} seconds of elapsed time on stream stop`);
@@ -488,7 +466,7 @@ export default function TiedInControl() {
           try {
             const currentScene = await obs.call("GetCurrentProgramScene");
             const sceneName = currentScene.currentProgramSceneName;
-            const map = { [SCENE_WORK]: "work", [SCENE_PLAY]: "play", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby" };
+            const map = { [SCENE_WORK]: "work", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby" };
             const expectedMode = map[sceneName];
             const currentState = stateRef.current;
             
@@ -701,8 +679,8 @@ export default function TiedInControl() {
          todayWorkSeconds: -1, // Backend uses this as the dedicated flush flag
          accumulatedTodaySeconds: -1, // Triggers reset in pushUpdate
          modeTimestamp: Date.now(),
-         contactedCount: 0, 
-         convertedCount: 0 
+         contentCount: 0, 
+         salesCount: 0 
       });
     }
   };
@@ -731,8 +709,6 @@ export default function TiedInControl() {
     
     const isWorkToExplain = (state.mode === 'work' && isExplainTarget);
     const isExplainToWork = (isExplainCurrent && mode === 'work');
-    const isWorkToPlay = (state.mode === 'work' && mode === 'play');
-    const isPlayToWork = (state.mode === 'play' && mode === 'work');
     const isWorkToStandby = (state.mode === 'work' && mode === 'standby');
     const isStandbyToWork = (state.mode === 'standby' && mode === 'work');
     
@@ -740,10 +716,10 @@ export default function TiedInControl() {
     if (state.isPaused) {
        nextAccumulated = state.accumulatedTodaySeconds || 0;
        nextTimestamp = state.modeTimestamp || Date.now();
-    } else if (isWorkToExplain || isExplainToWork || isWorkToPlay || isPlayToWork || isWorkToStandby || isStandbyToWork) {
+    } else if (isWorkToExplain || isExplainToWork || isWorkToStandby || isStandbyToWork) {
        nextAccumulated = state.accumulatedTodaySeconds || 0;
        nextTimestamp = state.modeTimestamp || Date.now();
-    } else if (state.mode === 'work' || state.mode === 'play') {
+    } else if (state.mode === 'work') {
        if (state.modeTimestamp) {
           const elapsed = Math.max(0, Math.floor((Date.now() - state.modeTimestamp) / 1000));
           nextAccumulated += elapsed;
@@ -755,7 +731,6 @@ export default function TiedInControl() {
       mode,
       accumulatedTodaySeconds: nextAccumulated,
       modeTimestamp: nextTimestamp,
-      gameName: selectedGame,
       standbySelection: selectedStandby,
       timestamps: state.timestamps,
       streamNumber: state.streamNumber,
@@ -768,7 +743,7 @@ export default function TiedInControl() {
         addLog(`Skipping OBS scene change (originated from OBS)`);
         obsSceneChangeRef.current = false;
       } else {
-        const scene = mode === "work" ? SCENE_WORK : isExplainTarget ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : mode === "play" ? SCENE_PLAY : SCENE_STANDBY;
+        const scene = mode === "work" ? SCENE_WORK : isExplainTarget ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : SCENE_STANDBY;
         addLog(`Telling OBS to switch scene to: ${scene}`);
         
         obsRef.current.call("SetCurrentProgramScene", { sceneName: scene })
@@ -782,7 +757,7 @@ export default function TiedInControl() {
             if (currentScene.currentProgramSceneName !== scene) {
               addLog(`WARNING: OBS scene mismatch! Expected: ${scene}, Got: ${currentScene.currentProgramSceneName}`);
               // Force sync to actual OBS state
-              const reverseMap = { "work": "work", "play": "play", "explain": "explain", "break": "break", "standby": "standby" };
+              const reverseMap = { "work": "work", "explain": "explain", "break": "break", "standby": "standby" };
               const actualMode = reverseMap[currentScene.currentProgramSceneName] || mode;
               if (actualMode !== mode) {
                 addLog(`Forcing mode sync to actual OBS state: ${actualMode}`);
@@ -820,9 +795,8 @@ export default function TiedInControl() {
     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
     const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
    const explainText = getExplainMarkerText(mode, explainTopicTarget);
-   const playText = getPlayMarkerText(selectedGame);
    const standbyText = getStandbyMarkerText(selectedStandby);
-   addYtMarker(mode === 'work' ? workText : isExplainTarget ? explainText : mode === 'play' ? playText : mode === 'break' ? 'break' : standbyText);
+   addYtMarker(mode === 'work' ? workText : isExplainTarget ? explainText : mode === 'break' ? 'break' : standbyText);
    };
 
    if (isLocked) {
@@ -893,20 +867,6 @@ export default function TiedInControl() {
              </select>
              <button className={`mode-btn button-wide ${state.mode === 'standby' ? 'active' : ''}`} onClick={() => setMode('standby')}>Standby</button>
           </div>
-          <div className="grid-2 grid-gap-top">
-             <select 
-                value={selectedGame} 
-                onChange={e => setSelectedGame(e.target.value)}
-                className="input-full input-pad"
-                style={{ cursor: 'pointer' }}
-             >
-                <option value="Just Playing">Just Playing</option>
-                <option value="Red Dead Redemption">Red Dead Redemption</option>
-                <option value="Sons of the Forest">Sons of the Forest</option>
-                <option value="Minecraft">Minecraft</option>
-             </select>
-             <button className={`mode-btn button-wide ${state.mode === 'play' ? 'active' : ''}`} onClick={() => setMode('play')}>Play</button>
-          </div>
        </div>
 
        {/* YouTube Markers Box */}
@@ -914,7 +874,7 @@ export default function TiedInControl() {
          <div className="side-line panel-row">
             <span>Timestamps</span>
             <div className="inline-form">
-               <button className="mode-btn button-sm" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode === 'play' ? getPlayMarkerText(selectedGame) : state.mode === 'standby' ? getStandbyMarkerText(selectedStandby) : state.mode === 'break' ? 'break' : 'standby')}>MARK</button>
+               <button className="mode-btn button-sm" onClick={() => addYtMarker(state.mode === 'work' ? workText : state.mode.startsWith('explain') ? getExplainMarkerText(state.mode, explainTopic) : state.mode === 'standby' ? getStandbyMarkerText(selectedStandby) : state.mode === 'break' ? 'break' : 'standby')}>MARK</button>
                <button className="mode-btn button-sm" onClick={resetMarkers}>CLEAR</button>
             </div>
          </div>
@@ -964,17 +924,17 @@ export default function TiedInControl() {
        {/* Metrics Box */}
        <div className="context-pill stack">
          <div className="side-line panel-row">
-            <span>Projects: {state.contactedCount}</span>
+            <span>CONTENT: {state.contentCount}</span>
            <div className="inline-form">
-             <button className="mode-btn button-xs" onClick={() => handleMetric('contactedCount', -1)}>-</button>
-               <button className="mode-btn button-xs" onClick={() => handleMetric('contactedCount', 1)}>+</button>
+             <button className="mode-btn button-xs" onClick={() => handleMetric('contentCount', -1)}>-</button>
+               <button className="mode-btn button-xs" onClick={() => handleMetric('contentCount', 1)}>+</button>
              </div>
            </div>
            <div className="side-line panel-row">
-              <span>Contacts: {state.convertedCount}</span>
+              <span>SALES: {state.salesCount}</span>
              <div className="inline-form">
-               <button className="mode-btn button-xs" onClick={() => handleMetric('convertedCount', -1)}>-</button>
-               <button className="mode-btn button-xs" onClick={() => handleMetric('convertedCount', 1)}>+</button>
+               <button className="mode-btn button-xs" onClick={() => handleMetric('salesCount', -1)}>-</button>
+               <button className="mode-btn button-xs" onClick={() => handleMetric('salesCount', 1)}>+</button>
              </div>
            </div>
            {state.mode === 'work' && (
