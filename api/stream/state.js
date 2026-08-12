@@ -1,3 +1,5 @@
+import { resolveStreamTable } from './table.js';
+
 export default async function handler(req, res) {
   // CORS configuration to allow OBS to securely read this endpoint
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -31,6 +33,7 @@ export default async function handler(req, res) {
     // Dynamic import for Vercel Serverless environment
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const streamTable = await resolveStreamTable(supabase);
 
     // Use local timezone (e.g. 'Europe/Paris') for day bounds
     // to strictly prevent roll-overs mismatching your location
@@ -39,7 +42,7 @@ export default async function handler(req, res) {
     // First, check if there's an active stream from any day
     // If so, continue using that record regardless of date change
     const { data: activeStreamData, error: activeStreamError } = await supabase
-      .from('GrossGauntlet')
+      .from(streamTable)
       .select('*')
       .eq('is_streaming', true)
       .single();
@@ -53,7 +56,7 @@ export default async function handler(req, res) {
     } else {
       // No active stream - fetch today's metrics
       const result = await supabase
-        .from('GrossGauntlet')
+        .from(streamTable)
         .select('*')
         .eq('date', today)
         .single();
@@ -66,12 +69,12 @@ export default async function handler(req, res) {
     }
 
     const { count, error: countErr } = await supabase
-      .from('GrossGauntlet')
+      .from(streamTable)
       .select('*', { count: 'exact', head: true });
 
     // Calculate true accumulated time from PREVIOUS days (so today doesn't double count active ticking)
     const { data: pastRows } = await supabase
-      .from('GrossGauntlet')
+      .from(streamTable)
       .select('today_seconds, accumulated_seconds')
       .neq('date', today);
       
