@@ -1,13 +1,13 @@
      1	import { useState, useEffect, useRef } from 'react';
      2	import OBSWebSocket from 'obs-websocket-js';
-     3	import './TiedInApp.css';
+     3	import './GrossGauntletApp.css';
      4	
      5	const OBS_WS_URL = "ws://localhost:4455";
      6	const SCENE_WORK = "work";
      7	const SCENE_EXPLAIN = "explain";
      8	const SCENE_BREAK = "break";
      9	
-    10	export default function TiedInControl() {
+    10	export default function GrossGauntletControl() {
     11	  const [adminKey, setAdminKey] = useState(() => localStorage.getItem('STREAM_ADMIN_KEY') || '');
     12	  const [obsPassword, setObsPassword] = useState(() => localStorage.getItem('OBS_PASS') || '');
     13	  

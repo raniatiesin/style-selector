@@ -1,5 +1,5 @@
---- src/components/TiedIn/TiedInApp.css
-+++ src/components/TiedIn/TiedInApp.css
+--- src/components/GrossGauntlet/GrossGauntletApp.css
++++ src/components/GrossGauntlet/GrossGauntletApp.css
 @@ -107,6 +107,10 @@
    grid-template-columns: minmax(0, 1fr) 334.67px;
  }

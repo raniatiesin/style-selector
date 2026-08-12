@@ -413,7 +413,7 @@ const server = http.createServer((req, res) => {
     res.write(`data: ${JSON.stringify(stats)}\n\n`);
     clients.push(res);
 
-    console.log(`[Server] TiedInApp UI connected via SSE.`);
+    console.log(`[Server] GrossGauntletApp UI connected via SSE.`);
 
     req.on('close', () => {
       clients = clients.filter(c => c !== res);

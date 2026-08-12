@@ -12,11 +12,11 @@ function vercelRewritesPlugin() {
         // Allow direct requests to assets to pass through
         if (req.url.includes('.')) return next();
         
-        if (req.url.startsWith('/tiedin/controls')) {
-          req.url = '/tiedin/index.html';
-        } else if (req.url.startsWith('/tiedin/overlays')) {
-          req.url = '/tiedin/index.html';
-        } else if (req.url.startsWith('/tiedin')) {
+        if (req.url.startsWith('/GrossGauntlet/controls')) {
+          req.url = '/GrossGauntlet/index.html';
+        } else if (req.url.startsWith('/GrossGauntlet/overlays')) {
+          req.url = '/GrossGauntlet/index.html';
+        } else if (req.url.startsWith('/GrossGauntlet')) {
           req.url = '/documentation/index.html';
         }
         next();
@@ -36,7 +36,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        tiedin: resolve(__dirname, 'tiedin/index.html'),
+        GrossGauntlet: resolve(__dirname, 'GrossGauntlet/index.html'),
         documentation: resolve(__dirname, 'documentation/index.html'),
       },
       output: {

@@ -1,19 +1,19 @@
 {
   "rewrites": [
     {
-      "source": "/tiedin/controls",
-      "destination": "/tiedin/index.html"
+      "source": "/GrossGauntlet/controls",
+      "destination": "/GrossGauntlet/index.html"
     },
     {
-      "source": "/tiedin/overlays/(.*)",
-      "destination": "/tiedin/index.html"
+      "source": "/GrossGauntlet/overlays/(.*)",
+      "destination": "/GrossGauntlet/index.html"
     },
     {
-      "source": "/tiedin",
+      "source": "/GrossGauntlet",
       "destination": "/documentation/index.html"
     },
     {
-      "source": "/tiedin/(.*)",
+      "source": "/GrossGauntlet/(.*)",
       "destination": "/documentation/index.html"
     },
     {

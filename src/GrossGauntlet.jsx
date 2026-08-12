@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import TiedInApp from './components/TiedIn/TiedInApp';
-import TiedInControl from './components/TiedIn/TiedInControl';
+import GrossGauntletApp from './components/GrossGauntlet/GrossGauntletApp';
+import GrossGauntletControl from './components/GrossGauntlet/GrossGauntletControl';
 
 const rootElement = document.getElementById('root');
 
@@ -12,18 +12,18 @@ if (rootElement) {
   let componentToRender;
 
   if (path.includes('/controls') || window.location.search.includes('controls')) {
-    componentToRender = <TiedInControl />;
+    componentToRender = <GrossGauntletControl />;
   } else if (path.includes('overlays/explain')) {
-    componentToRender = <TiedInApp displayMode="explain" />;
+    componentToRender = <GrossGauntletApp displayMode="explain" />;
   } else if (path.includes('overlays/break')) {
-    componentToRender = <TiedInApp displayMode="break" />;
+    componentToRender = <GrossGauntletApp displayMode="break" />;
   } else if (path.includes('overlays/work')) {
-    componentToRender = <TiedInApp displayMode="work" />;
+    componentToRender = <GrossGauntletApp displayMode="work" />;
   } else if (path.includes('overlays/standby')) {
-    componentToRender = <TiedInApp displayMode="standby" />;
+    componentToRender = <GrossGauntletApp displayMode="standby" />;
   } else {
     // Default fallback
-    componentToRender = <div style={{ color: 'white', padding: '20px' }}>Please specify an overlay path like /tiedin/overlays/work, /tiedin/overlays/explain, /tiedin/overlays/break, or /tiedin/controls</div>;
+    componentToRender = <div style={{ color: 'white', padding: '20px' }}>Please specify an overlay path like /GrossGauntlet/overlays/work, /GrossGauntlet/overlays/explain, /GrossGauntlet/overlays/break, or /GrossGauntlet/controls</div>;
   }
 
   createRoot(rootElement).render(

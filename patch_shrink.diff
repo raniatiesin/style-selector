@@ -1,5 +1,5 @@
---- src/components/TiedIn/TiedInApp.css
-+++ src/components/TiedIn/TiedInApp.css
+--- src/components/GrossGauntlet/GrossGauntletApp.css
++++ src/components/GrossGauntlet/GrossGauntletApp.css
 @@ -109,6 +109,7 @@
  
  .mode-minecraft .hero-col {

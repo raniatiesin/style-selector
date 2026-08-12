@@ -8,27 +8,27 @@ const SIDEBAR_STRUCTURE = [
   {
     id: 'peripherals',
     title: '0 — Peripherals',
-    pages: [{ id: 'overview', title: 'Overview', path: '/tiedin/peripherals' }]
+    pages: [{ id: 'overview', title: 'Overview', path: '/GrossGauntlet/peripherals' }]
   },
   {
     id: 'playbook',
     title: '1 — Playbook',
-    pages: [{ id: 'overview', title: 'Overview', path: '/tiedin/playbook' }]
+    pages: [{ id: 'overview', title: 'Overview', path: '/GrossGauntlet/playbook' }]
   },
   {
     id: 'prospecting',
     title: '2 — Prospecting',
-    pages: [{ id: 'overview', title: 'Overview', path: '/tiedin/prospecting' }]
+    pages: [{ id: 'overview', title: 'Overview', path: '/GrossGauntlet/prospecting' }]
   },
   {
     id: 'production',
     title: '3 — Production',
-    pages: [{ id: 'overview', title: 'Overview', path: '/tiedin/production' }]
+    pages: [{ id: 'overview', title: 'Overview', path: '/GrossGauntlet/production' }]
   },
   {
     id: 'progression',
     title: '4 — Progression',
-    pages: [{ id: 'overview', title: 'Overview', path: '/tiedin/progression' }]
+    pages: [{ id: 'overview', title: 'Overview', path: '/GrossGauntlet/progression' }]
   }
 ];
 
@@ -99,11 +99,11 @@ export default function DocsApp() {
             ☰
           </button>
           <a 
-            href="/tiedin" 
+            href="/GrossGauntlet" 
             className={styles.logo}
-            onClick={(e) => { e.preventDefault(); navigate('/tiedin/' + SIDEBAR_STRUCTURE[0].id); }}
+            onClick={(e) => { e.preventDefault(); navigate('/GrossGauntlet/' + SIDEBAR_STRUCTURE[0].id); }}
           >
-            Tiesin
+            GrossGauntlet
           </a>
         </div>
         <div>

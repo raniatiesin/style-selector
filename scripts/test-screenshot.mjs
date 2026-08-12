@@ -3,7 +3,7 @@ import { chromium } from 'playwright';
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  await page.goto('http://localhost:5174/tiedin/index.html');
+  await page.goto('http://localhost:5174/GrossGauntlet/index.html');
   await page.waitForTimeout(2000); // Wait for load
   
   // Force it into explain mode

@@ -1,5 +1,5 @@
---- src/components/TiedIn/TiedInApp.css
-+++ src/components/TiedIn/TiedInApp.css
+--- src/components/GrossGauntlet/GrossGauntletApp.css
++++ src/components/GrossGauntlet/GrossGauntletApp.css
 @@ -205,6 +205,9 @@
    display: block;
  }

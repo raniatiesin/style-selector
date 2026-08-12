@@ -2,7 +2,7 @@ const fs = require('fs');
 
 const code = `import { useState, useEffect, useRef } from 'react';
 import OBSWebSocket from 'obs-websocket-js';
-import './TiedInApp.css';
+import './GrossGauntletApp.css';
 
 const OBS_WS_URL = "ws://localhost:4455";
 const SCENE_WORK = "work";
@@ -10,7 +10,7 @@ const SCENE_EXPLAIN = "explain";
 const SCENE_BREAK = "break";
 const SCENE_STANDBY = "standby";
 
-export default function TiedInControl() {
+export default function GrossGauntletControl() {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem('STREAM_ADMIN_KEY') || '');
   const [obsPassword, setObsPassword] = useState(() => localStorage.getItem('OBS_PASS') || '');
   
@@ -357,7 +357,7 @@ export default function TiedInControl() {
     return (
       <div className="dashboard-login">
          <div className="login-box overlay-root">
-             <h2 style={{color: '#fff', marginBottom: 24, fontSize: 18}}>TiedIn Control Panel</h2>
+             <h2 style={{color: '#fff', marginBottom: 24, fontSize: 18}}>GrossGauntlet Control Panel</h2>
              <form onSubmit={saveAdminKey} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                  <input 
                    type="password" 
@@ -386,7 +386,7 @@ export default function TiedInControl() {
        
        <aside className="dashboard-sidebar" style={{ width: 320, background: '#1a1a1a', borderRight: '1px solid #333', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: 24, borderBottom: '1px solid #333' }}>
-             <h2 style={{ fontSize: 16, margin: 0, opacity: 0.8 }}>TiedIn Control</h2>
+             <h2 style={{ fontSize: 16, margin: 0, opacity: 0.8 }}>GrossGauntlet Control</h2>
              <div style={{ marginTop: 8, fontSize: 13, color: obsConnected ? '#4DAA57' : '#F95738', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span className="status-dot" style={{color: obsConnected ? '#4DAA57' : '#F95738'}}>&#9679;</span>
                 {obsConnected ? 'OBS WS Connected' : 'OBS Disconnected'}
@@ -494,4 +494,4 @@ export default function TiedInControl() {
 }
 `
 
-fs.writeFileSync('c:/Website/src/components/TiedIn/TiedInControl.jsx', code);
+fs.writeFileSync('c:/Website/src/components/GrossGauntlet/GrossGauntletControl.jsx', code);

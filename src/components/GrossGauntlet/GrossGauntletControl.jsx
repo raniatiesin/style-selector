@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import OBSWebSocket from 'obs-websocket-js';
-import './TiedInApp.css';
+import './GrossGauntletApp.css';
 
 const OBS_WS_URL = "ws://localhost:4455";
 const SCENE_WORK = "work";
@@ -8,7 +8,7 @@ const SCENE_EXPLAIN = "explain";
 const SCENE_BREAK = "break";
 const SCENE_STANDBY = "standby";
 
-export default function TiedInControl() {
+export default function GrossGauntletControl() {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem('STREAM_ADMIN_KEY') || '');
   const [obsPassword, setObsPassword] = useState(() => localStorage.getItem('OBS_PASS') || '');
   
@@ -804,7 +804,7 @@ export default function TiedInControl() {
       return (
          <div className="dashboard-login">
             <div className="login-box overlay-root">
-               <h2 className="login-title">TiedIn Control Panel</h2>
+               <h2 className="login-title">GrossGauntlet Control Panel</h2>
                <form onSubmit={saveAdminKey} className="form-stack">
                   <input
                      type="password"
@@ -835,7 +835,7 @@ export default function TiedInControl() {
        {/* Header Box */}
        <div className="context-pill stack">
           <div className="side-line panel-header">
-             <span>TiedIn Control</span>
+             <span>GrossGauntlet Control</span>
              <span className={`panel-status ${obsConnected ? 'connected' : 'disconnected'}`}>
                 <span className="status-dot">●</span>
                 {obsConnected ? 'Connected' : 'Disconnected'}

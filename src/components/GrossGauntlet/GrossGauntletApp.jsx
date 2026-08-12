@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/refs, react-hooks/exhaustive-deps */
 
 import { useState, useEffect, useRef } from 'react';
-import './TiedInApp.css?v=20260529o';
+import './GrossGauntletApp.css?v=20260529o';
 
 const HOURS_TARGET = 1000;
 const CONTEXT_WIDTH = 1075.33;
@@ -50,7 +50,7 @@ function relativeTime(timestamp) {
   return `${days}d ago`;
 }
 
-export default function TiedInApp({ displayMode }) {
+export default function GrossGauntletApp({ displayMode }) {
   // Purely data-driven state for UI lists (tasks, counts)
   const [tasks, setTasks] = useState([]);
   const [counts, setCounts] = useState({ content: 0, sales: 0 });
@@ -265,7 +265,7 @@ export default function TiedInApp({ displayMode }) {
             acc = 0;
             liveStateRef.current.modeTimestamp = Date.now();
           } else {
-            liveStateRef.current.modeTimestamp = Number(m.sessionStartTimestamp ?? m.modeTimestamp || Date.now());
+            liveStateRef.current.modeTimestamp = Number((m.sessionStartTimestamp ?? m.modeTimestamp) || Date.now());
           }
 
           // Only update streaming state if explicitly provided (fixes the "not streaming" bug)
