@@ -2,19 +2,19 @@
   "rewrites": [
     {
       "source": "/GrossGauntlet/controls",
-      "destination": "/GrossGauntlet/index.html"
+      "destination": "/index.html"
     },
     {
       "source": "/GrossGauntlet/overlays/(.*)",
-      "destination": "/GrossGauntlet/index.html"
+      "destination": "/index.html"
     },
     {
       "source": "/GrossGauntlet",
-      "destination": "/GrossGauntlet/index.html"
+      "destination": "/index.html"
     },
     {
       "source": "/GrossGauntlet/(.*)",
-      "destination": "/GrossGauntlet/index.html"
+      "destination": "/index.html"
     },
     {
       "source": "/((?!api/).*)",

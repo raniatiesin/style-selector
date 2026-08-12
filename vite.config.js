@@ -13,11 +13,11 @@ function vercelRewritesPlugin() {
         if (req.url.includes('.')) return next();
         
         if (req.url.startsWith('/GrossGauntlet/controls')) {
-          req.url = '/GrossGauntlet/index.html';
+          req.url = '/index.html';
         } else if (req.url.startsWith('/GrossGauntlet/overlays')) {
-          req.url = '/GrossGauntlet/index.html';
+          req.url = '/index.html';
         } else if (req.url.startsWith('/GrossGauntlet')) {
-          req.url = '/GrossGauntlet/index.html';
+          req.url = '/index.html';
         }
         next();
       });
