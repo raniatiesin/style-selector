@@ -17,7 +17,7 @@ async function run() {
   // overwrite or initialize `session_start_timestamp` for an
   // active streaming session.
   const { data, error } = await supabase
-    .from('stream_metrics')
+    .from('GrossGauntlet')
     .upsert({ 
       date: today, 
       updated_at: new Date().toISOString(),

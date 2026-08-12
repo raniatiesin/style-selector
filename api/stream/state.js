@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     // First, check if there's an active stream from any day
     // If so, continue using that record regardless of date change
     const { data: activeStreamData, error: activeStreamError } = await supabase
-      .from('stream_metrics')
+      .from('GrossGauntlet')
       .select('*')
       .eq('is_streaming', true)
       .single();
@@ -53,7 +53,7 @@ export default async function handler(req, res) {
     } else {
       // No active stream - fetch today's metrics
       const result = await supabase
-        .from('stream_metrics')
+        .from('GrossGauntlet')
         .select('*')
         .eq('date', today)
         .single();
@@ -66,12 +66,12 @@ export default async function handler(req, res) {
     }
 
     const { count, error: countErr } = await supabase
-      .from('stream_metrics')
+      .from('GrossGauntlet')
       .select('*', { count: 'exact', head: true });
 
     // Calculate true accumulated time from PREVIOUS days (so today doesn't double count active ticking)
     const { data: pastRows } = await supabase
-      .from('stream_metrics')
+      .from('GrossGauntlet')
       .select('today_seconds, accumulated_seconds')
       .neq('date', today);
       

@@ -84,7 +84,7 @@ export default async function handler(req, res) {
     
     // Check if there's an active stream from any day
     const { data: activeStreamData, error: activeStreamError } = await supabase
-      .from('stream_metrics')
+      .from('GrossGauntlet')
       .select('*')
       .eq('is_streaming', true)
       .single();
@@ -94,7 +94,7 @@ export default async function handler(req, res) {
 
     // Fetch the current task arrays so we can dynamically modify them
     const { data, error: fetchError } = await supabase
-      .from('stream_metrics')
+      .from('GrossGauntlet')
       .select('in_progress_tasks, in_review_tasks, up_next_tasks, done_tasks, webhook_logs')
       .eq('date', activeDate)
       .single();
@@ -216,7 +216,7 @@ export default async function handler(req, res) {
 
     // Save the modified arrays back to Supabase
     const { error: updateErr } = await supabase
-      .from('stream_metrics')
+      .from('GrossGauntlet')
       .upsert({
          date: activeDate,
          in_progress_tasks: inProgress,

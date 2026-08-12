@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     
     // Check if there's an active stream from any day
     const { data: activeStreamData, error: activeStreamError } = await supabase
-      .from('stream_metrics')
+      .from('GrossGauntlet')
       .select('*')
       .eq('is_streaming', true)
       .single();
@@ -122,14 +122,14 @@ export default async function handler(req, res) {
       const updateDataWithoutDate = { ...updateData };
       delete updateDataWithoutDate.date;
       result = await supabase
-        .from('stream_metrics')
+        .from('GrossGauntlet')
         .update(updateDataWithoutDate)
         .eq('date', activeStreamData.date)
         .select();
     } else {
       // No active stream - check if a record exists for the active date
       const { data: existingRecord, error: checkError } = await supabase
-        .from('stream_metrics')
+        .from('GrossGauntlet')
         .select('*')
         .eq('date', activeDate)
         .single();
@@ -149,7 +149,7 @@ export default async function handler(req, res) {
           updateData.mode_timestamp = Date.now();
           // Stream start/stop with no record - create new record
           result = await supabase
-            .from('stream_metrics')
+            .from('GrossGauntlet')
             .insert(updateData)
             .select();
         } else {
@@ -162,7 +162,7 @@ export default async function handler(req, res) {
       } else {
         // Record exists - update it
         result = await supabase
-          .from('stream_metrics')
+          .from('GrossGauntlet')
           .update(updateData)
           .eq('date', activeDate)
           .select();
