@@ -13,11 +13,11 @@ function vercelRewritesPlugin() {
         if (req.url.includes('.')) return next();
         
         if (req.url.startsWith('/GrossGauntlet/controls')) {
-          req.url = '/index.html';
+          req.url = '/GrossGauntlet/index.html';
         } else if (req.url.startsWith('/GrossGauntlet/overlays')) {
-          req.url = '/index.html';
+          req.url = '/GrossGauntlet/index.html';
         } else if (req.url.startsWith('/GrossGauntlet')) {
-          req.url = '/index.html';
+          req.url = '/GrossGauntlet/index.html';
         }
         next();
       });
@@ -36,6 +36,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+        GrossGauntlet: resolve(__dirname, 'GrossGauntlet/index.html'),
       },
       output: {
         manualChunks: {
