@@ -8,8 +8,8 @@ html:has(.overlay-root) body {
 
 .overlay-root {
   position: relative;
-  width: 1440px;
-  height: 1080px;
+  width: 2880px;
+  height: 2160px;
   font-family: var(--font, "Space Grotesk", system-ui, -apple-system, sans-serif);
   color: var(--white-92, rgba(173, 181, 189, 0.92));
   user-select: none;
@@ -81,8 +81,8 @@ html:has(.overlay-root) body {
   position: absolute;
   left: 0;
   top: 0;
-  width: 1440px;
-  height: 810px;
+  width: 2880px;
+  height: 1620px;
 }
 
 .timeline {
@@ -190,8 +190,8 @@ html:has(.overlay-root) body {
   position: absolute;
   left: 0;
   top: 809px;
-  width: 1440px;
-  height: 261px;
+  width: 2880px;
+  height: 522px;
   display: none;
   padding: 0;
 }
@@ -271,10 +271,6 @@ html:has(.overlay-root) body {
 
 .mode-explain .side-col {
   display: none !important;
-}
-  justify-content: flex-start;
-  font-size: 11px;
-  letter-spacing: 0.1em;
 }
 
 .minecraft-session-progress-overlay .side-line {
@@ -523,8 +519,8 @@ html:has(.overlay-root) body {
   position: absolute;
   left: 0;
   top: 0;
-  width: 1440px;
-  height: 1080px;
+  width: 2880px;
+  height: 2160px;
   display: none;
   overflow: hidden;
   background: var(--bg);
@@ -830,8 +826,8 @@ html:has(.overlay-root) body {
   position: absolute;
   left: 0;
   bottom: 0;
-  width: 1440px;
-  height: 24px;
+  width: 2880px;
+  height: 48px;
   background: transparent;
   border: 1px solid rgba(162, 154, 150, 0.12);
   border-radius: 0;
