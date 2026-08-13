@@ -7,13 +7,9 @@ html:has(.overlay-root) body {
 }
 
 .overlay-root {
-  position: fixed;
-  top: 0;
-  left: 0;
+  position: relative;
   width: 1440px;
   height: 1080px;
-  transform-origin: top left;
-  transform: scale(calc(min(100vw / 1440, 100vh / 1080)));
   font-family: var(--font, "Space Grotesk", system-ui, -apple-system, sans-serif);
   color: var(--white-92, rgba(173, 181, 189, 0.92));
   user-select: none;
