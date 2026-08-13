@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { API } from '../../config/api';
-import './GrossGauntletApp.css?v=20260529o';
+import './GrossGauntletApp.css';
 
 const HOURS_TARGET = 1000;
 const CONTEXT_WIDTH = 1075.33;
