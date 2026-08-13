@@ -8,8 +8,8 @@ html:has(.overlay-root) body {
 
 .overlay-root {
   position: relative;
-  width: 2880px;
-  height: 2160px;
+  width: 1440px;
+  height: 1080px;
   font-family: var(--font, "Space Grotesk", system-ui, -apple-system, sans-serif);
   color: var(--white-92, rgba(173, 181, 189, 0.92));
   user-select: none;
@@ -81,8 +81,8 @@ html:has(.overlay-root) body {
   position: absolute;
   left: 0;
   top: 0;
-  width: 2880px;
-  height: 1620px;
+  width: 1440px;
+  height: 810px;
 }
 
 .timeline {
@@ -190,8 +190,8 @@ html:has(.overlay-root) body {
   position: absolute;
   left: 0;
   top: 809px;
-  width: 2880px;
-  height: 522px;
+  width: 1440px;
+  height: 261px;
   display: none;
   padding: 0;
 }
@@ -519,8 +519,8 @@ html:has(.overlay-root) body {
   position: absolute;
   left: 0;
   top: 0;
-  width: 2880px;
-  height: 2160px;
+  width: 1440px;
+  height: 1080px;
   display: none;
   overflow: hidden;
   background: var(--bg);
@@ -826,8 +826,8 @@ html:has(.overlay-root) body {
   position: absolute;
   left: 0;
   bottom: 0;
-  width: 2880px;
-  height: 48px;
+  width: 1440px;
+  height: 24px;
   background: transparent;
   border: 1px solid rgba(162, 154, 150, 0.12);
   border-radius: 0;
