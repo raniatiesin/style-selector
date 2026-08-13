@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { API } from '../../config/api';
-import './GrossGauntletPages.css';
+import './TasksOverlay.css';
 
 /**
  * Isolated OBS Overlay for Tasks.
