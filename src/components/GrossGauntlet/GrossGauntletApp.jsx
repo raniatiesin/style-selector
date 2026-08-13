@@ -99,6 +99,9 @@ export default function GrossGauntletApp({ displayMode }) {
   // Ref for the timeline list container to enable scroll-to-in-progress
   const timelineListRef = useRef(null);
 
+  // Ref for the overlay scaler
+  const scalerRef = useRef(null);
+
   // Scroll to the first in_progress task whenever tasks change
   useEffect(() => {
     const container = timelineListRef.current;
@@ -111,6 +114,20 @@ export default function GrossGauntletApp({ displayMode }) {
       container.scrollTop = 0;
     }
   }, [tasks]);
+
+  // Dynamic scaling for overlay to fit any viewport
+  useEffect(() => {
+    function updateScale() {
+      if (!scalerRef.current) return;
+      const scaleX = window.innerWidth / 1440;
+      const scaleY = window.innerHeight / 1080;
+      const scale = Math.min(scaleX, scaleY);
+      scalerRef.current.style.transform = `scale(${scale})`;
+    }
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
 
   const getStoredExplainTopic = () => {
     try { return localStorage.getItem(EXPLAIN_TOPIC_KEY) || ""; }
@@ -391,6 +408,7 @@ export default function GrossGauntletApp({ displayMode }) {
 
   return (
     <div className={`overlay-root mode-${activeMode}`}>
+      <div className="overlay-scaler" ref={scalerRef}>
       
       {/* Top Banner specific for Explain Mode */}
       <div className="explain-banner">
@@ -537,6 +555,7 @@ export default function GrossGauntletApp({ displayMode }) {
           </div>
         </div>
       </section>
+      </div>
     </div>
   );
 }

@@ -8,7 +8,11 @@ html:has(.overlay-root) body {
 
 .overlay-root {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
   font-family: var(--font, "Space Grotesk", system-ui, -apple-system, sans-serif);
   color: var(--white-92, rgba(173, 181, 189, 0.92));
   user-select: none;
@@ -34,6 +38,15 @@ html:has(.overlay-root) body {
   --panel-bg: rgba(0, 0, 0, 0.62);
 
   --context-gap: 10px;
+}
+
+.overlay-scaler {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1440px;
+  height: 1080px;
+  transform-origin: top left;
 }
 
 .overlay-root *,
@@ -74,16 +87,6 @@ html:has(.overlay-root) body {
 .overlay-root select:focus-visible {
   outline: 1px solid var(--white-55);
   outline-offset: 2px;
-}
-
-.overlay-scale {
-  width: 1440px;
-  height: 1080px;
-  transform-origin: top left;
-  transform: scale(calc(100vw / 1440));
-  position: absolute;
-  top: 0;
-  left: 0;
 }
 
 .zone-top {
