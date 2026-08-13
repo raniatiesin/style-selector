@@ -8,13 +8,21 @@ import Quiz from './components/Quiz/Quiz';
 import OutputScreen from './components/Output/OutputScreen';
 import Confirmation from './components/Confirmation/Confirmation';
 import GrossGauntletRouter from './components/GrossGauntlet/GrossGauntletRouter';
+import GrossGauntletApp from './components/GrossGauntlet/GrossGauntletApp';
+import GrossGauntletControl from './components/GrossGauntlet/GrossGauntletControl';
+import TasksOverlay from './components/GrossGauntlet/TasksOverlay';
 import { WELCOME_IMAGE_IDS } from './config/welcome-images';
 
 // GrossGauntlet route paths that should render the router instead of the quiz
 const GROSSGAUNTLET_ROUTES = ['/Logs'];
+const OVERLAY_ROUTES = ['/GrossGauntlet/overlays/', '/GrossGauntlet/controls'];
 
 function isGrossGauntletRoute(pathname) {
   return GROSSGAUNTLET_ROUTES.some((route) => pathname.startsWith(route));
+}
+
+function isOverlayRoute(pathname) {
+  return OVERLAY_ROUTES.some(r => pathname.includes(r));
 }
 
 export default function App() {
@@ -39,6 +47,7 @@ export default function App() {
 
   // Check if we're on a GrossGauntlet route
   const isGGRoute = isGrossGauntletRoute(location.pathname);
+  const isOvlRoute = isOverlayRoute(location.pathname);
 
   useEffect(() => {
     const el = document.getElementById('app-loading');
@@ -57,6 +66,17 @@ export default function App() {
 
     bootstrapSession(extractedHandle);
   }, [bootstrapSession]);
+
+  // Render overlay components for OBS browser source paths
+  if (isOvlRoute) {
+    const path = location.pathname;
+    if (path.includes('overlays/explain')) return <GrossGauntletApp displayMode="explain" />;
+    if (path.includes('overlays/break'))   return <GrossGauntletApp displayMode="break" />;
+    if (path.includes('overlays/work'))    return <GrossGauntletApp displayMode="work" />;
+    if (path.includes('overlays/standby')) return <GrossGauntletApp displayMode="standby" />;
+    if (path.includes('overlays/tasks'))   return <TasksOverlay />;
+    if (path.includes('/controls'))        return <GrossGauntletControl />;
+  }
 
   // Render GrossGauntlet router for /grossgauntlet, /tasks, /overlay paths
   if (isGGRoute) {
