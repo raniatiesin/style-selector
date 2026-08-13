@@ -1,13 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { API } from '../../config/api';
+import { formatDate } from './utils';
 import './GrossGauntletPages.css';
-
-function formatDate(value) {
-  if (!value) return 'Unknown date';
-  const d = new Date(value);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
 
 export default function LogIndex() {
   const [logs, setLogs] = useState([]);

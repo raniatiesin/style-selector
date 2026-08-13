@@ -1,10 +1,5 @@
-/* Core OBS Transparency Override */
-html:has(.overlay-root),
-body:has(.overlay-root),
-body:has(.overlay-root) #root,
-html:has(.overlay-root) body {
-  background: transparent !important;
-}
+/* Import shared CSS variables */
+@import './variables.css';
 
 .overlay-root {
   position: fixed;
@@ -13,31 +8,9 @@ html:has(.overlay-root) body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  font-family: var(--font, "Space Grotesk", system-ui, -apple-system, sans-serif);
-  color: var(--white-92, rgba(173, 181, 189, 0.92));
+  font-family: var(--font);
+  color: var(--white-92);
   user-select: none;
-
-  --bg: #000000;
-
-  --white-100: rgba(173, 181, 189, 1.00);
-  --a29a96: #ADB5BD;
-  --white-92: rgba(173, 181, 189, 0.92);
-  --white-82: rgba(173, 181, 189, 0.82);
-  --white-75: rgba(173, 181, 189, 0.75);
-  --white-70: rgba(173, 181, 189, 0.70);
-  --white-55: rgba(173, 181, 189, 0.55);
-  --white-45: rgba(173, 181, 189, 0.45);
-  --white-40: rgba(173, 181, 189, 0.40);
-  --white-35: rgba(173, 181, 189, 0.35);
-  --white-25: rgba(173, 181, 189, 0.25);
-  --white-12: rgba(173, 181, 189, 0.12);
-  --white-10: rgba(173, 181, 189, 0.10);
-  --white-07: rgba(173, 181, 189, 0.07);
-  --white-06: rgba(173, 181, 189, 0.06);
-
-  --panel-bg: rgba(0, 0, 0, 0.62);
-
-  --context-gap: 10px;
 }
 
 .overlay-scaler {

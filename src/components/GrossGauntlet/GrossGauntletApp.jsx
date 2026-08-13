@@ -2,54 +2,25 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { API } from '../../config/api';
+import { 
+  clamp, 
+  formatHMS, 
+  formatTime12, 
+  formatMillis, 
+  formatDateLong, 
+  formatDateCA,
+  formatHours, 
+  relativeTime,
+  getLocalStorageItem,
+  setLocalStorageItem
+} from './utils';
+import { 
+  HOURS_TARGET, 
+  CONTEXT_WIDTH, 
+  STORAGE_KEYS,
+  DAILY_WORK_TARGET_SECONDS 
+} from './constants';
 import './GrossGauntletApp.css';
-
-const HOURS_TARGET = 1000;
-const CONTEXT_WIDTH = 1075.33;
-const EXPLAIN_TOPIC_KEY = 'EXPLAIN_TOPIC';
-
-function clamp(number, min, max) { return Math.min(max, Math.max(min, number)); }
-function pad(value) { return String(value).padStart(2, "0"); }
-function formatHMS(totalSeconds) {
-  const safe = Math.max(0, Number(totalSeconds) || 0);
-  const h = Math.floor(safe / 3600);
-  const m = Math.floor((safe % 3600) / 60);
-  const s = safe % 60;
-  return `${pad(h)}:${pad(m)}:${pad(s)}`;
-}
-function formatTime12(date) {
-  let h = date.getHours();
-  const m = pad(date.getMinutes());
-  const ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return `${h}:${m} ${ampm}`;
-}
-function formatMillis(ms) {
-  const safe = Math.max(0, Number(ms) || 0);
-  if (!safe) return "--:--";
-  const totalSeconds = Math.floor(safe / 1000);
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  const s = totalSeconds % 60;
-  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
-}
-function toLongDate(date) {
-  return date.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric" });
-}
-function formatHours(totalSeconds) { return (Math.max(0, totalSeconds) / 3600).toFixed(1); }
-
-function relativeTime(timestamp) {
-  const diff = Math.max(0, Date.now() - Number(timestamp || Date.now()));
-  const mins = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days === 1) return "yesterday";
-  return `${days}d ago`;
-}
 
 export default function GrossGauntletApp({ displayMode }) {
   // Purely data-driven state for UI lists (tasks, counts)
@@ -129,14 +100,8 @@ export default function GrossGauntletApp({ displayMode }) {
     return () => window.removeEventListener('resize', updateScale);
   }, []);
 
-  const getStoredExplainTopic = () => {
-    try { return localStorage.getItem(EXPLAIN_TOPIC_KEY) || ""; }
-    catch { return ""; }
-  };
-
-  const setStoredExplainTopic = (topic) => {
-    try { localStorage.setItem(EXPLAIN_TOPIC_KEY, topic); } catch { return; }
-  };
+  const getStoredExplainTopic = () => getLocalStorageItem(STORAGE_KEYS.EXPLAIN_TOPIC, "");
+  const setStoredExplainTopic = (topic) => setLocalStorageItem(STORAGE_KEYS.EXPLAIN_TOPIC, topic);
 
   // Animation Loop - Updates DOM directly
   useEffect(() => {
@@ -177,8 +142,8 @@ export default function GrossGauntletApp({ displayMode }) {
       }
       if (timerRefs.breakTime.current) timerRefs.breakTime.current.innerText = formatHMS(breakSecs);
       const time12 = formatTime12(d);
-      const ldate = toLongDate(d);
-      const shortDate = `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+      const ldate = formatDateLong(d);
+      const shortDate = formatDateCA(d);
       const weekdayShort = d.toLocaleDateString("en-US", { weekday: "short" });
       const sideDate = `${weekdayShort} - ${time12}`;
 
@@ -195,7 +160,7 @@ export default function GrossGauntletApp({ displayMode }) {
       if (timerRefs.explainDay.current) timerRefs.explainDay.current.innerText = `Day ${ls.totalDays || 1}`;
       if (timerRefs.explainTime.current) timerRefs.explainTime.current.innerText = sideDate;
 
-      const progressVal = clamp(todaySecs / (10 * 3600), 0, 1);
+      const progressVal = clamp(todaySecs / DAILY_WORK_TARGET_SECONDS, 0, 1);
       if (timerRefs.progressFill.current) {
         timerRefs.progressFill.current.style.width = `${(progressVal * CONTEXT_WIDTH).toFixed(2)}px`;
       }

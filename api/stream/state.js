@@ -51,14 +51,26 @@ export default async function handler(req, res) {
       // Active stream found - use this record regardless of date
       data = activeStreamData;
     } else {
-      // No active stream - fetch today's metrics
-      const result = await supabase
+      // No active stream — fall back to most recent session (highest stream_number)
+      const { data: recentSession } = await supabase
         .from('GrossGauntlet')
         .select('*')
-        .eq('date', today)
-        .single();
-      data = result.data;
-      error = result.error;
+        .order('stream_number', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (recentSession) {
+        data = recentSession;
+      } else {
+        // Last resort: today's row
+        const result = await supabase
+          .from('GrossGauntlet')
+          .select('*')
+          .eq('date', today)
+          .single();
+        data = result.data;
+        error = result.error;
+      }
     }
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
@@ -161,10 +173,18 @@ export default async function handler(req, res) {
         };
     }
 
+    const board = data ? {
+      up_next_tasks: data.up_next_tasks || [],
+      in_progress_tasks: data.in_progress_tasks || [],
+      in_review_tasks: data.in_review_tasks || [],
+      done_tasks: data.done_tasks || [],
+    } : null;
+
     return res.status(200).json({
       success: true,
       timestamp: Date.now(),
       tasks: tasks,
+      board: board,
       webhookLogs: webhookLogs,
       metrics: globalMetrics
     });

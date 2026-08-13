@@ -1,24 +1,85 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { API } from '../../config/api';
+import KanbanBoard from './kanban/KanbanBoard';
+import { buildBoard } from './kanban/moveTask';
+import RunButton, { getIsUnlocked } from './RunButton';
+import { STORAGE_KEYS, POLL_INTERVALS } from './constants';
 import './GrossGauntletPages.css';
 
-const UNLOCK_KEY = 'grossgauntlet_unlocked';
+const EMPTY_BOARD = buildBoard({});
+const SYNC_DEBOUNCE_MS = 400;
 
-function getIsUnlocked() {
-  try {
-    return localStorage.getItem(UNLOCK_KEY) === 'true';
-  } catch {
-    return false;
+async function syncBoardToApi(board) {
+  const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
+  if (!adminKey) throw new Error('Not authenticated');
+
+  const res = await fetch(API.syncTasks(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${adminKey}`,
+    },
+    body: JSON.stringify({
+      action: 'sync',
+      up_next_tasks: board.up_next_tasks,
+      in_progress_tasks: board.in_progress_tasks,
+      in_review_tasks: board.in_review_tasks,
+      done_tasks: board.done_tasks,
+    }),
+  });
+
+  if (res.status === 401) {
+    localStorage.removeItem(STORAGE_KEYS.GROSSGAUNTLET_UNLOCKED);
+    throw new Error('Unauthorized — re-unlock to edit');
+  }
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Sync failed (${res.status})`);
   }
 }
 
 export default function TasksEditor() {
-  const [tasks, setTasks] = useState([]);
+  const [board, setBoard] = useState(EMPTY_BOARD);
   const [mode, setMode] = useState('standby');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [streamNumber, setStreamNumber] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isReadOnly, setIsReadOnly] = useState(false);
+  const [syncError, setSyncError] = useState(null);
+  const [isUnlocked, setIsUnlocked] = useState(getIsUnlocked);
+
+  const writePendingRef = useRef(false);
+  const syncTimerRef = useRef(null);
+  const pendingBoardRef = useRef(null);
+
+  const isReadOnly = !isStreaming || !isUnlocked;
+
+  const flushSync = useCallback(async (boardToSync) => {
+    writePendingRef.current = true;
+    try {
+      await syncBoardToApi(boardToSync);
+      setSyncError(null);
+    } catch (e) {
+      setSyncError(e.message || 'Failed to save changes');
+    } finally {
+      writePendingRef.current = false;
+      pendingBoardRef.current = null;
+    }
+  }, []);
+
+  const handleBoardChange = useCallback(
+    (newBoard) => {
+      setBoard(newBoard);
+      pendingBoardRef.current = newBoard;
+
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+      syncTimerRef.current = setTimeout(() => {
+        if (pendingBoardRef.current) flushSync(pendingBoardRef.current);
+      }, SYNC_DEBOUNCE_MS);
+    },
+    [flushSync]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -31,27 +92,17 @@ export default function TasksEditor() {
         if (cancelled) return;
 
         const metrics = data?.metrics || {};
-        const isActiveStream = metrics.isStreaming === true;
-        const currentMode = metrics.mode || 'standby';
+        const activeStream = metrics.isStreaming === true;
 
-        setMode(currentMode);
-        setIsStreaming(isActiveStream);
+        setMode(metrics.mode || 'standby');
+        setIsStreaming(activeStream);
+        setStreamNumber(metrics.streamNumber ?? null);
+        setIsUnlocked(getIsUnlocked());
 
-        // Editable ONLY if streaming AND unlocked
-        // If not streaming, fall back to read-only mode
-        const canEdit = isActiveStream && getIsUnlocked();
-        setIsReadOnly(!canEdit);
+        if (!writePendingRef.current && data.board) {
+          setBoard(buildBoard(data.board));
+        }
 
-        // Process tasks from API
-        const fetchedTasks = Array.isArray(data.tasks)
-          ? data.tasks.map((t) => ({
-              id: String(t.id),
-              name: String(t.name || 'Untitled Task').trim(),
-              status: t.status || 'waiting',
-            }))
-          : [];
-
-        setTasks(fetchedTasks);
         setError(null);
       } catch (e) {
         if (!cancelled) setError(e.message || 'Failed to load tasks');
@@ -61,10 +112,11 @@ export default function TasksEditor() {
     }
 
     fetchState();
-    const interval = setInterval(fetchState, 5000);
+    const interval = setInterval(fetchState, POLL_INTERVALS.STATE_SYNC);
     return () => {
       cancelled = true;
       clearInterval(interval);
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     };
   }, []);
 
@@ -90,18 +142,6 @@ export default function TasksEditor() {
     );
   }
 
-  const statusOrder = {
-    in_progress: 0,
-    up_next: 1,
-    in_review: 2,
-    waiting: 3,
-    done: 4,
-  };
-
-  const sortedTasks = [...tasks].sort(
-    (a, b) => (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99)
-  );
-
   return (
     <div className="gg-page">
       <div className="gg-tasks-editor">
@@ -110,12 +150,17 @@ export default function TasksEditor() {
             <h1 className="gg-page-title">Tasks</h1>
             <p className="gg-page-subtitle">
               {isStreaming ? '🔴 Live' : '⏸️ Offline'}
+              {streamNumber != null && ` · Session ${streamNumber}`}
               {isReadOnly && !isStreaming && ' — Read-only (latest session)'}
-              {isReadOnly && isStreaming && ' — Read-only (unlock to edit)'}
+              {isReadOnly && isStreaming && !isUnlocked && ' — Read-only (unlock to edit)'}
               {!isReadOnly && ' — Editable'}
             </p>
           </div>
-          <div className="gg-tasks-mode">
+          <div className="gg-tasks-header-actions">
+            <RunButton
+              isUnlocked={isUnlocked}
+              onUnlock={() => setIsUnlocked(getIsUnlocked())}
+            />
             <span className="gg-mode-badge">Mode: {mode}</span>
           </div>
         </header>
@@ -124,22 +169,21 @@ export default function TasksEditor() {
           <div className="gg-session-notice">
             {!isStreaming
               ? '📖 No active stream. Showing latest session in read-only mode.'
-              : '🔒 Stream is locked. Enable unlock in control panel to edit.'}
+              : '🔒 Stream is locked. Click Run and enter your admin key to edit.'}
           </div>
         )}
 
-        <div className="gg-task-list-editor">
-          {sortedTasks.map((task) => (
-            <div key={task.id} className={`gg-task-item gg-task-${task.status || 'waiting'}`}>
-              <span className="gg-task-status-dot" />
-              <span className="gg-task-name">{task.name}</span>
-              <span className="gg-task-status">{task.status}</span>
-            </div>
-          ))}
-          {sortedTasks.length === 0 && (
-            <p className="gg-empty">No tasks available.</p>
-          )}
-        </div>
+        {syncError && (
+          <div className="gg-sync-error" role="alert">
+            ⚠ {syncError}
+          </div>
+        )}
+
+        <KanbanBoard
+          initialBoard={board}
+          editable={!isReadOnly}
+          onBoardChange={handleBoardChange}
+        />
       </div>
     </div>
   );

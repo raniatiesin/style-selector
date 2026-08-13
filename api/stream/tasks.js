@@ -52,7 +52,7 @@ export default async function handler(req, res) {
     console.error('[DEBUG]', JSON.stringify(req.body));
     
     const payload = req.method === 'DELETE' ? (Object.keys(body || {}).length ? body : req.query) : body;
-    let { id, task, status, time, action, inProgressTasks, doneTasks, due_date, dueDate, due } = payload || {};
+    let { id, task, status, time, action, inProgressTasks, inReviewTasks, upNextTasks, doneTasks, due_date, dueDate, due } = payload || {};
     
     // Clean up null/undefined string values
     if (id === "null" || id === "undefined") id = null;
@@ -92,12 +92,18 @@ export default async function handler(req, res) {
     // Determine which date to use - active stream's date if exists, otherwise today
     const activeDate = activeStreamData ? activeStreamData.date : today;
 
-    // Fetch the current task arrays so we can dynamically modify them
-    const { data, error: fetchError } = await supabase
+    // Fetch the current task arrays from the active stream row (or today's row)
+    let query = supabase
       .from('GrossGauntlet')
-      .select('in_progress_tasks, in_review_tasks, up_next_tasks, done_tasks, webhook_logs')
-      .eq('date', activeDate)
-      .single();
+      .select('id, date, in_progress_tasks, in_review_tasks, up_next_tasks, done_tasks, webhook_logs, is_streaming');
+
+    if (activeStreamData) {
+      query = query.eq('id', activeStreamData.id);
+    } else {
+      query = query.eq('date', activeDate);
+    }
+
+    const { data, error: fetchError } = await query.single();
 
     // Ignore PGRST116 (No rows) because we are about to upsert
     if (fetchError && fetchError.code !== 'PGRST116') {
@@ -117,6 +123,55 @@ export default async function handler(req, res) {
     done = done.map(t => ({ ...t, due: t.due || null }));
 
     const shortTime = new Date().toLocaleTimeString('en-US', { hour12: false });
+
+    // --- FULL BOARD SYNC (Kanban editor) ---
+    if (action === 'sync') {
+      inProgress = payload.in_progress_tasks ?? inProgressTasks ?? inProgress;
+      inReview = payload.in_review_tasks ?? inReviewTasks ?? inReview;
+      upNext = payload.up_next_tasks ?? upNextTasks ?? upNext;
+      done = payload.done_tasks ?? doneTasks ?? done;
+
+      // Mark done tasks with completedAt if missing
+      done = done.map((t) => ({
+        ...t,
+        status: 'done',
+        completedAt: t.completedAt ?? Date.now(),
+        due: t.due ?? null,
+      }));
+
+      const updatePayload = {
+        in_progress_tasks: inProgress,
+        in_review_tasks: inReview,
+        up_next_tasks: upNext,
+        done_tasks: done,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (data?.id) {
+        const { error: updateErr } = await supabase
+          .from('GrossGauntlet')
+          .update(updatePayload)
+          .eq('id', data.id);
+        if (updateErr) throw updateErr;
+      } else {
+        const { error: updateErr } = await supabase
+          .from('GrossGauntlet')
+          .upsert({ date: activeDate, ...updatePayload }, { onConflict: 'date' });
+        if (updateErr) throw updateErr;
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Board synced.',
+        counts: {
+          in_progress: inProgress.length,
+          in_review: inReview.length,
+          up_next: upNext.length,
+          done: done.length,
+        },
+      });
+    }
+
     const logMsg = `[${shortTime}] Webhook: '${task || 'Unknown Task'}' -> ${status || action || 'ignored'}`;
     webhookLogs.push(logMsg);
     // Keep only the last 30 logs so the DB doesn't explode
@@ -132,10 +187,7 @@ export default async function handler(req, res) {
     upNext = upNext.filter(t => String(t.id) !== taskId);
     done = done.filter(t => String(t.id) !== taskId);
 
-    if (action === 'sync') {
-       inProgress = inProgressTasks || inProgress;
-       done = doneTasks || done;
-    } else if (action === 'delete' || req.method === 'DELETE' || rawStatus === 'delete' || rawStatus === 'deleted') {
+    if (action === 'delete' || req.method === 'DELETE' || rawStatus === 'delete' || rawStatus === 'deleted') {
        // Just deleting, do nothing to add it back
     } else {
        // Check if task is due today
@@ -215,19 +267,27 @@ export default async function handler(req, res) {
     }
 
     // Save the modified arrays back to Supabase
-    const { error: updateErr } = await supabase
-      .from('GrossGauntlet')
-      .upsert({
-         date: activeDate,
-         in_progress_tasks: inProgress,
-         in_review_tasks: inReview,
-         up_next_tasks: upNext,
-         done_tasks: done,
-         webhook_logs: webhookLogs,
-         updated_at: new Date().toISOString()
-      }, { onConflict: 'date' });
+    const updatePayload = {
+      in_progress_tasks: inProgress,
+      in_review_tasks: inReview,
+      up_next_tasks: upNext,
+      done_tasks: done,
+      webhook_logs: webhookLogs,
+      updated_at: new Date().toISOString(),
+    };
 
-    if (updateErr) throw updateErr;
+    if (data?.id) {
+      const { error: updateErr } = await supabase
+        .from('GrossGauntlet')
+        .update(updatePayload)
+        .eq('id', data.id);
+      if (updateErr) throw updateErr;
+    } else {
+      const { error: updateErr } = await supabase
+        .from('GrossGauntlet')
+        .upsert({ date: activeDate, ...updatePayload }, { onConflict: 'date' });
+      if (updateErr) throw updateErr;
+    }
 
     return res.status(200).json({
       success: true,

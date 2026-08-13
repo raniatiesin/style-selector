@@ -1,19 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { API } from '../../config/api';
+import KanbanBoard from './kanban/KanbanBoard';
+import { buildBoard, buildBoardFromTasks } from './kanban/moveTask';
+import { formatDateLong, formatTime } from './utils';
 import './GrossGauntletPages.css';
-
-function formatDate(value) {
-  if (!value) return 'Unknown date';
-  const d = new Date(value);
-  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function formatTime(value) {
-  if (!value) return '';
-  const d = new Date(value);
-  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
 
 export default function SessionView() {
   const { n: logNumber, slug } = useParams();
@@ -26,8 +17,6 @@ export default function SessionView() {
 
     async function fetchSession() {
       try {
-        // Fetch specific session matching log position and slug
-        // TODO: Replace with real endpoint
         const res = await fetch(API.getSession(logNumber, slug));
         if (!res.ok) throw new Error(`Server returned ${res.status}`);
         const data = await res.json();
@@ -71,6 +60,9 @@ export default function SessionView() {
   const title = session.title || session.name || 'Untitled Session';
   const subtitle = session.subtitle || session.timestamps || '';
   const tasks = Array.isArray(session.tasks) ? session.tasks : [];
+  const board = session.board
+    ? buildBoard(session.board)
+    : buildBoardFromTasks(tasks);
 
   return (
     <div className="gg-page">
@@ -82,7 +74,7 @@ export default function SessionView() {
           <h1 className="gg-page-title">{title}</h1>
           {subtitle && <p className="gg-page-subtitle">{subtitle}</p>}
           <p className="gg-session-date">
-            {formatDate(session.date || session.created_at)}
+            {formatDateLong(session.date || session.created_at)}
             {session.created_at && ` · ${formatTime(session.created_at)}`}
           </p>
           <div className="gg-session-slug">/{slug}</div>
@@ -92,20 +84,7 @@ export default function SessionView() {
           ⚡ Historical record — read-only view
         </div>
 
-        {tasks.length > 0 && (
-          <div className="gg-session-tasks">
-            <h2 className="gg-section-title">Tasks ({tasks.length})</h2>
-            <div className="gg-task-list">
-              {tasks.map((task) => (
-                <div key={task.id || task.name} className={`gg-task-item gg-task-${task.status || 'waiting'}`}>
-                  <span className="gg-task-status-dot" />
-                  <span className="gg-task-name">{task.name}</span>
-                  <span className="gg-task-status">{task.status || 'waiting'}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <KanbanBoard initialBoard={board} editable={false} />
 
         {session.metrics && (
           <div className="gg-session-metrics">

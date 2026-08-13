@@ -2,19 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { API } from '../../config/api';
 import { generateSlug } from '../../utils/slug';
+import { formatDate, deriveSubtitle } from './utils';
 import './GrossGauntletPages.css';
-
-function formatDate(value) {
-  if (!value) return 'Unknown date';
-  const d = new Date(value);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function deriveSubtitle(streamTitle) {
-  if (!streamTitle) return '';
-  const parts = String(streamTitle).split(/[:—–-]/);
-  return parts[parts.length - 1]?.trim() || streamTitle;
-}
 
 export default function LogView() {
   const { n } = useParams();

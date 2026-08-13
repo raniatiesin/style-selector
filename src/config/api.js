@@ -25,8 +25,14 @@ export const API = {
   /** Fetch current stream state (metrics, tasks, mode) */
   getStreamState: () => `${API_BASE}/stream/state`,
 
-  /** Fetch tasks for the OBS overlay polling */
-  getTasks: () => `${API_BASE}/stream/tasks`,
+  /** Fetch tasks for the OBS overlay polling (alias for stream state) */
+  getTasks: () => `${API_BASE}/stream/state`,
+
+  /** Sync full Kanban board to the live stream row */
+  syncTasks: () => `${API_BASE}/stream/tasks`,
+
+  /** Fetch board state for a historical session by stream_number */
+  getTasksByStreamNumber: (streamNumber) => `${API_BASE}/grossgauntlet/tasks/${streamNumber}`,
 
   /** Push metrics / state updates to the live stream row */
   postMetrics: () => `${API_BASE}/stream/metrics`,

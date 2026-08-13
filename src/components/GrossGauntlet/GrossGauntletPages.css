@@ -4,13 +4,16 @@
    Reuses visual patterns from GrossGauntletApp.css
    ============================================================ */
 
+/* Import shared CSS variables */
+@import './variables.css';
+
 /* --- Page Shell --- */
 .gg-page {
   min-height: 100dvh;
   width: 100%;
   background: #0a0a0a;
-  font-family: var(--font, "Space Grotesk", system-ui, -apple-system, sans-serif);
-  color: var(--white-92, rgba(173, 181, 189, 0.92));
+  font-family: var(--font);
+  color: var(--white-92);
   padding: 40px 24px;
   overflow-y: auto;
 }
@@ -20,7 +23,7 @@
   font-weight: 300;
   line-height: 1.04;
   letter-spacing: -0.006em;
-  color: var(--white-100, rgba(173, 181, 189, 1));
+  color: var(--white-100);
   margin: 0 0 4px 0;
 }
 
@@ -28,16 +31,16 @@
   font-size: 14px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--white-45, rgba(173, 181, 189, 0.45));
+  color: var(--white-45);
   margin: 0 0 24px 0;
 }
 
 .gg-error {
-  color: #F95738;
+  color: var(--status-error);
 }
 
 .gg-empty {
-  color: var(--white-35, rgba(173, 181, 189, 0.35));
+  color: var(--white-35);
   font-size: 14px;
   letter-spacing: 0.1em;
   font-style: italic;
@@ -50,14 +53,14 @@
   font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--white-55, rgba(173, 181, 189, 0.55));
+  color: var(--white-55);
   text-decoration: none;
   margin-bottom: 24px;
   transition: color 0.18s ease;
 }
 
 .gg-back-link:hover {
-  color: var(--white-92, rgba(173, 181, 189, 0.92));
+  color: var(--white-92);
 }
 
 /* --- Index Header --- */
@@ -74,7 +77,7 @@
 
 .gg-log-card {
   display: block;
-  border: 1px solid var(--white-25, rgba(173, 181, 189, 0.25));
+  border: 1px solid var(--white-25);
   padding: 20px 24px;
   text-decoration: none;
   color: inherit;
@@ -82,7 +85,7 @@
 }
 
 .gg-log-card:hover {
-  border-color: var(--white-55, rgba(173, 181, 189, 0.55));
+  border-color: var(--white-55);
   background: rgba(255, 255, 255, 0.03);
 }
 
@@ -90,7 +93,7 @@
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--white-45, rgba(173, 181, 189, 0.45));
+  color: var(--white-45);
   margin-bottom: 8px;
 }
 
@@ -98,7 +101,7 @@
   font-size: 24px;
   font-weight: 300;
   line-height: 1.1;
-  color: var(--white-92, rgba(173, 181, 189, 0.92));
+  color: var(--white-92);
   margin-bottom: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -111,7 +114,7 @@
   align-items: center;
   font-size: 12px;
   letter-spacing: 0.1em;
-  color: var(--white-35, rgba(173, 181, 189, 0.35));
+  color: var(--white-35);
 }
 
 /* --- Log View / Session Meta --- */
@@ -126,7 +129,7 @@
 .gg-session-date {
   font-size: 12px;
   letter-spacing: 0.1em;
-  color: var(--white-45, rgba(173, 181, 189, 0.45));
+  color: var(--white-45);
   margin-top: 8px;
 }
 
@@ -136,16 +139,16 @@
   font-size: 14px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--white-82, rgba(173, 181, 189, 0.82));
+  color: var(--white-82);
   text-decoration: none;
-  border: 1px solid var(--white-35, rgba(173, 181, 189, 0.35));
+  border: 1px solid var(--white-35);
   padding: 12px 24px;
   transition: border-color 0.18s ease, color 0.18s ease;
 }
 
 .gg-primary-link:hover {
-  border-color: var(--white-70, rgba(173, 181, 189, 0.70));
-  color: var(--white-100, rgba(173, 181, 189, 1));
+  border-color: var(--white-70);
+  color: var(--white-100);
 }
 
 /* --- Section Title --- */
@@ -154,10 +157,10 @@
   font-weight: 400;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--white-55, rgba(173, 181, 189, 0.55));
+  color: var(--white-55);
   margin: 0 0 16px 0;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--white-12, rgba(173, 181, 189, 0.12));
+  border-bottom: 1px solid var(--white-12);
 }
 
 /* --- Session List (Multi-Session Selector) --- */
@@ -171,7 +174,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  border: 1px solid var(--white-25, rgba(173, 181, 189, 0.25));
+  border: 1px solid var(--white-25);
   padding: 16px 20px;
   text-decoration: none;
   color: inherit;
@@ -179,33 +182,33 @@
 }
 
 .gg-session-card:hover {
-  border-color: var(--white-55, rgba(173, 181, 189, 0.55));
+  border-color: var(--white-55);
 }
 
 .gg-session-card-stream {
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--white-35, rgba(173, 181, 189, 0.35));
+  color: var(--white-35);
 }
 
 .gg-session-card-title {
   font-size: 18px;
   font-weight: 300;
   line-height: 1.1;
-  color: var(--white-92, rgba(173, 181, 189, 0.92));
+  color: var(--white-92);
 }
 
 .gg-session-card-slug {
   font-size: 11px;
   font-family: monospace;
-  color: var(--white-45, rgba(173, 181, 189, 0.45));
+  color: var(--white-45);
 }
 
 .gg-session-card-arrow {
   align-self: flex-end;
   font-size: 12px;
-  color: var(--white-35, rgba(173, 181, 189, 0.35));
+  color: var(--white-35);
 }
 
 /* --- Session View --- */
@@ -216,15 +219,15 @@
 .gg-session-slug {
   font-size: 12px;
   font-family: monospace;
-  color: var(--white-45, rgba(173, 181, 189, 0.45));
+  color: var(--white-45);
   margin-top: 8px;
 }
 
 .gg-session-notice {
   font-size: 12px;
   letter-spacing: 0.06em;
-  color: var(--white-55, rgba(173, 181, 189, 0.55));
-  border: 1px solid var(--white-12, rgba(173, 181, 189, 0.12));
+  color: var(--white-55);
+  border: 1px solid var(--white-12);
   padding: 12px 16px;
   margin-bottom: 24px;
 }
@@ -241,7 +244,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 1px solid var(--white-12, rgba(173, 181, 189, 0.12));
+  border: 1px solid var(--white-12);
   padding: 10px 16px;
 }
 
@@ -249,20 +252,20 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--white-35, rgba(173, 181, 189, 0.35));
+  background: var(--white-35);
   flex-shrink: 0;
 }
 
-.gg-task-in_progress .gg-task-status-dot { background: #4DAA57; }
-.gg-task-up_next .gg-task-status-dot { background: #2F6690; }
-.gg-task-in_review .gg-task-status-dot { background: #FFBA08; }
-.gg-task-done .gg-task-status-dot { background: #F95738; }
+.gg-task-in_progress .gg-task-status-dot { background: var(--status-in-progress); }
+.gg-task-up_next .gg-task-status-dot { background: var(--status-up-next); }
+.gg-task-in_review .gg-task-status-dot { background: var(--status-in-review); }
+.gg-task-done .gg-task-status-dot { background: var(--status-done); }
 
 .gg-task-name {
   flex: 1;
   font-size: 15px;
   font-weight: 300;
-  color: var(--white-92, rgba(173, 181, 189, 0.92));
+  color: var(--white-92);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -272,7 +275,7 @@
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--white-45, rgba(173, 181, 189, 0.45));
+  color: var(--white-45);
   flex-shrink: 0;
 }
 
@@ -285,7 +288,7 @@
 }
 
 .gg-metric-card {
-  border: 1px solid var(--white-12, rgba(173, 181, 189, 0.12));
+  border: 1px solid var(--white-12);
   padding: 16px;
 }
 
@@ -293,14 +296,14 @@
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--white-45, rgba(173, 181, 189, 0.45));
+  color: var(--white-45);
   margin-bottom: 8px;
 }
 
 .gg-metric-value {
   font-size: 28px;
   font-weight: 300;
-  color: var(--white-92, rgba(173, 181, 189, 0.92));
+  color: var(--white-92);
 }
 
 /* --- Tasks Editor --- */
@@ -309,15 +312,88 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.gg-tasks-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .gg-mode-badge {
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--white-55, rgba(173, 181, 189, 0.55));
-  border: 1px solid var(--white-25, rgba(173, 181, 189, 0.25));
+  color: var(--white-55);
+  border: 1px solid var(--white-25);
   padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.gg-run-btn {
+  font-family: var(--font);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white-82);
+  background: transparent;
+  border: 1px solid var(--white-35);
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.gg-run-btn:hover {
+  border-color: var(--white-70);
+  color: var(--white-100);
+  background: var(--white-06);
+}
+
+.gg-run-btn--locked {
+  color: var(--white-45);
+  border-color: var(--white-12);
+}
+
+.gg-run-btn--cancel {
+  color: var(--white-35);
+  border-color: var(--white-12);
+}
+
+.gg-run-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gg-run-input {
+  background: var(--white-06);
+  border: 1px solid var(--white-25);
+  border-radius: 4px;
+  color: var(--white-100);
+  font-family: var(--font);
+  font-size: 12px;
+  padding: 6px 10px;
+  outline: none;
+  min-width: 140px;
+}
+
+.gg-run-error {
+  font-size: 11px;
+  color: var(--status-error);
+  letter-spacing: 0.04em;
+}
+
+.gg-sync-error {
+  font-size: 12px;
+  color: #FFBA08;
+  border: 1px solid rgba(255, 186, 8, 0.25);
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  letter-spacing: 0.04em;
 }
 
 .gg-task-list-editor {

@@ -1,0 +1,189 @@
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCorners,
+} from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+
+import KanbanColumn from './KanbanColumn';
+import KanbanCard from './KanbanCard';
+import {
+  COLUMNS,
+  COLUMN_LABELS,
+  moveTask,
+  addTask,
+  deleteTask,
+  renameTask,
+  generateTaskId,
+  colKeyToStatus,
+} from './moveTask';
+import styles from './KanbanBoard.module.css';
+
+function findCardColumn(board, cardId) {
+  for (const col of COLUMNS) {
+    if (board[col].some((t) => t.id === cardId)) return col;
+  }
+  return null;
+}
+
+function getDropIndex(board, overId, overCol) {
+  if (COLUMNS.includes(overId)) return -1;
+  const idx = board[overCol].findIndex((t) => t.id === overId);
+  return idx === -1 ? -1 : idx;
+}
+
+export default function KanbanBoard({ initialBoard, editable, onBoardChange }) {
+  const [board, setBoard] = useState(initialBoard);
+  const [activeCard, setActiveCard] = useState(null);
+  const boardAtDragStart = useRef(null);
+  const isDraggingRef = useRef(false);
+
+  useEffect(() => {
+    if (!isDraggingRef.current) {
+      setBoard(initialBoard);
+    }
+  }, [initialBoard]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const applyAndNotify = useCallback(
+    (newBoard) => {
+      setBoard(newBoard);
+      onBoardChange?.(newBoard);
+    },
+    [onBoardChange]
+  );
+
+  const handleAddTask = useCallback(
+    (colKey, name) => {
+      const newTask = {
+        id: generateTaskId(),
+        name,
+        status: colKeyToStatus(colKey),
+        createdAt: Date.now(),
+        completedAt: null,
+        due: null,
+      };
+      applyAndNotify(addTask(board, colKey, newTask));
+    },
+    [board, applyAndNotify]
+  );
+
+  const handleDeleteTask = useCallback(
+    (taskId) => {
+      applyAndNotify(deleteTask(board, taskId));
+    },
+    [board, applyAndNotify]
+  );
+
+  const handleRenameTask = useCallback(
+    (taskId, newName) => {
+      applyAndNotify(renameTask(board, taskId, newName));
+    },
+    [board, applyAndNotify]
+  );
+
+  function handleDragStart({ active }) {
+    isDraggingRef.current = true;
+    boardAtDragStart.current = board;
+    const col = findCardColumn(board, active.id);
+    const card = col ? board[col].find((t) => t.id === active.id) : null;
+    setActiveCard(card ?? null);
+  }
+
+  function handleDragOver({ active, over }) {
+    if (!over) return;
+
+    const activeCol = findCardColumn(board, active.id);
+    const overCol = COLUMNS.includes(over.id)
+      ? over.id
+      : findCardColumn(board, over.id);
+
+    if (!activeCol || !overCol || activeCol === overCol) return;
+
+    const toIndex = getDropIndex(board, over.id, overCol);
+    setBoard((prev) => moveTask(prev, active.id, activeCol, overCol, toIndex));
+  }
+
+  function handleDragEnd({ active, over }) {
+    isDraggingRef.current = false;
+    setActiveCard(null);
+
+    if (!over) {
+      if (boardAtDragStart.current) setBoard(boardAtDragStart.current);
+      boardAtDragStart.current = null;
+      return;
+    }
+
+    const activeCol = findCardColumn(board, active.id);
+    const overCol = COLUMNS.includes(over.id)
+      ? over.id
+      : findCardColumn(board, over.id);
+
+    if (!activeCol || !overCol) return;
+
+    const toIndex = getDropIndex(board, over.id, overCol);
+    const newBoard = moveTask(board, active.id, activeCol, overCol, toIndex);
+    applyAndNotify(newBoard);
+    boardAtDragStart.current = null;
+  }
+
+  function handleDragCancel() {
+    isDraggingRef.current = false;
+    setActiveCard(null);
+    if (boardAtDragStart.current) {
+      setBoard(boardAtDragStart.current);
+      boardAtDragStart.current = null;
+    }
+  }
+
+  const columns = COLUMNS.map((colKey) => (
+    <KanbanColumn
+      key={colKey}
+      colKey={colKey}
+      label={COLUMN_LABELS[colKey]}
+      tasks={board[colKey]}
+      editable={editable}
+      onAddTask={handleAddTask}
+      onDeleteTask={handleDeleteTask}
+      onRenameTask={handleRenameTask}
+    />
+  ));
+
+  if (!editable) {
+    return <div className={styles.board}>{columns}</div>;
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+      <div className={styles.board}>{columns}</div>
+
+      <DragOverlay>
+        {activeCard ? (
+          <div className={styles.dragOverlay}>
+            <KanbanCard task={activeCard} editable={false} />
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+  );
+}

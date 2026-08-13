@@ -1,0 +1,48 @@
+/* ============================================================
+   Gross Gauntlet - Shared CSS Variables
+   Centralized color palette and design tokens
+   ============================================================ */
+
+:root {
+  /* Base Colors */
+  --bg: #000000;
+  
+  /* White Opacity Scale */
+  --white-100: rgba(173, 181, 189, 1.00);
+  --a29a96: #ADB5BD;
+  --white-92: rgba(173, 181, 189, 0.92);
+  --white-82: rgba(173, 181, 189, 0.82);
+  --white-75: rgba(173, 181, 189, 0.75);
+  --white-70: rgba(173, 181, 189, 0.70);
+  --white-55: rgba(173, 181, 189, 0.55);
+  --white-45: rgba(173, 181, 189, 0.45);
+  --white-40: rgba(173, 181, 189, 0.40);
+  --white-35: rgba(173, 181, 189, 0.35);
+  --white-25: rgba(173, 181, 189, 0.25);
+  --white-12: rgba(173, 181, 189, 0.12);
+  --white-10: rgba(173, 181, 189, 0.10);
+  --white-07: rgba(173, 181, 189, 0.07);
+  --white-06: rgba(173, 181, 189, 0.06);
+  
+  /* UI Elements */
+  --panel-bg: rgba(0, 0, 0, 0.62);
+  --context-gap: 10px;
+  
+  /* Status Colors */
+  --status-in-progress: #4DAA57;
+  --status-up-next: #2F6690;
+  --status-in-review: #FFBA08;
+  --status-done: #F95738;
+  --status-error: #F95738;
+  
+  /* Typography */
+  --font: "Space Grotesk", system-ui, -apple-system, sans-serif;
+}
+
+/* OBS Transparency Override - applies to any page with overlay-root */
+html:has(.overlay-root),
+body:has(.overlay-root),
+body:has(.overlay-root) #root,
+html:has(.overlay-root) body {
+  background: transparent !important;
+}

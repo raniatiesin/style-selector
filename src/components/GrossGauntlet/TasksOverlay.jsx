@@ -1,21 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { API } from '../../config/api';
+import { sortTasksByStatus } from './utils';
+import { POLL_INTERVALS, TASK_STATUSES } from './constants';
 import './TasksOverlay.css';
 
 /**
  * Isolated OBS Overlay for Tasks.
  * CRITICAL: MUST NOT import @dnd-kit/core, @dnd-kit/sortable, or any drag-and-drop dependencies.
- * Read-only, polls /api/tasks every 2000ms with exponential backoff on errors.
+ * Read-only, polls /api/stream/state with exponential backoff on errors.
  */
-const POLL_INTERVAL_MS = 2000;
-const MAX_BACKOFF_MS = 30000;
-const STALE_THRESHOLD_MS = 10000;
 
 export default function TasksOverlay() {
   const [tasks, setTasks] = useState([]);
   const [lastFetchTime, setLastFetchTime] = useState(null);
   const [isStale, setIsStale] = useState(false);
-  const backoffRef = useRef(POLL_INTERVAL_MS);
+  const backoffRef = useRef(POLL_INTERVALS.TASKS);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,39 +22,29 @@ export default function TasksOverlay() {
 
     async function fetchTasks() {
       try {
-        const res = await fetch(API.getTasks());
+        const res = await fetch(API.getStreamState());
         if (!res.ok) {
           throw new Error(`Server returned ${res.status}`);
         }
         const data = await res.json();
         if (cancelled) return;
 
-        // Successful fetch - reset backoff and stale state
-        backoffRef.current = POLL_INTERVAL_MS;
+        backoffRef.current = POLL_INTERVALS.TASKS;
         setLastFetchTime(Date.now());
         setIsStale(false);
 
-        // Process tasks from response
         const fetchedTasks = Array.isArray(data.tasks)
           ? data.tasks.map((t) => ({
               id: String(t.id),
               name: String(t.name || 'Untitled Task').trim(),
               status: t.status || 'waiting',
             }))
-          : Array.isArray(data)
-            ? data.map((t) => ({
-                id: String(t.id),
-                name: String(t.name || 'Untitled Task').trim(),
-                status: t.status || 'waiting',
-              }))
-            : [];
+          : [];
 
         setTasks(fetchedTasks);
-      } catch (e) {
+      } catch {
         if (cancelled) return;
-        // Exponential backoff on errors
-        const currentBackoff = backoffRef.current;
-        backoffRef.current = Math.min(currentBackoff * 2, MAX_BACKOFF_MS);
+        backoffRef.current = Math.min(backoffRef.current * 2, POLL_INTERVALS.MAX_BACKOFF);
       }
     }
 
@@ -66,36 +55,35 @@ export default function TasksOverlay() {
       timeoutId = setTimeout(poll, backoffRef.current);
     }
 
-    // Initial fetch
     poll();
 
-    // Separate interval to check staleness
     const staleInterval = setInterval(() => {
-      if (lastFetchTime && Date.now() - lastFetchTime > STALE_THRESHOLD_MS) {
-        setIsStale(true);
-      } else {
-        setIsStale(false);
-      }
+      setLastFetchTime((prev) => {
+        if (prev && Date.now() - prev > POLL_INTERVALS.STALE_THRESHOLD) {
+          setIsStale(true);
+        } else if (prev) {
+          setIsStale(false);
+        }
+        return prev;
+      });
     }, 1000);
 
     return () => {
       cancelled = true;
       if (timeoutId) clearTimeout(timeoutId);
-      if (staleInterval) clearInterval(staleInterval);
+      clearInterval(staleInterval);
     };
   }, []);
 
   const statusOrder = {
-    in_progress: 0,
-    up_next: 1,
-    in_review: 2,
-    waiting: 3,
-    done: 4,
+    [TASK_STATUSES.IN_PROGRESS]: 0,
+    [TASK_STATUSES.UP_NEXT]: 1,
+    [TASK_STATUSES.IN_REVIEW]: 2,
+    [TASK_STATUSES.WAITING]: 3,
+    [TASK_STATUSES.DONE]: 4,
   };
 
-  const sortedTasks = [...tasks].sort(
-    (a, b) => (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99)
-  );
+  const sortedTasks = sortTasksByStatus(tasks, statusOrder);
 
   return (
     <div className="gg-overlay-root">

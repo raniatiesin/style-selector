@@ -1,0 +1,19 @@
+/*
+ * KanbanBoard.module.css
+ * Horizontal board layout — uses GrossGauntlet token system via variables.css
+ */
+
+.board {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  align-items: flex-start;
+}
+
+.dragOverlay {
+  opacity: 0.95;
+  transform: rotate(2deg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}

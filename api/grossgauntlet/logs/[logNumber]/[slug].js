@@ -90,7 +90,15 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      data: session
+      data: {
+        ...session,
+        board: {
+          up_next_tasks: record.up_next_tasks || [],
+          in_progress_tasks: record.in_progress_tasks || [],
+          in_review_tasks: record.in_review_tasks || [],
+          done_tasks: record.done_tasks || [],
+        },
+      }
     });
 
   } catch (error) {

@@ -1,17 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
 import OBSWebSocket from 'obs-websocket-js';
 import { API } from '../../config/api';
+import { 
+  formatYTTime, 
+  sanitizeFilenamePart, 
+  getLocalStorageItem, 
+  setLocalStorageItem,
+  getLocalStorageJSON,
+  setLocalStorageJSON
+} from './utils';
+import { 
+  OBS_CONFIG, 
+  STORAGE_KEYS,
+  LOG_CONFIG 
+} from './constants';
 import './GrossGauntletApp.css';
 
-const OBS_WS_URL = "ws://localhost:4455";
-const SCENE_WORK = "work";
-const SCENE_EXPLAIN = "explain";
-const SCENE_BREAK = "break";
-const SCENE_STANDBY = "standby";
-
 export default function GrossGauntletControl() {
-  const [adminKey, setAdminKey] = useState(() => localStorage.getItem('STREAM_ADMIN_KEY') || '');
-  const [obsPassword, setObsPassword] = useState(() => localStorage.getItem('OBS_PASS') || '');
+  const [adminKey, setAdminKey] = useState(() => getLocalStorageItem(STORAGE_KEYS.STREAM_ADMIN_KEY, ''));
+  const [obsPassword, setObsPassword] = useState(() => getLocalStorageItem(STORAGE_KEYS.OBS_PASS, ''));
   
   const [inputKey, setInputKey] = useState('');
   const [inputObs, setInputObs] = useState('');
@@ -51,42 +58,29 @@ export default function GrossGauntletControl() {
     stateRef.current = state;
   }, [state]);
 
-  // Auto-dismiss logs after 10 seconds
+  // Auto-dismiss logs after configured time
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
-      setLogs(prevLogs => prevLogs.filter(log => now - log.timestamp < 10000));
+      setLogs(prevLogs => prevLogs.filter(log => now - log.timestamp < LOG_CONFIG.AUTO_DISMISS_MS));
     }, 1000);
     return () => clearInterval(interval);
   }, []);
 
   // --- YouTube Markers ---
-  const [ytMarkers, setYtMarkers] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('YT_MARKERS')) || []; }
-    catch { return []; }
-  });
-  const [streamStart, setStreamStart] = useState(() => Number(localStorage.getItem('YT_STREAM_START')) || null);
+  const [ytMarkers, setYtMarkers] = useState(() => getLocalStorageJSON(STORAGE_KEYS.YT_MARKERS, []));
+  const [streamStart, setStreamStart] = useState(() => Number(getLocalStorageItem(STORAGE_KEYS.YT_STREAM_START, '0')) || null);
   const activeTaskRef = useRef("INITIAL_LOAD_FLAG");
 
-  const formatYTTime = (startMillis) => {
-     if (!startMillis) return "00:00";
-     const diffSec = Math.max(0, Math.floor((Date.now() - startMillis) / 1000));
-     const h = Math.floor(diffSec / 3600);
-     const m = Math.floor((diffSec % 3600) / 60);
-     const s = diffSec % 60;
-     if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
   const addYtMarker = (text) => {
-     const currentStart = Number(localStorage.getItem('YT_STREAM_START')); 
+     const currentStart = Number(getLocalStorageItem(STORAGE_KEYS.YT_STREAM_START, '0')); 
      const m = `${formatYTTime(currentStart)} - ${text}`;
      
      setYtMarkers(prev => {
         // Check if the exact same marker already exists (same timestamp and text)
         if (prev.length > 0 && prev[prev.length - 1] === m) return prev;
         const next = [...prev, m];
-        localStorage.setItem('YT_MARKERS', JSON.stringify(next));
+        setLocalStorageJSON(STORAGE_KEYS.YT_MARKERS, next);
         return next;
      });
      
@@ -138,15 +132,15 @@ export default function GrossGauntletControl() {
     if (window.confirm("Start/Reset stream recording timeline from 00:00?")) {
        const now = Date.now();
        setStreamStart(now);
-       localStorage.setItem('YT_STREAM_START', String(now));
+       setLocalStorageItem(STORAGE_KEYS.YT_STREAM_START, String(now));
        const initial = ["00:00 - Intro"];
        setYtMarkers(initial);
-       localStorage.setItem('YT_MARKERS', JSON.stringify(initial));
+       setLocalStorageJSON(STORAGE_KEYS.YT_MARKERS, initial);
        setState(s => ({ ...s, timestamps: `STREAM ${s.streamNumber || 1}` }));
     }
   };
 
-  const addLog = (msg) => setLogs(l => [...l, { message: `[${new Date().toLocaleTimeString()}] ${msg}`, timestamp: Date.now() }].slice(-20));
+  const addLog = (msg) => setLogs(l => [...l, { message: `[${new Date().toLocaleTimeString()}] ${msg}`, timestamp: Date.now() }].slice(-LOG_CONFIG.MAX_LOGS));
 
   // State validation function to catch inconsistencies
   const validateState = (s) => {
@@ -190,7 +184,6 @@ export default function GrossGauntletControl() {
     return issues.length === 0;
   };
 
-   const sanitizeFilenamePart = (value) => value.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
    const formatExplainRecordingName = (topic) => {
       const safeTopic = sanitizeFilenamePart(topic) || 'Explain';
       return `%CCYY-%MM-%DD - %hh%mm - ${safeTopic}`;
@@ -298,8 +291,8 @@ export default function GrossGauntletControl() {
     async function connect() {
       if (!keepConnecting) return;
       try {
-        addLog(`Attempting OBS WS connection to ${OBS_WS_URL}...`);
-        await obs.connect(OBS_WS_URL, obsPassword);
+        addLog(`Attempting OBS WS connection to ${OBS_CONFIG.WS_URL}...`);
+        await obs.connect(OBS_CONFIG.WS_URL, obsPassword);
         if (!keepConnecting) {
            obs.disconnect();
            return;
@@ -309,7 +302,7 @@ export default function GrossGauntletControl() {
 
         obs.on("CurrentProgramSceneChanged", (event) => {
            addLog(`OBS Scene changed to: ${event.sceneName}`);
-           const map = { [SCENE_WORK]: "work", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby" };
+           const map = { [OBS_CONFIG.SCENES.WORK]: "work", [OBS_CONFIG.SCENES.EXPLAIN]: "explain", [OBS_CONFIG.SCENES.BREAK]: "break", [OBS_CONFIG.SCENES.STANDBY]: "standby" };
            const mapped = map[event.sceneName];
            if (mapped) {
              // Mark this as an OBS-initiated change to prevent circular updates
@@ -401,7 +394,7 @@ export default function GrossGauntletControl() {
             setYtMarkers(initial);
             localStorage.setItem('YT_MARKERS', JSON.stringify(initial));
 
-            obs.call("SetCurrentProgramScene", { sceneName: SCENE_STANDBY }).catch(e => addLog(`Scene err: ${e.message}`));
+            obs.call("SetCurrentProgramScene", { sceneName: OBS_CONFIG.SCENES.STANDBY }).catch(e => addLog(`Scene err: ${e.message}`));
 
             setState(s => {
                // Switch to standby and update timestamp, but DO NOT reset accumulated time.
@@ -468,7 +461,7 @@ export default function GrossGauntletControl() {
           try {
             const currentScene = await obs.call("GetCurrentProgramScene");
             const sceneName = currentScene.currentProgramSceneName;
-            const map = { [SCENE_WORK]: "work", [SCENE_EXPLAIN]: "explain", [SCENE_BREAK]: "break", [SCENE_STANDBY]: "standby" };
+            const map = { [OBS_CONFIG.SCENES.WORK]: "work", [OBS_CONFIG.SCENES.EXPLAIN]: "explain", [OBS_CONFIG.SCENES.BREAK]: "break", [OBS_CONFIG.SCENES.STANDBY]: "standby" };
             const expectedMode = map[sceneName];
             const currentState = stateRef.current;
             
@@ -534,6 +527,7 @@ export default function GrossGauntletControl() {
     if (inputKey.trim()) {
       localStorage.setItem('STREAM_ADMIN_KEY', inputKey.trim());
       localStorage.setItem('OBS_PASS', inputObs.trim());
+      localStorage.setItem(STORAGE_KEYS.GROSSGAUNTLET_UNLOCKED, 'true');
       setAdminKey(inputKey.trim());
       setObsPassword(inputObs.trim());
       setIsLocked(false);
@@ -543,6 +537,7 @@ export default function GrossGauntletControl() {
   const logout = () => {
     localStorage.removeItem('STREAM_ADMIN_KEY');
     localStorage.removeItem('OBS_PASS');
+    localStorage.removeItem(STORAGE_KEYS.GROSSGAUNTLET_UNLOCKED);
     setAdminKey('');
     setObsPassword('');
     setIsLocked(true);
@@ -745,7 +740,7 @@ export default function GrossGauntletControl() {
         addLog(`Skipping OBS scene change (originated from OBS)`);
         obsSceneChangeRef.current = false;
       } else {
-        const scene = mode === "work" ? SCENE_WORK : isExplainTarget ? SCENE_EXPLAIN : mode === "break" ? SCENE_BREAK : SCENE_STANDBY;
+        const scene = mode === "work" ? OBS_CONFIG.SCENES.WORK : isExplainTarget ? OBS_CONFIG.SCENES.EXPLAIN : mode === "break" ? OBS_CONFIG.SCENES.BREAK : OBS_CONFIG.SCENES.STANDBY;
         addLog(`Telling OBS to switch scene to: ${scene}`);
         
         obsRef.current.call("SetCurrentProgramScene", { sceneName: scene })
