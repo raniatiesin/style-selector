@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { API } from '../../config/api';
 import KanbanBoard from './kanban/KanbanBoard';
 import { buildBoard, buildBoardFromTasks } from './kanban/moveTask';
-import { formatDateLong, formatTime } from './utils';
+import { formatDateLong, formatTime, formatHMS } from './utils';
 import './GrossGauntletPages.css';
 
 export default function GrossGauntletSession() {
@@ -64,6 +64,15 @@ export default function GrossGauntletSession() {
     ? buildBoard(session.board)
     : buildBoardFromTasks(tasks);
 
+  const totalTasks = Object.values(board).flat().length;
+  const doneTasks = board.done?.length ?? 0;
+  const workedFormatted = formatHMS(session.today_seconds ?? 0);
+
+  function getYoutubeId(url) {
+    const match = url?.match(/(?:v=|youtu\.be\/)([^&\s]+)/);
+    return match?.[1] ?? null;
+  }
+
   return (
     <div className="gg-page">
       <div className="gg-session-view">
@@ -85,6 +94,56 @@ export default function GrossGauntletSession() {
         </div>
 
         <KanbanBoard initialBoard={board} editable={false} />
+
+        {/* Stats row */}
+        <div className="gg-metrics-grid">
+          <div className="gg-metric-card">
+            <div className="gg-metric-label">Worked</div>
+            <div className="gg-metric-value">{workedFormatted}</div>
+          </div>
+          <div className="gg-metric-card">
+            <div className="gg-metric-label">Done</div>
+            <div className="gg-metric-value">{doneTasks}/{totalTasks}</div>
+          </div>
+          <div className="gg-metric-card">
+            <div className="gg-metric-label">Content</div>
+            <div className="gg-metric-value">{session.content_count ?? 0}</div>
+          </div>
+          <div className="gg-metric-card">
+            <div className="gg-metric-label">Sales</div>
+            <div className="gg-metric-value">{session.sales_count ?? 0}</div>
+          </div>
+        </div>
+
+        {/* YouTube embed */}
+        {session.stream_url && (
+          <div className="youtubeSection">
+            <iframe
+              className="youtubeEmbed"
+              src={`https://www.youtube.com/embed/${getYoutubeId(session.stream_url)}`}
+              title="Stream recording"
+              frameBorder="0"
+              allowFullScreen
+            />
+            <a
+              href={session.stream_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="watchLink"
+            >
+              Watch on YouTube →
+            </a>
+          </div>
+        )}
+
+        {/* Replay link */}
+        <Link
+          to={`/grossgauntlet/${date}/${sessionNumber}/replay`}
+          className="gg-primary-link"
+          style={{ marginTop: 24 }}
+        >
+          Replay This Session →
+        </Link>
 
         {session.metrics && (
           <div className="gg-session-metrics">

@@ -424,6 +424,34 @@
 }
 
 /* ============================================================
+   YouTube Embed
+   ============================================================ */
+
+.youtubeSection { margin-bottom: var(--space-28); }
+
+.youtubeEmbed {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 10px;
+  background: rgba(10,10,10,0.62);
+}
+
+.watchLink {
+  display: inline-block;
+  margin-top: var(--space-12);
+  font-family: var(--font);
+  font-size: 0.78rem;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.watchLink:hover { color: rgba(255,255,255,0.82); }
+
+/* ============================================================
    Tasks Overlay (OBS Browser Source)
    MUST NOT rely on dnd-kit or any drag-and-drop deps.
    ============================================================ */
