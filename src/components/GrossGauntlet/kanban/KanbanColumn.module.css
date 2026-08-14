@@ -3,110 +3,120 @@
  * Uses the existing GrossGauntlet token system from variables.css.
  */
 
+/* Column container — glass card, same as Welcome.module.css .card */
 .column {
   display: flex;
   flex-direction: column;
   min-width: 220px;
-  max-width: 280px;
+  max-width: 260px;
   flex: 1;
-  background: var(--white-06);
-  border: 1px solid var(--white-10);
-  border-radius: 10px;
+  background: rgba(10, 10, 10, 0.62);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
   overflow: hidden;
+  transition: border-color 0.18s ease;
 }
 
-.editable {
-  transition: border-color 0.15s ease;
+.editable:hover {
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .dropOver {
-  border-color: var(--white-35);
-  background: var(--white-07);
+  border-color: rgba(255, 255, 255, 0.30);
 }
 
+/* Header */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px 10px;
-  border-bottom: 1px solid var(--white-10);
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .label {
   font-family: var(--font);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--white-55);
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .count {
   font-family: var(--font);
-  font-size: 11px;
-  color: var(--white-35);
-  background: var(--white-07);
-  border-radius: 20px;
-  padding: 1px 7px;
-  border: 1px solid var(--white-10);
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.25);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 0;
+  padding: 2px 8px;
+  letter-spacing: 0.08em;
 }
 
+/* Card list */
 .cardList {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 10px;
+  gap: var(--space-8);
+  padding: var(--space-12);
   flex: 1;
   min-height: 60px;
 }
 
 .empty {
   font-family: var(--font);
-  font-size: 12px;
-  color: var(--white-25);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.20);
   text-align: center;
-  padding: 12px 0;
+  padding: var(--space-16) 0;
   margin: 0;
+  letter-spacing: 0.06em;
 }
 
+/* Add row */
 .addRow {
-  padding: 6px 10px 10px;
-  border-top: 1px solid var(--white-07);
+  padding: var(--space-8) var(--space-12) var(--space-12);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .addBtn {
   width: 100%;
   background: transparent;
-  border: 1px dashed var(--white-12);
-  border-radius: 6px;
-  color: var(--white-35);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 0;
+  color: rgba(255, 255, 255, 0.35);
   font-family: var(--font);
-  font-size: 12px;
-  padding: 6px 10px;
+  font-size: 0.72rem;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 8px 12px;
   cursor: pointer;
   text-align: left;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  transition: color 0.18s ease, border-color 0.18s ease;
 }
 
 .addBtn:hover {
-  color: var(--white-70);
-  border-color: var(--white-25);
-  background: var(--white-06);
+  color: rgba(255, 255, 255, 0.70);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .addInput {
   width: 100%;
-  background: var(--white-06);
-  border: 1px solid var(--white-25);
-  border-radius: 6px;
-  color: var(--white-100);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0;
+  color: rgba(255, 255, 255, 0.92);
   font-family: var(--font);
-  font-size: 12px;
-  padding: 6px 10px;
+  font-size: 0.82rem;
+  padding: 6px 0;
   outline: none;
   box-sizing: border-box;
 }
 
 .addInput::placeholder {
-  color: var(--white-25);
+  color: rgba(255, 255, 255, 0.25);
 }

@@ -5,15 +5,18 @@
 
 .board {
   display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 8px;
+  gap: var(--space-12);
   align-items: flex-start;
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: var(--space-4);
 }
 
+/* Ghost card under pointer during drag */
 .dragOverlay {
-  opacity: 0.95;
-  transform: rotate(2deg);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  border-radius: 10px;
+  transform: rotate(1deg);
+  opacity: 0.88;
   pointer-events: none;
 }

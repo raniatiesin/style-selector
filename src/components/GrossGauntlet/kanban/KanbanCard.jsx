@@ -112,12 +112,12 @@ function EditableCard({ task, statusColor, onDelete, onRename }) {
 }
 
 const STATUS_COLORS = {
-  todo: '#808080',
+  todo:        '#808080',
+  up_next:     '#8A4FFF',
   in_progress: '#2ECC71',
-  up_next: '#8A4FFF',
-  in_review: '#F0A500',
-  done: '#E74C3C',
-  waiting: '#808080',
+  in_review:   '#F0A500',
+  done:        '#E74C3C',
+  waiting:     '#808080',
 };
 
 export default function KanbanCard({ task, editable, onDelete, onRename }) {
