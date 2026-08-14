@@ -139,3 +139,49 @@ export function generateTaskId() {
   }
   return `task_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
+
+/**
+ * Replay the board state at a specific point in time.
+ * Applies all events with occurred_at <= targetTime in chronological order.
+ * Returns a fresh board — never mutates inputs.
+ */
+export function replayToTime(events, targetTime) {
+  const board = { todo: [], up_next: [], in_progress: [], in_review: [], done: [] };
+
+  const relevant = events.filter(e => new Date(e.occurred_at) <= targetTime);
+
+  for (const event of relevant) {
+    switch (event.event_type) {
+      case 'create':
+        board[event.to_column]?.push({
+          id: event.task_id,
+          name: event.payload?.name ?? 'Untitled',
+          status: event.to_column,
+          createdAt: new Date(event.occurred_at).getTime()
+        });
+        break;
+      case 'move': {
+        let task = null;
+        for (const col of Object.keys(board)) {
+          const idx = board[col].findIndex(t => t.id === event.task_id);
+          if (idx !== -1) { task = board[col].splice(idx, 1)[0]; break; }
+        }
+        if (task && event.to_column) board[event.to_column].push({ ...task, status: event.to_column });
+        break;
+      }
+      case 'rename':
+        for (const col of Object.keys(board)) {
+          const task = board[col].find(t => t.id === event.task_id);
+          if (task) { task.name = event.payload?.new ?? task.name; break; }
+        }
+        break;
+      case 'delete':
+        for (const col of Object.keys(board)) {
+          const idx = board[col].findIndex(t => t.id === event.task_id);
+          if (idx !== -1) { board[col].splice(idx, 1); break; }
+        }
+        break;
+    }
+  }
+  return board;
+}
