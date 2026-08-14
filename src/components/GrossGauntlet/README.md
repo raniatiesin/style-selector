@@ -16,16 +16,12 @@ This directory contains all components for the Gross Gauntlet streaming overlay 
 - **TasksEditor.jsx** - Task management interface
 - **ReplayScrubber.jsx** - Phase 2 placeholder for event timeline replay
 
-### Overlay Components
-- **TasksOverlay.jsx** - Isolated OBS overlay for task display (no drag-and-drop dependencies)
-
 ### Shared Resources
 - **utils.js** - Shared utility functions (date formatting, time formatting, localStorage helpers)
 - **constants.js** - Centralized constants (storage keys, OBS config, polling intervals, task statuses)
 - **variables.css** - Shared CSS variables and color palette
 - **GrossGauntletApp.css** - Main overlay styles
 - **GrossGauntletPages.css** - Page component styles
-- **TasksOverlay.css** - Task overlay styles
 
 ## Key Features
 

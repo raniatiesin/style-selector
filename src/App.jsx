@@ -10,7 +10,6 @@ import Confirmation from './components/Confirmation/Confirmation';
 import GrossGauntletRouter from './components/GrossGauntlet/GrossGauntletRouter';
 import GrossGauntletApp from './components/GrossGauntlet/GrossGauntletApp';
 import GrossGauntletControl from './components/GrossGauntlet/GrossGauntletControl';
-import TasksOverlay from './components/GrossGauntlet/TasksOverlay';
 import { WELCOME_IMAGE_IDS } from './config/welcome-images';
 
 // GrossGauntlet route paths that should render the router instead of the quiz
@@ -74,7 +73,6 @@ export default function App() {
     if (path.includes('overlays/break'))   return <GrossGauntletApp displayMode="break" />;
     if (path.includes('overlays/work'))    return <GrossGauntletApp displayMode="work" />;
     if (path.includes('overlays/standby')) return <GrossGauntletApp displayMode="standby" />;
-    if (path.includes('overlays/tasks'))   return <TasksOverlay />;
     if (path.includes('/controls'))        return <GrossGauntletControl />;
   }
 

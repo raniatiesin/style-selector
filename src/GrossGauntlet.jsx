@@ -1,6 +1,5 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import TasksOverlay from './components/GrossGauntlet/TasksOverlay';
 import GrossGauntletApp from './components/GrossGauntlet/GrossGauntletApp';
 import GrossGauntletControl from './components/GrossGauntlet/GrossGauntletControl';
 
@@ -35,8 +34,6 @@ if (path.includes('overlays/explain')) {
   renderOverlay(<GrossGauntletApp displayMode="work" />);
 } else if (path.includes('overlays/standby')) {
   renderOverlay(<GrossGauntletApp displayMode="standby" />);
-} else if (path.includes('overlays/tasks')) {
-  renderOverlay(<TasksOverlay />);
 } else if (path.includes('/controls') || window.location.search.includes('controls')) {
   renderOverlay(<GrossGauntletControl />);
 }

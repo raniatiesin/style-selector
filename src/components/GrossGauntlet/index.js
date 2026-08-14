@@ -20,9 +20,6 @@ export { default as RunButton } from './RunButton';
 export { default as KanbanBoard } from './kanban/KanbanBoard';
 export * from './kanban/moveTask';
 
-// Overlay components
-export { default as TasksOverlay } from './TasksOverlay';
-
 // Utilities
 export * from './utils';
 export * from './constants';
