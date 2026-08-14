@@ -28,14 +28,8 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized access blocked. Secret mismatch or missing." });     
   }
 
-  if (req.method !== 'POST' && req.method !== 'DELETE' && req.method !== 'PUT' && req.method !== 'PATCH') {
-    return res.status(405).json({ error: `Method Not Allowed. Passed method: ${req.method}` });
-  }
-
   try {
     let body = req.body;
-    
-    // Vercel failed to parse body, get raw string
     if (typeof body === 'object' && Object.keys(body).length === 0) {
       body = await new Promise((resolve) => {
         let raw = '';
@@ -45,254 +39,146 @@ export default async function handler(req, res) {
     }
     
     if (typeof body === 'string') {
-      body = body.replace(/:\s*([\d]{4}-[\d]{2}-[\d]{2}T[^\s,}\]]+)/g, ': "$1"');
       try { body = JSON.parse(body); } catch(e) { body = {}; }
     }
     
-    console.error('[DEBUG]', JSON.stringify(req.body));
-    
     const payload = req.method === 'DELETE' ? (Object.keys(body || {}).length ? body : req.query) : body;
-    let { id, task, status, time, action, inProgressTasks, inReviewTasks, upNextTasks, doneTasks, due_date, dueDate, due } = payload || {};
-    
-    // Clean up null/undefined string values
-    if (id === "null" || id === "undefined") id = null;
-    if (task === "null" || task === "undefined") task = null;
-    if (status === "null" || status === "undefined") status = null;
-    if (time === "null" || time === "undefined") time = null;
-    if (due_date === "null" || due_date === "undefined") due_date = null;
-    if (dueDate === "null" || dueDate === "undefined") dueDate = null;
-    if (due === "null" || due === "undefined") due = null;
-    
-    // Task name fallback
-    task = task || payload?.name || payload?.title || payload?.subject;
-    
-    // Status field fallback
-    status = status || payload?.type || payload?.state;
-
-    // Fallback to headers if n8n forces you to send them there for DELETE requests
-    id = id || req.headers['id'] || req.headers['x-task-id'];
-    action = action || req.headers['action'] || req.headers['x-action'];
+    let { action, taskId, toColumn, fromColumn, name, oldName, newName, inProgressTasks, inReviewTasks, upNextTasks, doneTasks } = payload || {};
 
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // FIX: Align the database 'date' string format calculation with the state poll 
-    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
-    
-    // Check if there's an active stream from any day
-    const { data: activeStreamData, error: activeStreamError } = await supabase
-      .from('GrossGauntlet')
+    // Find active session
+    const { data: activeSession } = await supabase
+      .from('Sessions')
       .select('*')
       .eq('is_streaming', true)
       .single();
-    
-    // Determine which date to use - active stream's date if exists, otherwise today
-    const activeDate = activeStreamData ? activeStreamData.date : today;
 
-    // Fetch the current task arrays from the active stream row (or today's row)
-    let query = supabase
-      .from('GrossGauntlet')
-      .select('id, date, in_progress_tasks, in_review_tasks, up_next_tasks, done_tasks, webhook_logs, is_streaming');
-
-    if (activeStreamData) {
-      query = query.eq('id', activeStreamData.id);
-    } else {
-      query = query.eq('date', activeDate);
+    let session = activeSession;
+    if (!session) {
+      const { data: recentSession } = await supabase
+        .from('Sessions')
+        .select('*')
+        .order('date', { ascending: false })
+        .order('session_number', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      session = recentSession;
     }
 
-    const { data, error: fetchError } = await query.single();
-
-    // Ignore PGRST116 (No rows) because we are about to upsert
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      throw fetchError;
+    if (!session) {
+      return res.status(404).json({ error: "No session found to perform task actions." });
     }
 
-    let inProgress = data?.in_progress_tasks || [];
-    let inReview = data?.in_review_tasks || [];
-    let upNext = data?.up_next_tasks || [];
-    let done = data?.done_tasks || [];
-    let webhookLogs = data?.webhook_logs || [];
+    const sDate = session.date;
+    const sNum = session.session_number;
 
-    // Ensure all existing tasks have due field
-    inProgress = inProgress.map(t => ({ ...t, due: t.due || null }));
-    inReview = inReview.map(t => ({ ...t, due: t.due || null }));
-    upNext = upNext.map(t => ({ ...t, due: t.due || null }));
-    done = done.map(t => ({ ...t, due: t.due || null }));
-
-    const shortTime = new Date().toLocaleTimeString('en-US', { hour12: false });
-
-    // --- FULL BOARD SYNC (Kanban editor) ---
     if (action === 'sync') {
-      inProgress = payload.in_progress_tasks ?? inProgressTasks ?? inProgress;
-      inReview = payload.in_review_tasks ?? inReviewTasks ?? inReview;
-      upNext = payload.up_next_tasks ?? upNextTasks ?? upNext;
-      done = payload.done_tasks ?? doneTasks ?? done;
+      // Delete all existing logs for this session
+      await supabase.from('Logs').delete().eq('session_date', sDate).eq('session_number', sNum);
+      
+      const insertLogs = [];
+      const now = new Date().toISOString();
+      const createEvent = (task, col) => ({
+        session_date: sDate,
+        session_number: sNum,
+        task_id: String(task.id),
+        event_type: 'create',
+        to_column: col,
+        payload: { name: task.name || task.task || 'Untitled' },
+        occurred_at: task.createdAt ? new Date(task.createdAt).toISOString() : now
+      });
 
-      // Mark done tasks with completedAt if missing
-      done = done.map((t) => ({
-        ...t,
-        status: 'done',
-        completedAt: t.completedAt ?? Date.now(),
-        due: t.due ?? null,
-      }));
+      (inProgressTasks || []).forEach(t => insertLogs.push(createEvent(t, 'in_progress')));
+      (inReviewTasks || []).forEach(t => insertLogs.push(createEvent(t, 'in_review')));
+      (upNextTasks || []).forEach(t => insertLogs.push(createEvent(t, 'up_next')));
+      (doneTasks || []).forEach(t => insertLogs.push(createEvent(t, 'done')));
 
-      const updatePayload = {
-        in_progress_tasks: inProgress,
-        in_review_tasks: inReview,
-        up_next_tasks: upNext,
-        done_tasks: done,
-        updated_at: new Date().toISOString(),
+      if (insertLogs.length > 0) {
+        await supabase.from('Logs').insert(insertLogs);
+      }
+    } else {
+      if (!taskId) taskId = String(Date.now());
+      
+      const logEntry = {
+        session_date: sDate,
+        session_number: sNum,
+        task_id: String(taskId),
+        event_type: action,
+        occurred_at: new Date().toISOString()
       };
 
-      if (data?.id) {
-        const { error: updateErr } = await supabase
-          .from('GrossGauntlet')
-          .update(updatePayload)
-          .eq('id', data.id);
-        if (updateErr) throw updateErr;
-      } else {
-        const { error: updateErr } = await supabase
-          .from('GrossGauntlet')
-          .upsert({ date: activeDate, ...updatePayload }, { onConflict: 'date' });
-        if (updateErr) throw updateErr;
+      if (action === 'create') {
+        logEntry.to_column = toColumn || 'todo';
+        logEntry.payload = { name: name };
+      } else if (action === 'move') {
+        logEntry.from_column = fromColumn;
+        logEntry.to_column = toColumn;
+      } else if (action === 'rename') {
+        logEntry.payload = { old: oldName, new: newName };
+      } else if (action === 'delete') {
+        // No payload needed
       }
 
-      return res.status(200).json({
-        success: true,
-        message: 'Board synced.',
-        counts: {
-          in_progress: inProgress.length,
-          in_review: inReview.length,
-          up_next: upNext.length,
-          done: done.length,
-        },
-      });
+      const { error: insertErr } = await supabase.from('Logs').insert(logEntry);
+      if (insertErr) throw insertErr;
     }
 
-    const logMsg = `[${shortTime}] Webhook: '${task || 'Unknown Task'}' -> ${status || action || 'ignored'}`;
-    webhookLogs.push(logMsg);
-    // Keep only the last 30 logs so the DB doesn't explode
-    if (webhookLogs.length > 30) webhookLogs = webhookLogs.slice(-30);
+    // Refold logs
+    const { data: logs } = await supabase
+      .from('Logs')
+      .select('*')
+      .eq('session_date', sDate)
+      .eq('session_number', sNum)
+      .order('occurred_at', { ascending: true });
 
-    // --- TASK ACTION ROUTING ---
-    const rawStatus = String(status || '').toLowerCase().trim();
-    const taskId = String(id || Date.now());
+    const board = { todo: [], up_next: [], in_progress: [], in_review: [], done: [] };
+    
+    function removeFromBoard(board, tId) {
+      for (const col of ['todo', 'up_next', 'in_progress', 'in_review', 'done']) {
+        const idx = board[col].findIndex(t => String(t.id) === String(tId));
+        if (idx !== -1) return board[col].splice(idx, 1)[0];
+      }
+      return null;
+    }
+    function updateInBoard(board, tId, updates) {
+      for (const col of ['todo', 'up_next', 'in_progress', 'in_review', 'done']) {
+        const idx = board[col].findIndex(t => String(t.id) === String(tId));
+        if (idx !== -1) {
+          Object.assign(board[col][idx], updates);
+          return true;
+        }
+      }
+      return false;
+    }
 
-    // Clean up task from everywhere first to prevent duplicates (using weak inequality in case DB has ints vs strings)
-    inProgress = inProgress.filter(t => String(t.id) !== taskId);
-    inReview = inReview.filter(t => String(t.id) !== taskId);
-    upNext = upNext.filter(t => String(t.id) !== taskId);
-    done = done.filter(t => String(t.id) !== taskId);
-
-    if (action === 'delete' || req.method === 'DELETE' || rawStatus === 'delete' || rawStatus === 'deleted') {
-       // Just deleting, do nothing to add it back
-    } else {
-       // Check if task is due today
-       const passedDate = due_date || dueDate || due;
-       let isDueToday = true;
-       if (passedDate) {
-         try {
-           const parsedDue = new Date(passedDate).toISOString().split('T')[0];
-           if (parsedDue !== today) isDueToday = false;
-         } catch(e) {}
-       }
-
-       // Map Twenty CRM statuses to overlay internal statuses
-       const twentyToOverlayStatus = {
-           // Waiting states
-           'new': 'waiting',
-           'waiting': 'waiting',
-           'todo': 'waiting',
-          // In progress states
-          'ongoing': 'in_progress',
-          'in_progress': 'in_progress',
-          'contacted': 'in_progress',
-          'qualified': 'in_progress',
-          // In review states
-          'in_review': 'in_review',
-          'review': 'in_review',
-          // Up next states
-          'up_next': 'up_next',
-          'upnext': 'up_next',
-          'next': 'up_next',
-          'up next': 'up_next',
-          // Done states
-          'won': 'done',
-          'lost': 'done',
-          'converted': 'done',
-          'unqualified': 'done',
-          'done': 'done',
-          'completed': 'done'
-       };
-       const overlayStatus = twentyToOverlayStatus[rawStatus] || rawStatus;
-
-       const recognizedStatuses = ['in progress', 'in_progress', 'up next', 'up_next', 'upnext', 'in review', 'in_review', 'waiting', 'done', 'completed', 'active'];
-       if (recognizedStatuses.includes(overlayStatus) || recognizedStatuses.includes(rawStatus)) {
-          // Normalize to overlay format
-          let normalizedStatus = 'waiting';
-          if (overlayStatus.includes('progress') || rawStatus.includes('progress')) normalizedStatus = 'in_progress';
-          else if (overlayStatus.includes('next') || rawStatus.includes('next')) normalizedStatus = 'up_next';
-          else if (overlayStatus.includes('review') || rawStatus.includes('review')) normalizedStatus = 'in_review';
-          else if (overlayStatus === 'done' || overlayStatus === 'completed' || rawStatus === 'done' || rawStatus === 'completed') normalizedStatus = 'done';
-          else if (overlayStatus === 'active') normalizedStatus = 'in_progress';
-
-          if (normalizedStatus === 'done') {
-             if (isDueToday) {
-               done.unshift({
-                 id: taskId,
-                 name: String(task || "Completed Task"),
-                 status: "done",
-                 createdAt: Date.now(),
-                 completedAt: time ? new Date(time).getTime() : Date.now(),
-                 due: passedDate || null
-               });
-             }
-          } else {
-             const newTask = {
-               id: taskId,
-               name: String(task || "Untitled Task"),
-               status: normalizedStatus,
-               createdAt: time ? new Date(time).getTime() : Date.now(),
-               completedAt: null,
-               due: passedDate || null
-             };
-             if (normalizedStatus === 'in_progress') inProgress.push(newTask);
-             else if (normalizedStatus === 'in_review') inReview.push(newTask);
-             else upNext.push(newTask);
+    if (logs) {
+      for (const event of logs) {
+        const toCol = event.to_column || 'todo';
+        if (!board[toCol]) board[toCol] = [];
+        if (event.event_type === 'create') {
+          board[toCol].push({ id: event.task_id, name: event.payload?.name || 'Untitled', createdAt: event.occurred_at });
+        } else if (event.event_type === 'move') {
+          const task = removeFromBoard(board, event.task_id);
+          if (task) {
+              if (!board[toCol]) board[toCol] = [];
+              board[toCol].push(task);
           }
-       }
-    }
-
-    // Save the modified arrays back to Supabase
-    const updatePayload = {
-      in_progress_tasks: inProgress,
-      in_review_tasks: inReview,
-      up_next_tasks: upNext,
-      done_tasks: done,
-      webhook_logs: webhookLogs,
-      updated_at: new Date().toISOString(),
-    };
-
-    if (data?.id) {
-      const { error: updateErr } = await supabase
-        .from('GrossGauntlet')
-        .update(updatePayload)
-        .eq('id', data.id);
-      if (updateErr) throw updateErr;
-    } else {
-      const { error: updateErr } = await supabase
-        .from('GrossGauntlet')
-        .upsert({ date: activeDate, ...updatePayload }, { onConflict: 'date' });
-      if (updateErr) throw updateErr;
+        } else if (event.event_type === 'rename') {
+          updateInBoard(board, event.task_id, { name: event.payload?.new });
+        } else if (event.event_type === 'delete') {
+          removeFromBoard(board, event.task_id);
+        }
+      }
     }
 
     return res.status(200).json({
       success: true,
-      message: `Task status '${status}' processed.`,
-      activeTasksCount: inProgress.length
+      message: `Task action '${action}' processed.`,
+      board
     });
 
   } catch (error) {

@@ -4,32 +4,32 @@ import { API } from '../../config/api';
 import { formatDate } from './utils';
 import './GrossGauntletPages.css';
 
-export default function LogIndex() {
-  const [logs, setLogs] = useState([]);
+export default function GrossGauntletHome() {
+  const [days, setDays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function fetchLogs() {
+    async function fetchDays() {
       try {
-        const res = await fetch(API.getAllLogs());
+        const res = await fetch(API.getAllDays());
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (cancelled) return;
         const records = Array.isArray(json) ? json : (json?.data || []);
-        setLogs(records);
+        setDays(records);
         setError(null);
       } catch (e) {
-        if (!cancelled) setError(e.message || 'Failed to load logs');
-        if (!cancelled) setLogs([]);
+        if (!cancelled) setError(e.message || 'Failed to load days');
+        if (!cancelled) setDays([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
 
-    fetchLogs();
+    fetchDays();
     return () => { cancelled = true; };
   }, []);
 
@@ -38,7 +38,7 @@ export default function LogIndex() {
       <div className="gg-page">
         <div className="gg-log-index">
           <h1 className="gg-page-title">GrossGauntlet</h1>
-          <p className="gg-page-subtitle">Loading logs…</p>
+          <p className="gg-page-subtitle">Loading days…</p>
         </div>
       </div>
     );
@@ -64,27 +64,31 @@ export default function LogIndex() {
         </header>
 
         <div className="gg-log-grid">
-          {logs.map((log, index) => {
-            const logNumber = index + 1;
-            const title = log.title || log.name || `Log ${logNumber}`;
+          {days.map((day) => {
+            const sessionCount = day.sessions?.length || 0;
+            const isLive = day.sessions?.some(s => s.is_streaming);
+            const totalDone = day.sessions?.reduce((acc, s) => acc + (s.done_count || 0), 0) || 0;
+            const displayTitle = day.dayNumber ? `Day ${day.dayNumber}` : day.date;
+
             return (
               <Link
-                key={log.id ?? logNumber}
-                to={`/Logs/${logNumber}`}
+                key={day.date}
+                to={`/grossgauntlet/${day.date}`}
                 className="gg-log-card"
               >
-                <div className="gg-log-card-number">Log {logNumber}</div>
-                <div className="gg-log-card-title">{title}</div>
+                <div className="gg-log-card-number">{displayTitle}</div>
+                <div className="gg-log-card-title">{formatDate(day.date)}</div>
                 <div className="gg-log-card-meta">
-                  <span>{formatDate(log.date || log.created_at)}</span>
+                  <span>{sessionCount} session{sessionCount !== 1 ? 's' : ''} · {totalDone} done</span>
+                  {isLive && <span style={{ color: '#2ECC71', fontWeight: 'bold' }}>● Live</span>}
                   <span>→</span>
                 </div>
               </Link>
             );
           })}
 
-          {logs.length === 0 && (
-            <p className="gg-empty">No historical logs found.</p>
+          {days.length === 0 && (
+            <p className="gg-empty">No challenge days recorded yet.</p>
           )}
         </div>
       </div>

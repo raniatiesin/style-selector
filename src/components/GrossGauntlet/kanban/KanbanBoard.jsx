@@ -59,9 +59,9 @@ export default function KanbanBoard({ initialBoard, editable, onBoardChange }) {
   );
 
   const applyAndNotify = useCallback(
-    (newBoard) => {
+    (newBoard, actionObj) => {
       setBoard(newBoard);
-      onBoardChange?.(newBoard);
+      onBoardChange?.(newBoard, actionObj);
     },
     [onBoardChange]
   );
@@ -76,21 +76,40 @@ export default function KanbanBoard({ initialBoard, editable, onBoardChange }) {
         completedAt: null,
         due: null,
       };
-      applyAndNotify(addTask(board, colKey, newTask));
+      applyAndNotify(addTask(board, colKey, newTask), {
+        action: 'create',
+        taskId: newTask.id,
+        toColumn: colKey,
+        name
+      });
     },
     [board, applyAndNotify]
   );
 
   const handleDeleteTask = useCallback(
     (taskId) => {
-      applyAndNotify(deleteTask(board, taskId));
+      const col = findCardColumn(board, taskId);
+      const task = col ? board[col].find(t => t.id === taskId) : null;
+      applyAndNotify(deleteTask(board, taskId), {
+        action: 'delete',
+        taskId,
+        fromColumn: col,
+        name: task?.name || ''
+      });
     },
     [board, applyAndNotify]
   );
 
   const handleRenameTask = useCallback(
     (taskId, newName) => {
-      applyAndNotify(renameTask(board, taskId, newName));
+      const col = findCardColumn(board, taskId);
+      const task = col ? board[col].find(t => t.id === taskId) : null;
+      applyAndNotify(renameTask(board, taskId, newName), {
+        action: 'rename',
+        taskId,
+        oldName: task?.name || '',
+        newName
+      });
     },
     [board, applyAndNotify]
   );
@@ -136,7 +155,12 @@ export default function KanbanBoard({ initialBoard, editable, onBoardChange }) {
 
     const toIndex = getDropIndex(board, over.id, overCol);
     const newBoard = moveTask(board, active.id, activeCol, overCol, toIndex);
-    applyAndNotify(newBoard);
+    applyAndNotify(newBoard, {
+      action: 'move',
+      taskId: active.id,
+      fromColumn: activeCol,
+      toColumn: overCol
+    });
     boardAtDragStart.current = null;
   }
 

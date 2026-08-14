@@ -6,8 +6,8 @@ import { buildBoard, buildBoardFromTasks } from './kanban/moveTask';
 import { formatDateLong, formatTime } from './utils';
 import './GrossGauntletPages.css';
 
-export default function SessionView() {
-  const { n: logNumber, slug } = useParams();
+export default function GrossGauntletSession() {
+  const { date, sessionNumber } = useParams();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,7 +17,7 @@ export default function SessionView() {
 
     async function fetchSession() {
       try {
-        const res = await fetch(API.getSession(logNumber, slug));
+        const res = await fetch(API.getSession(date, sessionNumber));
         if (!res.ok) throw new Error(`Server returned ${res.status}`);
         const data = await res.json();
         if (cancelled) return;
@@ -32,13 +32,13 @@ export default function SessionView() {
 
     fetchSession();
     return () => { cancelled = true; };
-  }, [logNumber, slug]);
+  }, [date, sessionNumber]);
 
   if (loading) {
     return (
       <div className="gg-page">
         <div className="gg-session-view">
-          <Link to={`/Logs/${logNumber}`} className="gg-back-link">← Log {logNumber}</Link>
+          <Link to={`/grossgauntlet/${date}`} className="gg-back-link">← {date}</Link>
           <p className="gg-page-subtitle">Loading session…</p>
         </div>
       </div>
@@ -49,7 +49,7 @@ export default function SessionView() {
     return (
       <div className="gg-page">
         <div className="gg-session-view">
-          <Link to={`/Logs/${logNumber}`} className="gg-back-link">← Log {logNumber}</Link>
+          <Link to={`/grossgauntlet/${date}`} className="gg-back-link">← {date}</Link>
           <h1 className="gg-page-title">Session not found</h1>
           <p className="gg-page-subtitle gg-error">{error || 'The requested session could not be loaded.'}</p>
         </div>
@@ -67,17 +67,17 @@ export default function SessionView() {
   return (
     <div className="gg-page">
       <div className="gg-session-view">
-        <Link to={`/Logs/${logNumber}`} className="gg-back-link">← Log {logNumber}</Link>
+        <Link to={`/grossgauntlet/${date}`} className="gg-back-link">← {date}</Link>
 
         <div className="gg-session-header">
-          <div className="gg-log-card-number">Log {logNumber}</div>
+          <div className="gg-log-card-number">{date}</div>
           <h1 className="gg-page-title">{title}</h1>
           {subtitle && <p className="gg-page-subtitle">{subtitle}</p>}
           <p className="gg-session-date">
             {formatDateLong(session.date || session.created_at)}
             {session.created_at && ` · ${formatTime(session.created_at)}`}
           </p>
-          <div className="gg-session-slug">/{slug}</div>
+          <div className="gg-session-slug">Session {sessionNumber}</div>
         </div>
 
         <div className="gg-session-notice">

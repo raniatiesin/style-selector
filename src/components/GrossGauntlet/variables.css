@@ -29,11 +29,16 @@
   --context-gap: 10px;
   
   /* Status Colors */
-  --status-in-progress: #4DAA57;
-  --status-up-next: #2F6690;
-  --status-in-review: #FFBA08;
-  --status-done: #F95738;
-  --status-error: #F95738;
+  --status-todo:       #808080;
+  --status-todo-bg:    rgba(160, 160, 160, 0.12);
+  --status-upnext:     #8A4FFF;
+  --status-upnext-bg:  rgba(138, 79, 255, 0.12);
+  --status-progress:   #2ECC71;
+  --status-progress-bg:rgba(46, 204, 113, 0.12);
+  --status-review:     #F0A500;
+  --status-review-bg:  rgba(240, 165, 0, 0.12);
+  --status-done:       #E74C3C;
+  --status-done-bg:    rgba(231, 76, 60, 0.12);
   
   /* Typography */
   --font: "Space Grotesk", system-ui, -apple-system, sans-serif;

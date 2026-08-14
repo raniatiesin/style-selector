@@ -9,11 +9,10 @@ export { default as GrossGauntletControl } from './GrossGauntletControl';
 export { default as GrossGauntletRouter } from './GrossGauntletRouter';
 
 // Page components
-export { default as LogIndex } from './LogIndex';
-export { default as LogView } from './LogView';
-export { default as SessionView } from './SessionView';
-export { default as TasksEditor } from './TasksEditor';
-export { default as TasksHistorical } from './TasksHistorical';
+export { default as GrossGauntletHome } from './GrossGauntletHome';
+export { default as GrossGauntletDay } from './GrossGauntletDay';
+export { default as GrossGauntletSession } from './GrossGauntletSession';
+export { default as GrossGauntletNow } from './GrossGauntletNow';
 export { default as ReplayScrubber } from './ReplayScrubber';
 export { default as RunButton } from './RunButton';
 

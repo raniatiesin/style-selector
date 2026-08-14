@@ -7,13 +7,14 @@
  *   up_next_tasks | in_progress_tasks | in_review_tasks | done_tasks
  */
 
-export const COLUMNS = ['up_next_tasks', 'in_progress_tasks', 'in_review_tasks', 'done_tasks'];
+export const COLUMNS = ['todo', 'up_next', 'in_progress', 'in_review', 'done'];
 
 export const COLUMN_LABELS = {
-  up_next_tasks: 'Up Next',
-  in_progress_tasks: 'In Progress',
-  in_review_tasks: 'In Review',
-  done_tasks: 'Done',
+  todo: 'To-Do',
+  up_next: 'Up Next',
+  in_progress: 'In Progress',
+  in_review: 'In Review',
+  done: 'Done',
 };
 
 /**
@@ -72,35 +73,37 @@ export function renameTask(board, taskId, newName) {
 
 export function colKeyToStatus(colKey) {
   const map = {
-    up_next_tasks: 'up_next',
-    in_progress_tasks: 'in_progress',
-    in_review_tasks: 'in_review',
-    done_tasks: 'done',
+    todo: 'todo',
+    up_next: 'up_next',
+    in_progress: 'in_progress',
+    in_review: 'in_review',
+    done: 'done',
   };
   return map[colKey] ?? 'up_next';
 }
 
 export function statusToColKey(status) {
   const map = {
-    up_next: 'up_next_tasks',
-    in_progress: 'in_progress_tasks',
-    in_review: 'in_review_tasks',
-    done: 'done_tasks',
-    waiting: 'up_next_tasks',
-    todo: 'up_next_tasks',
-    ongoing: 'in_progress_tasks',
-    review: 'in_review_tasks',
-    completed: 'done_tasks',
+    todo: 'todo',
+    up_next: 'up_next',
+    in_progress: 'in_progress',
+    in_review: 'in_review',
+    done: 'done',
+    waiting: 'up_next',
+    ongoing: 'in_progress',
+    review: 'in_review',
+    completed: 'done',
   };
-  return map[status] ?? 'up_next_tasks';
+  return map[status] ?? 'todo';
 }
 
-export function buildBoard({ up_next_tasks, in_progress_tasks, in_review_tasks, done_tasks }) {
+export function buildBoard({ todo, up_next, in_progress, in_review, done }) {
   return {
-    up_next_tasks: normalizeTaskList(up_next_tasks),
-    in_progress_tasks: normalizeTaskList(in_progress_tasks),
-    in_review_tasks: normalizeTaskList(in_review_tasks),
-    done_tasks: normalizeTaskList(done_tasks),
+    todo: normalizeTaskList(todo),
+    up_next: normalizeTaskList(up_next),
+    in_progress: normalizeTaskList(in_progress),
+    in_review: normalizeTaskList(in_review),
+    done: normalizeTaskList(done),
   };
 }
 

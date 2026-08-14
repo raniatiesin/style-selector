@@ -36,6 +36,8 @@ export default function GrossGauntletControl() {
     isStreaming: false,
     standbySelection: 'Coming Soon',
     streamNumber: 1,
+    sessionNumber: 1,
+    title: '',
     timestamps: ''
   });
 
@@ -234,7 +236,9 @@ export default function GrossGauntletControl() {
                 isStreaming: data.metrics.isStreaming !== undefined ? data.metrics.isStreaming : s.isStreaming,
                 standbySelection: data.metrics.standbySelection ?? s.standbySelection,
                 timestamps: data.metrics.timestamps ?? s.timestamps,
-                streamNumber: data.metrics.streamNumber ?? s.streamNumber,
+                streamNumber: data.metrics.streamNumber ?? data.metrics.sessionNumber ?? s.streamNumber,
+                sessionNumber: data.metrics.sessionNumber ?? data.metrics.streamNumber ?? s.sessionNumber,
+                title: data.metrics.title !== undefined ? data.metrics.title : s.title,
                 // Always update pause state from API to ensure sync
                 // The isSyncingRef prevents overwriting during manual pushes
                 isPaused: data.metrics.isPaused !== undefined ? data.metrics.isPaused : s.isPaused,
@@ -382,7 +386,7 @@ export default function GrossGauntletControl() {
            }
         });
 
-        obs.on("StreamStateChanged", (event) => {
+        obs.on("StreamStateChanged", async (event) => {
           addLog(`StreamStateChanged event - outputActive: ${event.outputActive}`);
           if (event.outputActive) {
             addLog("OBS Stream Started! Resetting setup...");
@@ -396,25 +400,42 @@ export default function GrossGauntletControl() {
 
             obs.call("SetCurrentProgramScene", { sceneName: OBS_CONFIG.SCENES.STANDBY }).catch(e => addLog(`Scene err: ${e.message}`));
 
+            // Fetch OBS stream title on stream start
+            let obsTitle = null;
+            try {
+              const streamSettings = await obs.call('GetStreamServiceSettings').catch(() => null);
+              obsTitle = streamSettings?.streamServiceSettings?.server
+                ?? await obs.call('GetProfileParameter', {
+                     parameterCategory: 'Info',
+                     parameterName: 'Name'
+                   }).catch(() => null);
+            } catch (err) {
+              // fallback
+            }
+
             setState(s => {
                // Switch to standby and update timestamp, but DO NOT reset accumulated time.
                // This preserves today's already-tracked work seconds across multiple stream sessions.
-               const currentStreamNumber = (s.streamNumber || 1);
+               const currentSessionNumber = (s.sessionNumber || s.streamNumber || 1);
+               const dayNumber = Math.max(1, Math.floor((Date.now() - new Date('2026-08-15').getTime()) / (1000 * 60 * 60 * 24)) + 1);
+               const title = obsTitle || s.title || `Day ${dayNumber} — Session ${currentSessionNumber}`;
                // Only add stream heading if timestamps is empty (first stream of day)
-               const newTimestamps = s.timestamps ? s.timestamps : `STREAM ${currentStreamNumber}`;
+               const newTimestamps = s.timestamps ? s.timestamps : `STREAM ${currentSessionNumber}`;
                
                const standbyPayload = { 
                   ...s, 
                   mode: "standby", 
-                modeTimestamp: now,
-                sessionStartTimestamp: s.session_start_timestamp || now,
+                  modeTimestamp: now,
+                  sessionStartTimestamp: s.session_start_timestamp || now,
                   isStreaming: true,
-                  streamNumber: currentStreamNumber,
+                  streamNumber: currentSessionNumber,
+                  sessionNumber: currentSessionNumber,
+                  title: title,
                   timestamps: newTimestamps
                };
-               addLog(`Setting isStreaming to true, pushing update...`);
+               addLog(`Setting isStreaming to true (Title: "${title}"), pushing update...`);
                pushUpdate(standbyPayload);
-               return s;
+               return standbyPayload;
             });
           } else {
             addLog("OBS Stream Stopped!");
@@ -836,6 +857,21 @@ export default function GrossGauntletControl() {
                 <span className="status-dot">●</span>
                 {obsConnected ? 'Connected' : 'Disconnected'}
              </span>
+          </div>
+          <div className="grid-gap-top">
+             <input
+                type="text"
+                placeholder="Session Title (e.g. Day 1 — Session 1)"
+                value={state.title || ''}
+                onChange={e => {
+                   const newTitle = e.target.value;
+                   setState(s => ({ ...s, title: newTitle }));
+                }}
+                onBlur={() => {
+                   pushUpdate({ ...stateRef.current, title: state.title });
+                }}
+                className="input-full input-pad"
+             />
           </div>
        </div>
 

@@ -6,12 +6,12 @@ import './GrossGauntletPages.css';
  * Route: /tasks/:streamNumber/replay
  */
 export default function ReplayScrubber() {
-  const { streamNumber } = useParams();
+  const { date, sessionNumber } = useParams();
 
   return (
     <div className="gg-page">
       <div className="gg-replay-scrubber">
-        <Link to={`/tasks/${streamNumber}`} className="gg-back-link">← Session {streamNumber}</Link>
+        <Link to={`/grossgauntlet/${date}/${sessionNumber}`} className="gg-back-link">← Session {sessionNumber}</Link>
         <h1 className="gg-page-title">Event Replay</h1>
 
         <div className="gg-session-notice">
@@ -19,7 +19,7 @@ export default function ReplayScrubber() {
         </div>
 
         <div className="gg-replay-placeholder">
-          <p className="gg-replay-note">Strictly read-only event replay for session {streamNumber}.</p>
+          <p className="gg-replay-note">Strictly read-only event replay for session {sessionNumber} on {date}.</p>
         </div>
       </div>
     </div>

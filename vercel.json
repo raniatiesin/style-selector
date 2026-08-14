@@ -1,20 +1,14 @@
 {
   "rewrites": [
-    { "source": "/tiedin/controls", "destination": "/GrossGauntlet/index.html" },
-    { "source": "/tiedin/overlays/:path*", "destination": "/GrossGauntlet/index.html" },
-    { "source": "/tiedin/:path*", "destination": "/GrossGauntlet/index.html" },
-    { "source": "/api/stream/:path*", "destination": "https://tiesin.me/api/stream/:path*" },
-    { "source": "/GrossGauntlet/controls", "destination": "/GrossGauntlet/index.html" },
-    { "source": "/GrossGauntlet/overlays/:path*", "destination": "/index.html" },
-    { "source": "/GrossGauntlet", "destination": "/GrossGauntlet/index.html" },
-    { "source": "/GrossGauntlet/:path*", "destination": "/GrossGauntlet/index.html" },
-    { "source": "/Logs", "destination": "/index.html" },
-    { "source": "/Logs/:path*", "destination": "/index.html" },
-    { "source": "/((?!api|GrossGauntlet|Logs|assets|images).*)", "destination": "/index.html" }
+    { "source": "/GrossGauntlet/controls",       "destination": "/GrossGauntlet/index.html" },
+    { "source": "/GrossGauntlet/overlays/(.*)",  "destination": "/GrossGauntlet/index.html" },
+    { "source": "/grossgauntlet/(.*)",           "destination": "/index.html" },
+    { "source": "/grossgauntlet",                "destination": "/index.html" },
+    { "source": "/((?!api/).*)",                 "destination": "/index.html" }
   ],
   "headers": [
     {
-      "source": "/images/:path*",
+      "source": "/images/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {

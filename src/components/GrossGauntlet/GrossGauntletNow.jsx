@@ -7,25 +7,19 @@ import { STORAGE_KEYS, POLL_INTERVALS } from './constants';
 import './GrossGauntletPages.css';
 
 const EMPTY_BOARD = buildBoard({});
-const SYNC_DEBOUNCE_MS = 400;
 
-async function syncBoardToApi(board) {
+async function sendActionToApi(actionObj) {
+  if (!actionObj) return;
   const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
   if (!adminKey) throw new Error('Not authenticated');
 
-  const res = await fetch(API.syncTasks(), {
+  const res = await fetch(API.postTask(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${adminKey}`,
     },
-    body: JSON.stringify({
-      action: 'sync',
-      up_next_tasks: board.up_next_tasks,
-      in_progress_tasks: board.in_progress_tasks,
-      in_review_tasks: board.in_review_tasks,
-      done_tasks: board.done_tasks,
-    }),
+    body: JSON.stringify(actionObj),
   });
 
   if (res.status === 401) {
@@ -35,11 +29,11 @@ async function syncBoardToApi(board) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `Sync failed (${res.status})`);
+    throw new Error(err.error || `Action failed (${res.status})`);
   }
 }
 
-export default function TasksEditor() {
+export default function GrossGauntletNow() {
   const [board, setBoard] = useState(EMPTY_BOARD);
   const [mode, setMode] = useState('standby');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -50,35 +44,25 @@ export default function TasksEditor() {
   const [isUnlocked, setIsUnlocked] = useState(getIsUnlocked);
 
   const writePendingRef = useRef(false);
-  const syncTimerRef = useRef(null);
-  const pendingBoardRef = useRef(null);
 
-  const isReadOnly = !isStreaming || !isUnlocked;
-
-  const flushSync = useCallback(async (boardToSync) => {
-    writePendingRef.current = true;
-    try {
-      await syncBoardToApi(boardToSync);
-      setSyncError(null);
-    } catch (e) {
-      setSyncError(e.message || 'Failed to save changes');
-    } finally {
-      writePendingRef.current = false;
-      pendingBoardRef.current = null;
-    }
-  }, []);
+  const isEditable = isUnlocked;
 
   const handleBoardChange = useCallback(
-    (newBoard) => {
+    async (newBoard, actionObj) => {
       setBoard(newBoard);
-      pendingBoardRef.current = newBoard;
+      if (!actionObj) return;
 
-      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
-      syncTimerRef.current = setTimeout(() => {
-        if (pendingBoardRef.current) flushSync(pendingBoardRef.current);
-      }, SYNC_DEBOUNCE_MS);
+      writePendingRef.current = true;
+      try {
+        await sendActionToApi(actionObj);
+        setSyncError(null);
+      } catch (e) {
+        setSyncError(e.message || 'Failed to save changes');
+      } finally {
+        writePendingRef.current = false;
+      }
     },
-    [flushSync]
+    []
   );
 
   useEffect(() => {
@@ -116,7 +100,6 @@ export default function TasksEditor() {
     return () => {
       cancelled = true;
       clearInterval(interval);
-      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     };
   }, []);
 
@@ -151,9 +134,8 @@ export default function TasksEditor() {
             <p className="gg-page-subtitle">
               {isStreaming ? '🔴 Live' : '⏸️ Offline'}
               {streamNumber != null && ` · Session ${streamNumber}`}
-              {isReadOnly && !isStreaming && ' — Read-only (latest session)'}
-              {isReadOnly && isStreaming && !isUnlocked && ' — Read-only (unlock to edit)'}
-              {!isReadOnly && ' — Editable'}
+              {!isEditable && ' — Read-only (unlock to edit)'}
+              {isEditable && ' — Editable'}
             </p>
           </div>
           <div className="gg-tasks-header-actions">
@@ -165,11 +147,15 @@ export default function TasksEditor() {
           </div>
         </header>
 
-        {isReadOnly && (
+        {!isStreaming && (
           <div className="gg-session-notice">
-            {!isStreaming
-              ? '📖 No active stream. Showing latest session in read-only mode.'
-              : '🔒 Stream is locked. Click Run and enter your admin key to edit.'}
+            📖 Between streams. Board is active and edits will apply to the upcoming session.
+          </div>
+        )}
+
+        {!isEditable && isStreaming && (
+          <div className="gg-session-notice">
+            🔒 Stream is locked. Click Run and enter your admin key to edit.
           </div>
         )}
 
@@ -181,7 +167,7 @@ export default function TasksEditor() {
 
         <KanbanBoard
           initialBoard={board}
-          editable={!isReadOnly}
+          editable={isEditable}
           onBoardChange={handleBoardChange}
         />
       </div>

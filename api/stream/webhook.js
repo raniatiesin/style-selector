@@ -10,9 +10,6 @@ export default async function handler(req, res) {
     return;
   }
 
-  // 1. Extreme Security Check 
-  // This webhook MUST be accompanied by "Authorization: Bearer <WEBHOOK_SECRET>"
-  // Add this WEBHOOK_SECRET securely to your Vercel Dashboard Environment Variables
   const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || process.env.STREAM_ADMIN_KEY;
 
   if (!WEBHOOK_SECRET) {
@@ -22,7 +19,6 @@ export default async function handler(req, res) {
 
   const authHeader = req.headers.authorization;
   if (!authHeader || authHeader !== `Bearer ${WEBHOOK_SECRET}`) {
-    console.warn(`[SECURITY] Unauthorized webhook attempt heavily rejected. Initial header: ${authHeader}`);
     return res.status(401).json({ error: "Unauthorized access attempt blocked." });
   }
 
@@ -33,23 +29,16 @@ export default async function handler(req, res) {
   try {
     const payload = req.body;
     
-    // Quick validation of required payload structures from Kanban
     if (!payload || !payload.id || !payload.status) {
       return res.status(400).json({ error: "Bad Request. Payload missing critical Kanban properties (id, status)." });
     }
 
-    // 2. High-Quality State Write 
-    // We instantly write the webhook into your existing Supabase
-    // This allows Vercel to securely remember it for OBS
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
     const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // We "Upsert" the task. 
-    // If Kanban says "Task 1: In Progress", it creates row.
-    // If Kanban says "Task 1: Done", it instantly updates the same row instead of duplicating.
     const { data, error } = await supabase
       .from('overlay')
       .upsert({

@@ -1,7 +1,6 @@
 export default async function handler(req, res) {
-  // CORS configuration to allow OBS to securely read this endpoint
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Or strict 'ms-browser-source://' if you want extreme OBS lock-down
+  res.setHeader('Access-Control-Allow-Origin', '*'); 
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
@@ -14,13 +13,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // Prevent edge caching to avoid race conditions with control panel updates
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
 
   try {
-    // IMPORTANT: Since Vercel Serverless has no "memory" (it destroys itself after every request),
-    // we use your existing Supabase connection to act as the "notepad" passing the task to OBS.
-
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
@@ -28,165 +23,174 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Supabase credentials missing from Vercel Env variables.' });
     }
 
-    // Dynamic import for Vercel Serverless environment
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Use local timezone (e.g. 'Europe/Paris') for day bounds
-    // to strictly prevent roll-overs mismatching your location
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
-    
-    // First, check if there's an active stream from any day
-    // If so, continue using that record regardless of date change
-    const { data: activeStreamData, error: activeStreamError } = await supabase
-      .from('GrossGauntlet')
+
+    const { data: activeStreamData } = await supabase
+      .from('Sessions')
       .select('*')
       .eq('is_streaming', true)
       .single();
 
-    let data = null;
-    let error = null;
+    let session = null;
 
     if (activeStreamData) {
-      // Active stream found - use this record regardless of date
-      data = activeStreamData;
+      session = activeStreamData;
     } else {
-      // No active stream — fall back to most recent session (highest stream_number)
       const { data: recentSession } = await supabase
-        .from('GrossGauntlet')
+        .from('Sessions')
         .select('*')
-        .order('stream_number', { ascending: false })
+        .order('date', { ascending: false })
+        .order('session_number', { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (recentSession) {
-        data = recentSession;
-      } else {
-        // Last resort: today's row
-        const result = await supabase
-          .from('GrossGauntlet')
-          .select('*')
-          .eq('date', today)
-          .single();
-        data = result.data;
-        error = result.error;
+        session = recentSession;
       }
     }
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-      throw error;
-    }
+    const { data: dateRows } = await supabase
+      .from('Sessions')
+      .select('date');
+    const uniqueDates = new Set(dateRows?.map(r => r.date) || []);
+    const count = uniqueDates.size || 1;
 
-    const { count, error: countErr } = await supabase
-      .from('GrossGauntlet')
-      .select('*', { count: 'exact', head: true });
-
-    // Calculate true accumulated time from PREVIOUS days (so today doesn't double count active ticking)
     const { data: pastRows } = await supabase
-      .from('GrossGauntlet')
-      .select('today_seconds, accumulated_seconds')
+      .from('Sessions')
+      .select('date, today_seconds')
       .neq('date', today);
       
     let pastDaysAcc = 0;
-    if (pastRows) {
-      const hasManualBase = pastRows.find(r => r.accumulated_seconds > 0);
-      if (hasManualBase) {
-         pastDaysAcc = Math.max(...pastRows.map(r => r.accumulated_seconds || 0));
-      } else {
-         pastDaysAcc = pastRows.reduce((acc, row) => acc + (row.today_seconds || 0), 0);
+    if (pastRows && pastRows.length > 0) {
+      const dailyMax = {};
+      for (const row of pastRows) {
+         if (!dailyMax[row.date] || row.today_seconds > dailyMax[row.date]) {
+             dailyMax[row.date] = row.today_seconds || 0;
+         }
       }
-    }
-
-    // Allow today's row to completely override previous days if explicitly manually set today
-    if (data && data.accumulated_seconds > 0) {
-        // Because the frontend calculates total as (previousDaysSeconds + todayWorkSeconds),
-        // we set pastDaysAcc = accumulated - today, so it adds up perfectly to the user's manual value.
-        pastDaysAcc = Math.max(0, data.accumulated_seconds - (data.today_seconds || 0));
+      pastDaysAcc = Object.values(dailyMax).reduce((a, b) => a + b, 0);
     }
 
     let globalMetrics = null;
-    let tasks = [];
-    let webhookLogs = [];
+    let board = { todo: [], up_next: [], in_progress: [], in_review: [], done: [] };
 
-    if (data) {
-       // If currently in an active ticking mode AND streaming, explicitly calculate the un-pushed elapsed time.
-       // This guarantees data isn't lost if the stream crashes before a break causes an accumulated log.
+    if (session) {
+       const { data: logs } = await supabase
+          .from('Logs')
+          .select('*')
+          .eq('session_date', session.date)
+          .eq('session_number', session.session_number)
+          .order('occurred_at', { ascending: true });
+
+       function removeFromBoard(board, taskId) {
+         for (const col of ['todo', 'up_next', 'in_progress', 'in_review', 'done']) {
+           const idx = board[col].findIndex(t => String(t.id) === String(taskId));
+           if (idx !== -1) return board[col].splice(idx, 1)[0];
+         }
+         return null;
+       }
+
+       function updateInBoard(board, taskId, updates) {
+         for (const col of ['todo', 'up_next', 'in_progress', 'in_review', 'done']) {
+           const idx = board[col].findIndex(t => String(t.id) === String(taskId));
+           if (idx !== -1) {
+             Object.assign(board[col][idx], updates);
+             return true;
+           }
+         }
+         return false;
+       }
+
+       if (logs) {
+         for (const event of logs) {
+           const toCol = event.to_column || 'todo';
+           if (!board[toCol]) board[toCol] = [];
+           if (event.event_type === 'create') {
+             board[toCol].push({ id: event.task_id, name: event.payload?.name || 'Untitled', createdAt: event.occurred_at });
+           } else if (event.event_type === 'move') {
+             const task = removeFromBoard(board, event.task_id);
+             if (task) {
+                 if (!board[toCol]) board[toCol] = [];
+                 board[toCol].push(task);
+             }
+           } else if (event.event_type === 'rename') {
+             updateInBoard(board, event.task_id, { name: event.payload?.new });
+           } else if (event.event_type === 'delete') {
+             removeFromBoard(board, event.task_id);
+           }
+         }
+       }
+
        let activeOffset = 0;
-       const isStreaming = data.is_streaming === true; // Only true if explicitly true, not missing/null
-       const normalizedMode = data.mode === 'play' || data.mode === 'minecraft' ? 'work' : data.mode;
+       const isStreaming = session.is_streaming === true;
+       const normalizedMode = session.mode === 'play' || session.mode === 'minecraft' ? 'work' : session.mode;
          if (normalizedMode === 'work' && isStreaming) {
-           // Prefer explicit session start timestamp to avoid day-boundary resets.
-           // Fall back to mode_timestamp for back-compat.
-           const timestamp = data.session_start_timestamp || data.mode_timestamp || Date.now();
+           const timestamp = session.session_start_timestamp || session.mode_timestamp || Date.now();
            activeOffset = Math.floor((Date.now() - timestamp) / 1000);
-           // Fallback to avoid negative values
            if (activeOffset < 0) activeOffset = 0;
        }
 
        globalMetrics = {
            mode: normalizedMode,
-           contentCount: data.content_count ?? data.projects_count ?? 0,
-           salesCount: data.sales_count ?? data.contacts_count ?? 0,
+           isStreaming: session.is_streaming === true,
+           isPaused: session.is_paused === true ? true : (session.is_paused === false ? false : undefined),
+           todayWorkSeconds: (session.today_seconds ?? 0) + activeOffset,
+           accumulatedTodaySeconds: session.today_seconds ?? 0,
            previousDaysSeconds: pastDaysAcc,
-           todayWorkSeconds: (data.today_seconds ?? 0) + activeOffset,
-           // Only true if explicitly set to true in database
-           isStreaming: data.is_streaming === true,
-           standbySelection: data.standby_selection ?? 'Coming Soon',
-           timestamps: data.timestamps ?? '',
-           streamNumber: data.stream_number ?? 1,
-           
-           // Pure timestamp states back to frontend
-           accumulatedTodaySeconds: data.today_seconds ?? 0,
-           modeTimestamp: data.session_start_timestamp ?? data.mode_timestamp,
-           // Only update pause state if explicitly set in database
-           isPaused: data.is_paused === true ? true : (data.is_paused === false ? false : undefined),
-           pausedTimestamp: data.paused_timestamp ?? null,
-
-           totalDays: count || 1
+           modeTimestamp: session.session_start_timestamp ?? session.mode_timestamp,
+           sessionStartTimestamp: session.session_start_timestamp,
+           contentCount: session.content_count ?? 0,
+           salesCount: session.sales_count ?? 0,
+           sessionNumber: session.session_number ?? 1,
+           date: session.date,
+           title: session.title,
+           standbySelection: session.standby_selection ?? 'Coming Soon',
+           timestamps: session.timestamps ?? '',
+           totalDays: count,
+           pausedTimestamp: session.paused_timestamp ?? null,
+           streamNumber: session.session_number ?? 1
        };
-       webhookLogs = data.webhook_logs || [];
-       // Combine the arrays for the frontend logic if needed
-       tasks = [
-         ...(data.in_progress_tasks || []),
-         ...(data.in_review_tasks || []),
-         ...(data.up_next_tasks || []),
-         ...(data.done_tasks || [])
-       ];
     } else {
-        // If no rows for today, still return the global accumulations
         globalMetrics = {
             mode: 'work',
+            isStreaming: false,
+            isPaused: false,
+            todayWorkSeconds: 0,
+            accumulatedTodaySeconds: 0,
+            previousDaysSeconds: pastDaysAcc,
+            modeTimestamp: null,
+            sessionStartTimestamp: null,
             contentCount: 0,
             salesCount: 0,
-            previousDaysSeconds: pastDaysAcc,
-            todayWorkSeconds: 0,
-            // Default to false - counter only runs when explicitly streaming
-            isStreaming: false,
+            sessionNumber: 1,
+            date: today,
+            title: null,
             standbySelection: 'Coming Soon',
             timestamps: '',
-            streamNumber: 1,
-            accumulatedTodaySeconds: 0,
-            modeTimestamp: Date.now(),
-            isPaused: false,
+            totalDays: count,
             pausedTimestamp: null,
-            totalDays: count ? count + 1 : 1
+            streamNumber: 1
         };
     }
 
-    const board = data ? {
-      up_next_tasks: data.up_next_tasks || [],
-      in_progress_tasks: data.in_progress_tasks || [],
-      in_review_tasks: data.in_review_tasks || [],
-      done_tasks: data.done_tasks || [],
-    } : null;
+    const flattenedTasks = [
+      ...(board.in_progress || []).map(t => ({ ...t, status: 'in_progress' })),
+      ...(board.up_next || []).map(t => ({ ...t, status: 'up_next' })),
+      ...(board.in_review || []).map(t => ({ ...t, status: 'in_review' })),
+      ...(board.todo || []).map(t => ({ ...t, status: 'todo' })),
+      ...(board.done || []).map(t => ({ ...t, status: 'done' })),
+    ];
 
     return res.status(200).json({
       success: true,
       timestamp: Date.now(),
-      tasks: tasks,
       board: board,
-      webhookLogs: webhookLogs,
-      metrics: globalMetrics
+      metrics: globalMetrics,
+      tasks: flattenedTasks,
+      webhookLogs: []
     });
 
   } catch (error) {
