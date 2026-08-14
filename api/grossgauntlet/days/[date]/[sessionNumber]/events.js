@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 
     if (error) throw error;
 
-    return res.status(200).json(logs || []);
+    return res.status(200).json({ success: true, events: logs ?? [] });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error.message });
