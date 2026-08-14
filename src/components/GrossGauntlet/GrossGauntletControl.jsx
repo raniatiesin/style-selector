@@ -25,6 +25,7 @@ export default function GrossGauntletControl() {
   const [explainTopic, setExplainTopic] = useState('');
   const [selectedStandby, setSelectedStandby] = useState('Coming Soon');
   
+  const [streamUrl, setStreamUrl] = useState('');
   const [isLocked, setIsLocked] = useState(!adminKey);
 
   const [state, setState] = useState({
@@ -845,6 +846,24 @@ export default function GrossGauntletControl() {
 
   const workText = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG" ? `work - ${activeTaskRef.current}` : 'work';
 
+  async function handleSaveStreamUrl() {
+    if (!streamUrl.trim()) return;
+    try {
+      const res = await fetch(API.postMetrics(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminKey}`
+        },
+        body: JSON.stringify({ streamUrl: streamUrl.trim() })
+      });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      addLog("YouTube link saved.");
+    } catch (err) {
+      addLog(`YouTube link save error: ${err.message}`);
+    }
+  }
+
    return (
       <div className="dashboard-shell" style={{ minHeight: '100dvh', width: '100%', background: '#000000' }}>
          <main className="overlay-root no-scrollbar control-panel">
@@ -992,6 +1011,28 @@ export default function GrossGauntletControl() {
           <div className="grid-1">
              <button onClick={resetDay} className="mode-btn button-wide danger">Reset Overlay Clocks</button>
              <button onClick={logout} className="mode-btn button-wide">Disconnect & Lock</button>
+          </div>
+       </div>
+
+       {/* YouTube VOD Link */}
+       <div className="context-pill stack">
+          <div className="side-line panel-row">
+             <span>YOUTUBE LINK</span>
+          </div>
+          <div className="grid-2">
+             <input
+                type="url"
+                placeholder="https://youtube.com/watch?v=..."
+                value={streamUrl}
+                onChange={e => setStreamUrl(e.target.value)}
+                className="input-full input-pad"
+             />
+             <button
+                className="mode-btn button-wide"
+                onClick={handleSaveStreamUrl}
+             >
+                Save
+             </button>
           </div>
        </div>
 
