@@ -19,13 +19,11 @@ export const API = {
   postMetrics:     ()                      => `${BASE}/stream/metrics`,
   postTask:        ()                      => `${BASE}/stream/tasks`,
 
-  // Archive — dayNumber based
+  // Archive — query-param based, all through /days
   getAllDays:      ()                      => `${BASE}/grossgauntlet/days`,
-  getDay:          (dayNumber)             => `${BASE}/grossgauntlet/days/${dayNumber}`,
-  getSession:      (dayNumber, sessionNumber) => `${BASE}/grossgauntlet/days/${dayNumber}/${sessionNumber}`,
-
-  // Events
-  getEvents:       (dayNumber, sessionNumber) => `${BASE}/grossgauntlet/days/${dayNumber}/${sessionNumber}/events`,
+  getDay:          (dayNumber)             => `${BASE}/grossgauntlet/days?dayNumber=${dayNumber}`,
+  getSession:      (dayNumber, sessionNumber) => `${BASE}/grossgauntlet/days?dayNumber=${dayNumber}&sessionNumber=${sessionNumber}`,
+  getEvents:       (dayNumber, sessionNumber) => `${BASE}/grossgauntlet/days?dayNumber=${dayNumber}&sessionNumber=${sessionNumber}&events=true`,
 
   // Notes autosave
   postNotes:       ()                      => `${BASE}/grossgauntlet/notes`,

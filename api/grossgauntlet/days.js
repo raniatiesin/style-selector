@@ -8,6 +8,8 @@ export default async function handler(req, res) {
     return;
   }
 
+  const { dayNumber, sessionNumber, events } = req.query;
+
   try {
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
@@ -19,6 +21,119 @@ export default async function handler(req, res) {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Resolve dayNumber to date
+    function dayNumberToDate(dn) {
+      const startDate = new Date('2026-08-15');
+      const targetDate = new Date(startDate);
+      targetDate.setDate(targetDate.getDate() + (Number(dn) - 1));
+      return targetDate.toISOString().split('T')[0];
+    }
+
+    // ── Pattern: events=true (must have dayNumber + sessionNumber) ──
+    if (events === 'true' && dayNumber && sessionNumber) {
+      const dateStr = dayNumberToDate(dayNumber);
+      const { data: logs, error } = await supabase
+        .from('Logs')
+        .select('*')
+        .eq('session_date', dateStr)
+        .eq('session_number', sessionNumber)
+        .order('occurred_at', { ascending: true });
+
+      if (error) throw error;
+      return res.status(200).json({ success: true, events: logs ?? [] });
+    }
+
+    // ── Pattern: dayNumber + sessionNumber (single session + folded board) ──
+    if (dayNumber && sessionNumber) {
+      const dateStr = dayNumberToDate(dayNumber);
+
+      const { data: session, error } = await supabase
+        .from('Sessions')
+        .select('*')
+        .eq('date', dateStr)
+        .eq('session_number', sessionNumber)
+        .single();
+
+      if (error) throw error;
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+
+      const { data: logs, error: logsError } = await supabase
+        .from('Logs')
+        .select('*')
+        .eq('session_date', dateStr)
+        .eq('session_number', sessionNumber)
+        .order('occurred_at', { ascending: true });
+
+      if (logsError) throw logsError;
+
+      const board = { todo: [], up_next: [], in_progress: [], in_review: [], done: [] };
+
+      function removeFromBoard(b, taskId) {
+        for (const col of ['todo', 'up_next', 'in_progress', 'in_review', 'done']) {
+          const idx = b[col].findIndex(t => String(t.id) === String(taskId));
+          if (idx !== -1) return b[col].splice(idx, 1)[0];
+        }
+        return null;
+      }
+
+      function updateInBoard(b, taskId, updates) {
+        for (const col of ['todo', 'up_next', 'in_progress', 'in_review', 'done']) {
+          const idx = b[col].findIndex(t => String(t.id) === String(taskId));
+          if (idx !== -1) { Object.assign(b[col][idx], updates); return true; }
+        }
+        return false;
+      }
+
+      if (logs) {
+        for (const event of logs) {
+          const toCol = event.to_column || 'todo';
+          if (!board[toCol]) board[toCol] = [];
+          if (event.event_type === 'create') {
+            board[toCol].push({ id: event.task_id, name: event.payload?.name || 'Untitled', createdAt: event.occurred_at });
+          } else if (event.event_type === 'move') {
+            const task = removeFromBoard(board, event.task_id);
+            if (task) {
+              if (!board[toCol]) board[toCol] = [];
+              board[toCol].push(task);
+            }
+          } else if (event.event_type === 'rename') {
+            updateInBoard(board, event.task_id, { name: event.payload?.new });
+          } else if (event.event_type === 'delete') {
+            removeFromBoard(board, event.task_id);
+          }
+        }
+      }
+
+      return res.status(200).json({ session, board });
+    }
+
+    // ── Pattern: dayNumber only (all sessions for a day) ──
+    if (dayNumber) {
+      const dateStr = dayNumberToDate(dayNumber);
+
+      const { data: sessions, error } = await supabase
+        .from('Sessions')
+        .select('*')
+        .eq('date', dateStr)
+        .order('session_number', { ascending: true });
+
+      if (error) throw error;
+      if (!sessions || sessions.length === 0) {
+        return res.status(404).json({ error: 'No sessions found for day' });
+      }
+
+      return res.status(200).json({
+        date: dateStr,
+        dayNumber: Number(dayNumber),
+        sessions: sessions.map(s => ({
+          ...s,
+          session_number: s.session_number,
+          title: s.title || `Day ${dayNumber} — Session ${s.session_number}`,
+        }))
+      });
+    }
+
+    // ── Pattern: no params (all days grouped, existing behavior) ──
     const { data: sessions, error } = await supabase
       .from('Sessions')
       .select('date, session_number, title, today_seconds, is_streaming, stream_url')
