@@ -5,7 +5,7 @@ import { formatDate, deriveSubtitle } from './utils';
 import './GrossGauntletPages.css';
 
 export default function GrossGauntletDay() {
-  const { date } = useParams();
+  const { dayNumber } = useParams();
   const [day, setDay] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,7 +16,7 @@ export default function GrossGauntletDay() {
 
     async function fetchDay() {
       try {
-        const res = await fetch(API.getDay(date));
+        const res = await fetch(API.getDay(dayNumber));
         if (!res.ok) throw new Error(`Server returned ${res.status}`);
         const data = await res.json();
         if (cancelled) return;
@@ -31,25 +31,25 @@ export default function GrossGauntletDay() {
 
     fetchDay();
     return () => { cancelled = true; };
-  }, [date]);
+  }, [dayNumber]);
 
   useEffect(() => {
     if (!day || loading) return;
     const sessions = Array.isArray(day.sessions) && day.sessions.length > 0
       ? day.sessions
-      : [{ session_number: 1, title: day.title || day.name || `Day ${date}`, subtitle: day.subtitle || null }];
+      : [{ session_number: 1, title: day.title || day.name || `Day ${dayNumber}`, subtitle: day.subtitle || null }];
     if (sessions.length === 1) {
-      const sessNum = sessions[0].session_number ?? sessions[0].stream_number ?? 1;
-      navigate(`/grossgauntlet/${date}/${sessNum}`, { replace: true });
+      const sessNum = sessions[0].session_number ?? 1;
+      navigate(`/grossgauntlet/${dayNumber}/${sessNum}`, { replace: true });
     }
-  }, [day, loading, date, navigate]);
+  }, [day, loading, dayNumber, navigate]);
 
   if (loading) {
     return (
       <div className="gg-page">
         <div className="gg-log-view">
           <Link to="/grossgauntlet" className="gg-back-link">← Days</Link>
-          <p className="gg-page-subtitle">Loading {date}…</p>
+          <p className="gg-page-subtitle">Loading Day {dayNumber}…</p>
         </div>
       </div>
     );
@@ -60,7 +60,7 @@ export default function GrossGauntletDay() {
       <div className="gg-page">
         <div className="gg-log-view">
           <Link to="/grossgauntlet" className="gg-back-link">← Days</Link>
-          <h1 className="gg-page-title">{date}</h1>
+          <h1 className="gg-page-title">Day {dayNumber}</h1>
           <p className="gg-page-subtitle gg-error">{error || 'Day not found.'}</p>
         </div>
       </div>
@@ -69,9 +69,9 @@ export default function GrossGauntletDay() {
 
   const sessions = Array.isArray(day.sessions) && day.sessions.length > 0
     ? day.sessions
-    : [{ session_number: 1, title: day.title || day.name || `Day ${date}`, subtitle: day.subtitle || null }];
+    : [{ session_number: 1, title: day.title || day.name || `Day ${dayNumber}`, subtitle: day.subtitle || null }];
 
-  const title = day.title || day.name || `Day ${date}`;
+  const title = day.title || day.name || `Day ${dayNumber}`;
   const subtitle = day.subtitle || day.timestamps || '';
 
   return (
@@ -79,7 +79,7 @@ export default function GrossGauntletDay() {
       <div className="gg-log-view">
         <Link to="/grossgauntlet" className="gg-back-link">← Days</Link>
         <div className="gg-session-meta">
-          <div className="gg-log-card-number">{date}</div>
+          <div className="gg-log-card-number">Day {dayNumber}</div>
           <h1 className="gg-page-title">{title}</h1>
           <p className="gg-page-subtitle">{subtitle}</p>
           <p className="gg-session-date">{formatDate(day.date || day.created_at)}</p>
@@ -88,13 +88,13 @@ export default function GrossGauntletDay() {
         <h2 className="gg-section-title">Stream Sessions</h2>
         <div className="gg-session-list">
           {sessions.map((session) => {
-            const sessNum = session.session_number ?? session.stream_number ?? 1;
+            const sessNum = session.session_number ?? 1;
             const streamTitle = session.title || title;
             const sessionSubtitle = session.subtitle || deriveSubtitle(streamTitle);
             return (
               <Link
                 key={`${sessNum}`}
-                to={`/grossgauntlet/${date}/${sessNum}`}
+                to={`/grossgauntlet/${dayNumber}/${sessNum}`}
                 className="gg-session-card"
               >
                 <div className="gg-session-card-stream">Session {sessNum}</div>

@@ -7,7 +7,7 @@ import { formatDateLong, formatTime, formatHMS } from './utils';
 import './GrossGauntletPages.css';
 
 export default function GrossGauntletSession() {
-  const { date, sessionNumber } = useParams();
+  const { dayNumber, sessionNumber } = useParams();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,7 +17,7 @@ export default function GrossGauntletSession() {
 
     async function fetchSession() {
       try {
-        const res = await fetch(API.getSession(date, sessionNumber));
+        const res = await fetch(API.getSession(dayNumber, sessionNumber));
         if (!res.ok) throw new Error(`Server returned ${res.status}`);
         const data = await res.json();
         if (cancelled) return;
@@ -32,13 +32,13 @@ export default function GrossGauntletSession() {
 
     fetchSession();
     return () => { cancelled = true; };
-  }, [date, sessionNumber]);
+  }, [dayNumber, sessionNumber]);
 
   if (loading) {
     return (
       <div className="gg-page">
         <div className="gg-session-view">
-          <Link to={`/grossgauntlet/${date}`} className="gg-back-link">← {date}</Link>
+          <Link to={`/grossgauntlet/${dayNumber}`} className="gg-back-link">← Day {dayNumber}</Link>
           <p className="gg-page-subtitle">Loading session…</p>
         </div>
       </div>
@@ -49,7 +49,7 @@ export default function GrossGauntletSession() {
     return (
       <div className="gg-page">
         <div className="gg-session-view">
-          <Link to={`/grossgauntlet/${date}`} className="gg-back-link">← {date}</Link>
+          <Link to={`/grossgauntlet/${dayNumber}`} className="gg-back-link">← Day {dayNumber}</Link>
           <h1 className="gg-page-title">Session not found</h1>
           <p className="gg-page-subtitle gg-error">{error || 'The requested session could not be loaded.'}</p>
         </div>
@@ -76,17 +76,16 @@ export default function GrossGauntletSession() {
   return (
     <div className="gg-page">
       <div className="gg-session-view">
-        <Link to={`/grossgauntlet/${date}`} className="gg-back-link">← {date}</Link>
+        <Link to={`/grossgauntlet/${dayNumber}`} className="gg-back-link">← Day {dayNumber}</Link>
 
         <div className="gg-session-header">
-          <div className="gg-log-card-number">{date}</div>
+          <div className="gg-log-card-number">Day {dayNumber} · Session {sessionNumber}</div>
           <h1 className="gg-page-title">{title}</h1>
           {subtitle && <p className="gg-page-subtitle">{subtitle}</p>}
           <p className="gg-session-date">
             {formatDateLong(session.date || session.created_at)}
             {session.created_at && ` · ${formatTime(session.created_at)}`}
           </p>
-          <div className="gg-session-slug">Session {sessionNumber}</div>
         </div>
 
         <div className="gg-session-notice">
@@ -135,15 +134,6 @@ export default function GrossGauntletSession() {
             </a>
           </div>
         )}
-
-        {/* Replay link */}
-        <Link
-          to={`/grossgauntlet/${date}/${sessionNumber}/replay`}
-          className="gg-primary-link"
-          style={{ marginTop: 24 }}
-        >
-          Replay This Session →
-        </Link>
 
         {session.metrics && (
           <div className="gg-session-metrics">

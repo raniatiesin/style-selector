@@ -70,10 +70,14 @@ export default function GrossGauntletHome() {
             const totalDone = day.sessions?.reduce((acc, s) => acc + (s.done_count || 0), 0) || 0;
             const displayTitle = day.dayNumber ? `Day ${day.dayNumber}` : day.date;
 
+            const navTarget = sessionCount === 1
+              ? `/grossgauntlet/${day.dayNumber}/1`
+              : `/grossgauntlet/${day.dayNumber}`;
+
             return (
               <Link
                 key={day.date}
-                to={`/grossgauntlet/${day.date}`}
+                to={navTarget}
                 className="gg-log-card"
               >
                 <div className="gg-log-card-number">{displayTitle}</div>

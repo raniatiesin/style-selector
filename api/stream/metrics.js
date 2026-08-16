@@ -77,6 +77,7 @@ export default async function handler(req, res) {
     if (Object.hasOwn(payload, 'pausedTimestamp')) updateData.paused_timestamp = payload.pausedTimestamp;
     if (Object.hasOwn(payload, 'title')) updateData.title = payload.title;
     if (Object.hasOwn(payload, 'streamUrl')) updateData.stream_url = payload.streamUrl;
+    if (Object.hasOwn(payload, 'notes')) updateData.notes = payload.notes;
 
     let result;
     
