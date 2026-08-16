@@ -1,12 +1,13 @@
 {
   "rewrites": [
-    { "source": "/GrossGauntlet", "destination": "/GrossGauntlet/index.html" },
-    { "source": "/GrossGauntlet/", "destination": "/GrossGauntlet/index.html" },
-    { "source": "/GrossGauntlet/controls",       "destination": "/GrossGauntlet/index.html" },
-    { "source": "/GrossGauntlet/overlays/(.*)",  "destination": "/GrossGauntlet/index.html" },
-    { "source": "/grossgauntlet/(.*)",           "destination": "/index.html" },
-    { "source": "/grossgauntlet",                "destination": "/index.html" },
-    { "source": "/((?!api/).*)",                 "destination": "/index.html" }
+    { "source": "/GrossGauntlet",               "destination": "/GrossGauntlet/index.html" },
+    { "source": "/GrossGauntlet/",              "destination": "/GrossGauntlet/index.html" },
+    { "source": "/GrossGauntlet/controls",      "destination": "/GrossGauntlet/index.html" },
+    { "source": "/GrossGauntlet/overlays/(.*)", "destination": "/GrossGauntlet/index.html" },
+    { "source": "/GrossGauntlet/(.*)",          "destination": "/GrossGauntlet/index.html" },
+    { "source": "/grossgauntlet/(.*)",          "destination": "/index.html" },
+    { "source": "/grossgauntlet",               "destination": "/index.html" },
+    { "source": "/((?!api/).*)",                "destination": "/index.html" }
   ],
   "headers": [
     {
