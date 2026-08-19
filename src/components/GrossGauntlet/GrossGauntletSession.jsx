@@ -29,6 +29,7 @@ export default function GrossGauntletSession() {
   const [session, setSession] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [sliderValue, setSliderValue] = useState(100);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -41,18 +42,33 @@ export default function GrossGauntletSession() {
   useEffect(() => {
     async function load() {
       setLoading(true);
+      setLoadError('');
+      setSession(null);
       try {
+        const fetchJson = async (url) => {
+          const response = await fetch(url);
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            const error = new Error(payload.error || `Request failed (${response.status})`);
+            error.status = response.status;
+            throw error;
+          }
+          return payload;
+        };
         const [sessionRes, eventsRes, dayRes] = await Promise.all([
-          fetch(API.getSession(dayNumber, sessionNumber)).then(r => r.json()),
-          fetch(API.getEvents(dayNumber, sessionNumber)).then(r => r.json()),
-          fetch(API.getDay(dayNumber)).then(r => r.json()),
+          fetchJson(API.getSession(dayNumber, sessionNumber)),
+          fetchJson(API.getEvents(dayNumber, sessionNumber)),
+          fetchJson(API.getDay(dayNumber)),
         ]);
-        setSession(sessionRes.session ?? sessionRes.data ?? null);
-        setNotes(sessionRes.session?.notes ?? sessionRes.data?.notes ?? '');
-        setEvents(eventsRes.events ?? []);
-        setTotalSessions(dayRes.sessions?.length ?? 1);
-      } catch {
+        const sessionData = sessionRes.session ?? sessionRes.data ?? null;
+        setSession(sessionData);
+        setNotes(sessionData?.notes ?? '');
+        setEvents(Array.isArray(eventsRes.events) ? eventsRes.events : []);
+        setTotalSessions(Array.isArray(dayRes.sessions) && dayRes.sessions.length ? dayRes.sessions.length : 1);
+      } catch (error) {
         setSession(null);
+        setEvents([]);
+        setLoadError(error.status === 404 ? '' : 'Unable to load this session. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -103,6 +119,7 @@ export default function GrossGauntletSession() {
   }
 
   if (loading) return <div className={styles.loading}>Loading…</div>;
+  if (loadError) return <div className={styles.loading}>{loadError}</div>;
   if (!session) return <div className={styles.loading}>Session not found.</div>;
 
   return (

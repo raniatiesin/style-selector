@@ -21,9 +21,9 @@ export const API = {
 
   // Archive — query-param based, all through /days
   getAllDays:      ()                      => `${BASE}/grossgauntlet/days`,
-  getDay:          (dayNumber)             => `${BASE}/grossgauntlet/days?dayNumber=${dayNumber}`,
-  getSession:      (dayNumber, sessionNumber) => `${BASE}/grossgauntlet/days?dayNumber=${dayNumber}&sessionNumber=${sessionNumber}`,
-  getEvents:       (dayNumber, sessionNumber) => `${BASE}/grossgauntlet/days?dayNumber=${dayNumber}&sessionNumber=${sessionNumber}&events=true`,
+  getDay:          (dayNumber)             => `${BASE}/grossgauntlet/days?dayNumber=${encodeURIComponent(Number(dayNumber))}`,
+  getSession:      (dayNumber, sessionNumber) => `${BASE}/grossgauntlet/days?dayNumber=${encodeURIComponent(Number(dayNumber))}&sessionNumber=${encodeURIComponent(Number(sessionNumber))}`,
+  getEvents:       (dayNumber, sessionNumber) => `${BASE}/grossgauntlet/days?dayNumber=${encodeURIComponent(Number(dayNumber))}&sessionNumber=${encodeURIComponent(Number(sessionNumber))}&events=true`,
 
   // Notes autosave
   postNotes:       ()                      => `${BASE}/grossgauntlet/notes`,

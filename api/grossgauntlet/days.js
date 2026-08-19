@@ -9,6 +9,15 @@ export default async function handler(req, res) {
   }
 
   const { dayNumber, sessionNumber, events } = req.query;
+  const day = Number(dayNumber);
+  const session = Number(sessionNumber);
+
+  if (dayNumber !== undefined && (!Number.isInteger(day) || day < 1)) {
+    return res.status(400).json({ error: 'dayNumber must be a positive integer' });
+  }
+  if (sessionNumber !== undefined && (!Number.isInteger(session) || session < 1)) {
+    return res.status(400).json({ error: 'sessionNumber must be a positive integer' });
+  }
 
   try {
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
