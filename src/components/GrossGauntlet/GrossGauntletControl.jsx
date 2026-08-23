@@ -331,15 +331,15 @@ export default function GrossGauntletControl() {
                    if (s.mode !== mapped) {
                      addLog(`Processing legitimate scene change: ${s.mode} -> ${mapped}`);
                      
-                     // Skip elapsed capture if this scene change was triggered by setMode() UI button
-                     // setMode already captured elapsed before calling pushUpdate
-                     if (s._skipPushCalc) {
-                       addLog(`Skipping elapsed capture — already handled by setMode()`);
-                       // Preserve the new lastBreakEndTimestamp that setMode() already pushed to server.
-                       // s.lastBreakEndTimestamp may still be the old value because setMode()'s pushUpdate
-                       // hasn't called setState yet (it's async). Re-read from stateRef or use now.
-                       const lastBreak = mapped === 'work' ? Date.now() : (s.lastBreakEndTimestamp || Date.now());
-                       const newState = { ...s, mode: mapped, lastBreakEndTimestamp: lastBreak, _skipPushCalc: false };
+                     // If this scene change was triggered by setMode() calling SetCurrentProgramScene,
+                     // skip elapsed capture — setMode() already computed the correct accumulatedTodaySeconds.
+                     // obsSceneChangeRef.current is set to true at the top of this handler.
+                     // Use fresh timestamps because s is the stale pre-setMode state.
+                     if (obsSceneChangeRef.current) {
+                       addLog(`Skipping elapsed capture — scene change originated from setMode()`);
+                       const now = Date.now();
+                       const lastBreak = mapped === 'work' ? now : (s.lastBreakEndTimestamp || now);
+                       const newState = { ...s, mode: mapped, lastBreakEndTimestamp: lastBreak, modeTimestamp: now };
                        pushUpdate(newState);
                        setTimeout(() => { obsSceneChangeRef.current = false; }, 1000);
                        return newState;
@@ -398,9 +398,6 @@ export default function GrossGauntletControl() {
                         isStreaming: s.isStreaming
                      };
 
-                     // Re-read lastBreakEndTimestamp from the snapshot that includes the update above
-                     // This ensures the server push carries the correct value even if s was stale
-                     newState.lastBreakEndTimestamp = isBreakToWork ? Date.now() : (s.lastBreakEndTimestamp || Date.now());
                      pushUpdate(newState);
                      const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
                      const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
