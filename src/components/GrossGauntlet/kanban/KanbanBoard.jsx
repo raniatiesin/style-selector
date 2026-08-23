@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { Flip } from 'gsap/flip';
+import { Flip } from 'gsap/Flip';
 import { useGSAP } from '@gsap/react';
 
 gsap.registerPlugin(Flip);
