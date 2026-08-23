@@ -325,6 +325,16 @@ export default function GrossGauntletControl() {
                  setState(s => {
                    if (s.mode !== mapped) {
                      addLog(`Processing legitimate scene change: ${s.mode} -> ${mapped}`);
+                     
+                     // Skip elapsed capture if this scene change was triggered by setMode() UI button
+                     // setMode already captured elapsed before calling pushUpdate
+                     if (s._skipPushCalc) {
+                       addLog(`Skipping elapsed capture — already handled by setMode()`);
+                       const newState = { ...s, mode: mapped, _skipPushCalc: false };
+                       pushUpdate(newState);
+                       setTimeout(() => { obsSceneChangeRef.current = false; }, 1000);
+                       return newState;
+                     }
                          
                      if (mapped === "explain") {
                        const topic = (s.mode.startsWith('explain|') ? s.mode.split('|').slice(1).join('|') : explainTopic).trim();
