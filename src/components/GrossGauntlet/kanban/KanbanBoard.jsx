@@ -1,4 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import gsap from 'gsap';
+import { Flip } from 'gsap/flip';
+import { useGSAP } from '@gsap/react';
+
+gsap.registerPlugin(Flip);
 import {
   DndContext,
   DragOverlay,
@@ -40,14 +45,40 @@ function getDropIndex(board, overId, overCol) {
 export default function KanbanBoard({ initialBoard, editable, onBoardChange }) {
   const [board, setBoard] = useState(initialBoard);
   const [activeCard, setActiveCard] = useState(null);
+  const [pendingFlip, setPendingFlip] = useState(0);
+  const boardRef = useRef(null);
   const boardAtDragStart = useRef(null);
   const isDraggingRef = useRef(false);
+  const pendingBoard = useRef(null);
 
   useEffect(() => {
-    if (!isDraggingRef.current) {
-      setBoard(initialBoard);
-    }
+    if (isDraggingRef.current) return;
+    pendingBoard.current = initialBoard;
+    setPendingFlip(s => s + 1);
   }, [initialBoard]);
+
+  useGSAP(() => {
+    if (!pendingBoard.current) return;
+    const state = Flip.getState(boardRef.current.querySelectorAll('[data-flip-id]'));
+    setBoard(pendingBoard.current);
+    pendingBoard.current = null;
+    requestAnimationFrame(() => {
+      Flip.from(state, {
+        targets: '[data-flip-id]',
+        duration: 0.45,
+        ease: 'power2.inOut',
+        stagger: { amount: 0.12, from: 'start' },
+        zIndex: 999,
+        onEnter: elements => gsap.fromTo(elements,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.25, delay: 0.15 }
+        ),
+        onLeave: elements => gsap.to(elements,
+          { opacity: 0, duration: 0.2 }
+        ),
+      });
+    });
+  }, [pendingFlip]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -187,7 +218,7 @@ export default function KanbanBoard({ initialBoard, editable, onBoardChange }) {
   ));
 
   if (!editable) {
-    return <div className={styles.board}>{columns}</div>;
+    return <div className={styles.board} ref={boardRef}>{columns}</div>;
   }
 
   return (
@@ -199,7 +230,7 @@ export default function KanbanBoard({ initialBoard, editable, onBoardChange }) {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className={styles.board}>{columns}</div>
+      <div className={styles.board} ref={boardRef}>{columns}</div>
 
       <DragOverlay>
         {activeCard ? (

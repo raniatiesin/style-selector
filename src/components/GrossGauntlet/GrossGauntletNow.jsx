@@ -105,72 +105,66 @@ export default function GrossGauntletNow() {
 
   if (loading) {
     return (
-      <div className="gg-page">
-        <div className="gg-tasks-editor">
-          <h1 className="gg-page-title">Tasks</h1>
-          <p className="gg-page-subtitle">Loading tasks…</p>
-        </div>
+      <div className="gg-tasks-editor">
+        <h1 className="gg-page-title">Tasks</h1>
+        <p className="gg-page-subtitle">Loading tasks…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="gg-page">
-        <div className="gg-tasks-editor">
-          <h1 className="gg-page-title">Tasks</h1>
-          <p className="gg-page-subtitle gg-error">{error}</p>
-        </div>
+      <div className="gg-tasks-editor">
+        <h1 className="gg-page-title">Tasks</h1>
+        <p className="gg-page-subtitle gg-error">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="gg-page">
-      <div className="gg-tasks-editor">
-        <header className="gg-tasks-header">
-          <div>
-            <h1 className="gg-page-title">Tasks</h1>
-            <p className="gg-page-subtitle">
-              {isStreaming ? '🔴 Live' : '⏸️ Offline'}
-              {streamNumber != null && ` · Session ${streamNumber}`}
-              {!isEditable && ' — Read-only (unlock to edit)'}
-              {isEditable && ' — Editable'}
-            </p>
-          </div>
-          <div className="gg-tasks-header-actions">
-            <RunButton
-              isUnlocked={isUnlocked}
-              onUnlock={() => setIsUnlocked(getIsUnlocked())}
-            />
-            <span className="gg-mode-badge">Mode: {mode}</span>
-          </div>
-        </header>
+    <div className="gg-tasks-editor">
+      <header className="gg-tasks-header">
+        <div>
+          <h1 className="gg-page-title">Tasks</h1>
+          <p className="gg-page-subtitle">
+            {isStreaming ? '🔴 Live' : '⏸️ Offline'}
+            {streamNumber != null && ` · Session ${streamNumber}`}
+            {!isEditable && ' — Read-only (unlock to edit)'}
+            {isEditable && ' — Editable'}
+          </p>
+        </div>
+        <div className="gg-tasks-header-actions">
+          <RunButton
+            isUnlocked={isUnlocked}
+            onUnlock={() => setIsUnlocked(getIsUnlocked())}
+          />
+          <span className="gg-mode-badge">Mode: {mode}</span>
+        </div>
+      </header>
 
-        {!isStreaming && (
-          <div className="gg-session-notice">
-            📖 Between streams. Board is active and edits will apply to the upcoming session.
-          </div>
-        )}
+      {!isStreaming && (
+        <div className="gg-session-notice">
+          📖 Between streams. Board is active and edits will apply to the upcoming session.
+        </div>
+      )}
 
-        {!isEditable && isStreaming && (
-          <div className="gg-session-notice">
-            🔒 Stream is locked. Click Run and enter your admin key to edit.
-          </div>
-        )}
+      {!isEditable && isStreaming && (
+        <div className="gg-session-notice">
+          🔒 Stream is locked. Click Run and enter your admin key to edit.
+        </div>
+      )}
 
-        {syncError && (
-          <div className="gg-sync-error" role="alert">
-            ⚠ {syncError}
-          </div>
-        )}
+      {syncError && (
+        <div className="gg-sync-error" role="alert">
+          ⚠ {syncError}
+        </div>
+      )}
 
-        <KanbanBoard
-          initialBoard={board}
-          editable={isEditable}
-          onBoardChange={handleBoardChange}
-        />
-      </div>
+      <KanbanBoard
+        initialBoard={board}
+        editable={isEditable}
+        onBoardChange={handleBoardChange}
+      />
     </div>
   );
 }

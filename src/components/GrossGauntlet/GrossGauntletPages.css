@@ -14,7 +14,7 @@
   background: #0a0a0a;
   font-family: var(--font);
   color: var(--white-92);
-  padding: 40px 24px;
+  padding: 0;
   overflow-y: auto;
 }
 
@@ -77,10 +77,14 @@
 
 .gg-log-card {
   display: block;
-  border: 1px solid var(--white-25);
+  background: rgba(10, 10, 10, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 0;
   padding: 20px 24px;
   text-decoration: none;
   color: inherit;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   transition: border-color 0.18s ease, background 0.18s ease;
 }
 
@@ -174,10 +178,14 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  border: 1px solid var(--white-25);
+  background: rgba(10, 10, 10, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 0;
   padding: 16px 20px;
   text-decoration: none;
   color: inherit;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   transition: border-color 0.18s ease;
 }
 
@@ -251,7 +259,7 @@
 .gg-task-status-dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--white-35);
   flex-shrink: 0;
 }
@@ -372,7 +380,7 @@
 .gg-run-input {
   background: var(--white-06);
   border: 1px solid var(--white-25);
-  border-radius: 4px;
+  border-radius: 0;
   color: var(--white-100);
   font-family: var(--font);
   font-size: 12px;
@@ -433,7 +441,7 @@
   width: 100%;
   aspect-ratio: 16/9;
   border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 10px;
+  border-radius: 0;
   background: rgba(10,10,10,0.62);
 }
 
@@ -531,7 +539,7 @@
 .gg-overlay-task-dot {
   width: 5px;
   height: 5px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--white-35, rgba(173, 181, 189, 0.35));
   flex-shrink: 0;
 }
@@ -556,4 +564,73 @@
   text-align: center;
   padding: 16px;
   font-style: italic;
+}
+
+/* ============================================================
+   Bottom Scrubber Bars (Home & Session)
+   ============================================================ */
+
+.gg-log-index--bottom-pad {
+  padding-bottom: 64px;
+}
+
+.gg-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 220px;
+  height: 48px;
+  background: rgba(10, 10, 10, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 48px;
+  z-index: 100;
+  overflow-x: auto;
+}
+
+.gg-bottom-bar-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.gg-bottom-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  border-radius: 0;
+  transition: color 0.18s;
+  white-space: nowrap;
+  padding: 4px 0;
+}
+
+.gg-bottom-label:hover {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.gg-bottom-label--active {
+  color: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.92);
+}
+
+.gg-bottom-bar .scrubber {
+  flex: 1;
+  height: 2px;
+  accent-color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  min-width: 0;
+}
+
+.gg-bottom-bar .time {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.3);
+  white-space: nowrap;
+  font-family: var(--font);
 }

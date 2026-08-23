@@ -1,5 +1,6 @@
+import { useRef } from 'react';
 import TagPill from '../shared/TagPill';
-import './GrossGauntletPages.css';
+import styles from './SessionCard.module.css';
 
 function formatTime(totalSeconds) {
   const safe = Math.max(0, Number(totalSeconds) || 0);
@@ -24,8 +25,11 @@ export default function SessionCard({
   isStreaming,
   streamUrl,
   onClick,
-  sessionCount
+  sessionCount,
+  dataMonth,
+  dataWeek
 }) {
+  const cardRef = useRef(null);
   const totalTasks = taskCounts
     ? (taskCounts.todo || 0) + (taskCounts.up_next || 0) + (taskCounts.in_progress || 0) + (taskCounts.in_review || 0) + (taskCounts.done || 0)
     : 0;
@@ -34,50 +38,52 @@ export default function SessionCard({
 
   return (
     <div
-      className="sessionCard"
+      ref={cardRef}
+      className={styles.sessionCard}
       onClick={onClick}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.(); }}
+      data-month={dataMonth}
+      data-week={dataWeek}
     >
-      <div className="sessionCardHeader">
-        <TagPill label={`DAY ${dayNumber || ''}`} />
+      <div className={styles.sessionCardHeader}>
         {sessionCount > 1 && (
           <TagPill label={`${sessionCount} SESSIONS`} />
         )}
         {isStreaming ? (
-          <span className="liveBadge">
-            <span className="liveDot" />
+          <span className={styles.liveBadge}>
+            <span className={styles.liveDot} />
             LIVE
           </span>
         ) : null}
       </div>
 
-      <h3 className="sessionCardTitle">{title || ''}</h3>
-      <p className="sessionCardDate">{formatDate(date)}</p>
+      <h3 className={styles.sessionCardTitle}>{title || ''}</h3>
+      <p className={styles.sessionCardDate}>{formatDate(date)}</p>
 
       {totalTasks > 0 && (
-        <div className="progressSection">
-          <div className="progressTrack">
+        <div className={styles.progressSection}>
+          <div className={styles.progressTrack}>
             <div
-              className="progressFill"
+              className={styles.progressFill}
               style={{ width: `${progressPct}%` }}
             />
           </div>
-          <span className="progressLabel">
+          <span className={styles.progressLabel}>
             {doneTasks}/{totalTasks} done
           </span>
         </div>
       )}
 
-      <p className="sessionCardTime">{formatTime(todaySeconds)}</p>
+      <p className={styles.sessionCardTime}>{formatTime(todaySeconds)}</p>
 
       {streamUrl && (
         <a
           href={streamUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="watchBtn"
+          className={styles.watchBtn}
           onClick={(e) => e.stopPropagation()}
         >
           ▶ Watch

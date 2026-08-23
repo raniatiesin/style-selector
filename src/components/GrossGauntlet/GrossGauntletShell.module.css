@@ -1,0 +1,125 @@
+.shell {
+  display: flex;
+  flex-direction: row;
+  min-height: 100dvh;
+  width: 100%;
+  background: #0a0a0a;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--font);
+  position: relative;
+}
+
+.shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  background-repeat: repeat;
+}
+
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  height: 100dvh;
+  position: sticky;
+  top: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 32px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+.sidebarTitle {
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.statRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statLabel {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.statValue {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 8px 0;
+}
+
+.nowLink {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 10px 16px;
+  transition: border-color 0.18s ease;
+}
+
+.nowLink:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.sidebarTextarea {
+  width: 100%;
+  min-height: 90px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.75rem;
+  line-height: 1.65;
+  padding: 8px 12px;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  font-family: var(--font);
+}
+
+.sidebarTextarea:focus {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.sidebarTextarea::placeholder {
+  color: rgba(255, 255, 255, 0.18);
+}
+
+.sidebarPre {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.38);
+  line-height: 1.9;
+  max-height: 180px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  scrollbar-width: thin;
+  margin: 0;
+  font-family: var(--font);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 40px 48px;
+  overflow-y: auto;
+}

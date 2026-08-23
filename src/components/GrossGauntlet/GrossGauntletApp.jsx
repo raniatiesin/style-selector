@@ -124,7 +124,7 @@ export default function GrossGauntletApp({ displayMode }) {
         const elapsed = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
         todaySecs += elapsed;
         sessionSecs = elapsed;
-      } else if (isBreak) {
+      } else if (isBreak && isStreaming) {
         breakSecs = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
       }
       

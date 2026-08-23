@@ -346,9 +346,17 @@ export default function GrossGauntletControl() {
                      const isWorkToExplain = (s.mode === 'work' && mapped === 'explain');
                      const isExplainToWork = (s.mode === 'explain' && mapped === 'work');
 
-                     if (isWorkToExplain || isExplainToWork) {
+                     if (isWorkToExplain) {
+                        // Exiting work: capture elapsed, add to accumulated, reset timestamp
+                        if (s.modeTimestamp) {
+                           const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
+                           nextAccumulated = (s.accumulatedTodaySeconds || 0) + elapsed;
+                        }
+                        nextTimestamp = Date.now();
+                     } else if (isExplainToWork) {
+                        // Entering work: keep accumulated unchanged, reset timestamp
                         nextAccumulated = s.accumulatedTodaySeconds || 0;
-                        nextTimestamp = s.modeTimestamp || Date.now();
+                        nextTimestamp = Date.now();
                      } else if (s.mode === 'work') {
                         if (s.modeTimestamp) {
                            const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
@@ -735,9 +743,17 @@ export default function GrossGauntletControl() {
     if (state.isPaused) {
        nextAccumulated = state.accumulatedTodaySeconds || 0;
        nextTimestamp = state.modeTimestamp || Date.now();
-    } else if (isWorkToExplain || isExplainToWork || isWorkToStandby || isStandbyToWork) {
+    } else if (isWorkToExplain || isWorkToStandby) {
+       // Exiting work: capture elapsed, add to accumulated, reset timestamp
+       if (state.modeTimestamp) {
+          const elapsed = Math.max(0, Math.floor((Date.now() - state.modeTimestamp) / 1000));
+          nextAccumulated = (state.accumulatedTodaySeconds || 0) + elapsed;
+       }
+       nextTimestamp = Date.now();
+    } else if (isExplainToWork || isStandbyToWork) {
+       // Entering work: keep accumulated unchanged, reset timestamp
        nextAccumulated = state.accumulatedTodaySeconds || 0;
-       nextTimestamp = state.modeTimestamp || Date.now();
+       nextTimestamp = Date.now();
     } else if (state.mode === 'work') {
        if (state.modeTimestamp) {
           const elapsed = Math.max(0, Math.floor((Date.now() - state.modeTimestamp) / 1000));

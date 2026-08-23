@@ -1,1 +1,1 @@
-.board{display:flex;gap:var(--space-12);align-items:flex-start;width:100%;overflow-x:auto;padding-bottom:var(--space-4)}.dragOverlay{box-shadow:0 8px 32px rgba(0,0,0,.5);border-radius:8px;transform:rotate(1deg);opacity:.85;pointer-events:none}
+.board{display:flex;gap:var(--space-12);align-items:flex-start;width:100%;overflow:visible;padding-bottom:var(--space-4)}.dragOverlay{border-radius:0;transform:rotate(1deg);opacity:.85;pointer-events:none}
