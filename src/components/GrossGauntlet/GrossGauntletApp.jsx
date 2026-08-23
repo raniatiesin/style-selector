@@ -123,7 +123,8 @@ export default function GrossGauntletApp({ displayMode }) {
       if (isStreaming && isWorking && !isPaused) {
         const elapsed = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
         todaySecs += elapsed;
-        sessionSecs = elapsed;
+        const sinceBreak = liveStateRef.current.lastBreakEndTimestamp;
+        sessionSecs = Math.floor(Math.max(0, nowMs - sinceBreak) / 1000);
       } else if (isBreak && isStreaming) {
         breakSecs = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
       }
@@ -264,6 +265,7 @@ export default function GrossGauntletApp({ displayMode }) {
             liveStateRef.current.pausedTimestamp = m.pausedTimestamp;
           }
 
+          liveStateRef.current.lastBreakEndTimestamp = Number(m.lastBreakEndTimestamp || Date.now());
           liveStateRef.current.mode = m.mode || "standby";
           liveStateRef.current.accumulatedTodaySeconds = acc;
           liveStateRef.current.previousDaysSeconds = Number(m.previousDaysSeconds || 0);

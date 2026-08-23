@@ -33,6 +33,7 @@ export default function GrossGauntletControl() {
     salesCount: 0,
     mode: 'work',
     accumulatedTodaySeconds: 0,
+    lastBreakEndTimestamp: Date.now(),
     modeTimestamp: Date.now(),
     isStreaming: false,
     standbySelection: 'Coming Soon',
@@ -232,8 +233,12 @@ export default function GrossGauntletControl() {
                 contentCount: data.metrics.contentCount ?? data.metrics.contactedCount ?? s.contentCount,
                 salesCount: data.metrics.salesCount ?? data.metrics.convertedCount ?? s.salesCount,
                 mode: data.metrics.mode || s.mode,
-                accumulatedTodaySeconds: data.metrics.accumulatedTodaySeconds ?? s.accumulatedTodaySeconds,
-                modeTimestamp: data.metrics.modeTimestamp ?? s.modeTimestamp,
+                accumulatedTodaySeconds: (s.isStreaming && s.mode === 'work')
+                  ? s.accumulatedTodaySeconds
+                  : (data.metrics.accumulatedTodaySeconds ?? s.accumulatedTodaySeconds),
+                modeTimestamp: (s.isStreaming && s.mode === 'work')
+                  ? s.modeTimestamp
+                  : (data.metrics.modeTimestamp ?? s.modeTimestamp),
                 isStreaming: data.metrics.isStreaming !== undefined ? data.metrics.isStreaming : s.isStreaming,
                 standbySelection: data.metrics.standbySelection ?? s.standbySelection,
                 timestamps: data.metrics.timestamps ?? s.timestamps,
@@ -355,6 +360,7 @@ export default function GrossGauntletControl() {
                      
                      const isWorkToExplain = (s.mode === 'work' && mapped === 'explain');
                      const isExplainToWork = (s.mode === 'explain' && mapped === 'work');
+                     const isBreakToWork = (s.mode === 'break' && mapped === 'work');
 
                      if (isWorkToExplain) {
                         // Exiting work: capture elapsed, add to accumulated, reset timestamp
@@ -364,6 +370,10 @@ export default function GrossGauntletControl() {
                         }
                         nextTimestamp = Date.now();
                      } else if (isExplainToWork) {
+                        // Entering work: keep accumulated unchanged, reset timestamp
+                        nextAccumulated = s.accumulatedTodaySeconds || 0;
+                        nextTimestamp = Date.now();
+                     } else if (isBreakToWork) {
                         // Entering work: keep accumulated unchanged, reset timestamp
                         nextAccumulated = s.accumulatedTodaySeconds || 0;
                         nextTimestamp = Date.now();
@@ -378,6 +388,7 @@ export default function GrossGauntletControl() {
                         ...s, 
                         mode: mapped,
                         accumulatedTodaySeconds: nextAccumulated,
+                        lastBreakEndTimestamp: isBreakToWork ? Date.now() : s.lastBreakEndTimestamp,
                         modeTimestamp: nextTimestamp,
                         _skipPushCalc: true,
                         isStreaming: s.isStreaming
@@ -444,6 +455,7 @@ export default function GrossGauntletControl() {
                const standbyPayload = { 
                   ...s, 
                   mode: "standby", 
+                  lastBreakEndTimestamp: Date.now(),
                   modeTimestamp: now,
                   sessionStartTimestamp: s.session_start_timestamp || now,
                   isStreaming: true,
@@ -748,6 +760,7 @@ export default function GrossGauntletControl() {
     const isExplainToWork = (isExplainCurrent && mode === 'work');
     const isWorkToStandby = (state.mode === 'work' && mode === 'standby');
     const isStandbyToWork = (state.mode === 'standby' && mode === 'work');
+    const isBreakToWork = (state.mode === 'break' && mode === 'work');
     
     // If paused, don't calculate elapsed time - just keep current accumulated
     if (state.isPaused) {
@@ -760,7 +773,7 @@ export default function GrossGauntletControl() {
           nextAccumulated = (state.accumulatedTodaySeconds || 0) + elapsed;
        }
        nextTimestamp = Date.now();
-    } else if (isExplainToWork || isStandbyToWork) {
+    } else if (isExplainToWork || isStandbyToWork || isBreakToWork) {
        // Entering work: keep accumulated unchanged, reset timestamp
        nextAccumulated = state.accumulatedTodaySeconds || 0;
        nextTimestamp = Date.now();
@@ -775,6 +788,7 @@ export default function GrossGauntletControl() {
       ...state,
       mode,
       accumulatedTodaySeconds: nextAccumulated,
+      lastBreakEndTimestamp: isBreakToWork ? Date.now() : state.lastBreakEndTimestamp,
       modeTimestamp: nextTimestamp,
       standbySelection: selectedStandby,
       timestamps: state.timestamps,
