@@ -89,32 +89,31 @@ export default function GrossGauntletControl() {
         return next;
      });
      
-     // Also add to timestamps string for database and sync
-     setState(s => {
-       const currentTimestamps = s.timestamps || '';
-       const newTimestamps = currentTimestamps ? `${currentTimestamps}\n${m}` : m;
-       const updatedState = { ...s, timestamps: newTimestamps };
-       // Push to database without triggering sync loop
-       isSyncingRef.current = true;
-       fetch(API.postMetrics(), {
-         method: 'POST',
-         headers: {
-           'Content-Type': 'application/json',
-           'Authorization': `Bearer ${adminKey}`
-         },
-         body: JSON.stringify({
-           ...updatedState,
-           _skipPushCalc: true
-         })
-       }).then(res => {
-         if (!res.ok) throw new Error(`Server returned ${res.status}`);
-         addLog("Timestamp synced to database");
-       }).catch(error => {
-         addLog(`Timestamp sync error: ${error.message}`);
-       }).finally(() => {
-         isSyncingRef.current = false;
-       });
-       return updatedState;
+     // Also add to timestamps string for database and sync (no side effects inside setState)
+     const s = stateRef.current;
+     const currentTimestamps = s.timestamps || '';
+     const newTimestamps = currentTimestamps ? `${currentTimestamps}\n${m}` : m;
+     const updatedState = { ...s, timestamps: newTimestamps };
+     setState(updatedState);
+     
+     isSyncingRef.current = true;
+     fetch(API.postMetrics(), {
+       method: 'POST',
+       headers: {
+         'Content-Type': 'application/json',
+         'Authorization': `Bearer ${adminKey}`
+       },
+       body: JSON.stringify({
+         ...updatedState,
+         _skipPushCalc: true
+       })
+     }).then(res => {
+       if (!res.ok) throw new Error(`Server returned ${res.status}`);
+       addLog("Timestamp synced to database");
+     }).catch(error => {
+       addLog(`Timestamp sync error: ${error.message}`);
+     }).finally(() => {
+       isSyncingRef.current = false;
      });
   };
 
@@ -268,11 +267,8 @@ export default function GrossGauntletControl() {
            const activeTask = data.tasks.find(t => t.status === 'in_progress' || t.status === 'in progress');
            const taskName = activeTask ? activeTask.name : null;
            if (taskName && activeTaskRef.current !== taskName) {
-              if (activeTaskRef.current !== "INITIAL_LOAD_FLAG") {
-                 setState(s => {
-                    if (s.mode === 'work') addYtMarker(`work - ${taskName}`);
-                    return s;
-                 });
+              if (activeTaskRef.current !== "INITIAL_LOAD_FLAG" && stateRef.current.mode === 'work') {
+                 addYtMarker(`work - ${taskName}`);
               }
               activeTaskRef.current = taskName;
            } else if (!taskName && activeTaskRef.current !== null) {
@@ -315,120 +311,114 @@ export default function GrossGauntletControl() {
            addLog(`OBS Scene changed to: ${event.sceneName}`);
            const map = { [OBS_CONFIG.SCENES.WORK]: "work", [OBS_CONFIG.SCENES.EXPLAIN]: "explain", [OBS_CONFIG.SCENES.BREAK]: "break", [OBS_CONFIG.SCENES.STANDBY]: "standby" };
            const mapped = map[event.sceneName];
-           if (mapped) {
-             // Mark this as an OBS-initiated change to prevent circular updates
-             obsSceneChangeRef.current = true;
-             
-             // Verify this is a real scene change, not a duplicate event
-             obs.call("GetCurrentProgramScene")
-               .then((currentScene) => {
-                 if (currentScene.currentProgramSceneName !== event.sceneName) {
-                   addLog(`Ignoring duplicate scene event. Current: ${currentScene.currentProgramSceneName}, Event: ${event.sceneName}`);
-                   obsSceneChangeRef.current = false;
-                   return;
-                 }
-                 
-                 setState(s => {
-                   if (s.mode !== mapped) {
-                     addLog(`Processing legitimate scene change: ${s.mode} -> ${mapped}`);
-                     
-                     // If this scene change was triggered by setMode() calling SetCurrentProgramScene,
-                     // skip elapsed capture — setMode() already computed the correct accumulatedTodaySeconds.
-                     if (uiSceneChangeRef.current) {
-                       addLog(`Skipping elapsed capture — scene change originated from setMode()`);
-                       uiSceneChangeRef.current = false;
-                       // Do NOT call pushUpdate here — setMode() already pushed the correct state
-                       // to the server. We only need to update local React state with fresh timestamps
-                       // so the OBS handler's return value doesn't overwrite setMode()'s computed values.
-                       const now = Date.now();
-                       const lastBreak = mapped === 'work' ? now : (s.lastBreakEndTimestamp || now);
-                       const newState = { ...s, mode: mapped, lastBreakEndTimestamp: lastBreak, modeTimestamp: now };
-                       // Broadcast to overlay immediately so the break timer resets / session timer starts
-                       window.dispatchEvent(new CustomEvent('grossgauntlet-state-update', { detail: { ...newState, accumulatedTodaySeconds: s.accumulatedTodaySeconds } }));
-                       setTimeout(() => { obsSceneChangeRef.current = false; }, 1000);
-                       return newState;
-                     }
-                         
-                     if (mapped === "explain") {
-                       const topic = (s.mode.startsWith('explain|') ? s.mode.split('|').slice(1).join('|') : explainTopic).trim();
-                       if (topic) setExplainRecordingName(topic);
-                       obs.call("StartRecord")
-                         .then(() => addLog("OBS record started (from scene)"))
-                         .catch(e => addLog(`StartRecord failed: ${e.message}`));
-                     } else {
-                       obs.call("StopRecord")
-                         .then(() => addLog("OBS record stopped (from scene)"))
-                         .catch(e => addLog(`StopRecord failed: ${e.message}`));
-                     }
+           if (!mapped) return;
 
-                     addLog(`Syncing new mode to Vercel: ${mapped}`);
-                     
-                     let nextAccumulated = s.accumulatedTodaySeconds || 0;
-                     let nextTimestamp = Date.now();
-                     
-                     const isWorkToExplain = (s.mode === 'work' && mapped === 'explain');
-                     const isExplainToWork = (s.mode === 'explain' && mapped === 'work');
-                     const isBreakToWork = (s.mode === 'break' && mapped === 'work');
+           // Mark this as a scene change being processed (used by drift-sync to avoid fighting)
+           obsSceneChangeRef.current = true;
 
-                     if (isWorkToExplain) {
-                        // Exiting work: capture elapsed, add to accumulated, reset timestamp
-                        if (s.modeTimestamp) {
-                           const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
-                           nextAccumulated = (s.accumulatedTodaySeconds || 0) + elapsed;
-                        }
-                        nextTimestamp = Date.now();
-                     } else if (isExplainToWork) {
-                        // Entering work: keep accumulated unchanged, reset timestamp
-                        nextAccumulated = s.accumulatedTodaySeconds || 0;
-                        nextTimestamp = Date.now();
-                     } else if (isBreakToWork) {
-                        // Entering work: keep accumulated unchanged, reset timestamp
-                        nextAccumulated = s.accumulatedTodaySeconds || 0;
-                        nextTimestamp = Date.now();
-                     } else if (s.mode === 'work') {
-                        if (s.modeTimestamp) {
-                           const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
-                           nextAccumulated += elapsed;
-                        }
-                     }
-                     
-                     const newState = { 
-                        ...s, 
-                        mode: mapped,
-                        accumulatedTodaySeconds: nextAccumulated,
-                        lastBreakEndTimestamp: isBreakToWork ? Date.now() : s.lastBreakEndTimestamp,
-                        modeTimestamp: nextTimestamp,
-                        _skipPushCalc: true,
-                        isStreaming: s.isStreaming
-                     };
-
-                     pushUpdate(newState);
-                     const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
-                     const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
-                     const explainText = getExplainMarkerText(s.mode, explainTopic);
-                     const standbyText = getStandbyMarkerText(selectedStandby);
-                     addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'break' ? 'break' : standbyText);
-                     
-                     // Clear the flag after a short delay to allow subsequent changes
-                     setTimeout(() => { obsSceneChangeRef.current = false; }, 1000);
-                     return newState;
-                   }
-                   obsSceneChangeRef.current = false;
-                   return s;
-                 });
-               })
-               .catch(e => {
-                 addLog(`Scene verification failed: ${e.message}`);
+           // Verify this is a real scene change, not a duplicate event
+           obs.call("GetCurrentProgramScene")
+             .then((currentScene) => {
+               if (currentScene.currentProgramSceneName !== event.sceneName) {
+                 addLog(`Ignoring duplicate scene event. Current: ${currentScene.currentProgramSceneName}, Event: ${event.sceneName}`);
                  obsSceneChangeRef.current = false;
-               });
-           }
+                 return;
+               }
+
+               const s = stateRef.current;
+               if (s.mode === mapped) {
+                 obsSceneChangeRef.current = false;
+                 return;
+               }
+
+               addLog(`Processing legitimate scene change: ${s.mode} -> ${mapped}`);
+
+               // UI-triggered: setMode() already folded elapsed, pushed the correct state,
+               // and dispatched the instant-update event. We only need to keep the local
+               // React "mode" in sync. Do NOT fold elapsed again and do NOT push/dispatch
+               // a conflicting (stale) event.
+               if (uiSceneChangeRef.current) {
+                 uiSceneChangeRef.current = false;
+                 addLog(`Skipping elapsed capture — scene change originated from setMode()`);
+                 setState(prev => ({ ...prev, mode: mapped }));
+                 setTimeout(() => { obsSceneChangeRef.current = false; }, 1000);
+                 return;
+               }
+
+               // OBS-initiated change: run the full elapsed-capture logic.
+               if (mapped === "explain") {
+                 const topic = (s.mode.startsWith('explain|') ? s.mode.split('|').slice(1).join('|') : explainTopic).trim();
+                 if (topic) setExplainRecordingName(topic);
+                 obs.call("StartRecord")
+                   .then(() => addLog("OBS record started (from scene)"))
+                   .catch(e => addLog(`StartRecord failed: ${e.message}`));
+               } else {
+                 obs.call("StopRecord")
+                   .then(() => addLog("OBS record stopped (from scene)"))
+                   .catch(e => addLog(`StopRecord failed: ${e.message}`));
+               }
+
+               addLog(`Syncing new mode to Vercel: ${mapped}`);
+
+               let nextAccumulated = s.accumulatedTodaySeconds || 0;
+               let nextTimestamp = Date.now();
+
+               const isWorkToExplain = (s.mode === 'work' && mapped === 'explain');
+               const isExplainToWork = (s.mode === 'explain' && mapped === 'work');
+               const isBreakToWork = (s.mode === 'break' && mapped === 'work');
+
+               if (isWorkToExplain) {
+                  // Exiting work: capture elapsed, add to accumulated, reset timestamp
+                  if (s.modeTimestamp) {
+                     const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
+                     nextAccumulated = (s.accumulatedTodaySeconds || 0) + elapsed;
+                  }
+                  nextTimestamp = Date.now();
+               } else if (isExplainToWork || isBreakToWork) {
+                  // Entering work: keep accumulated unchanged, reset timestamp
+                  nextAccumulated = s.accumulatedTodaySeconds || 0;
+                  nextTimestamp = Date.now();
+               } else if (s.mode === 'work') {
+                  if (s.modeTimestamp) {
+                     const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
+                     nextAccumulated += elapsed;
+                  }
+                  nextTimestamp = Date.now();
+               }
+
+               const newState = {
+                  ...s,
+                  mode: mapped,
+                  accumulatedTodaySeconds: nextAccumulated,
+                  lastBreakEndTimestamp: isBreakToWork ? Date.now() : (s.lastBreakEndTimestamp || Date.now()),
+                  modeTimestamp: nextTimestamp,
+                  isStreaming: s.isStreaming
+               };
+
+               pushUpdate(newState);
+
+               const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
+               const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
+               const explainText = getExplainMarkerText(s.mode, explainTopic);
+               const standbyText = getStandbyMarkerText(selectedStandby);
+               addYtMarker(mapped === 'work' ? workText : mapped === 'explain' ? explainText : mapped === 'break' ? 'break' : standbyText);
+
+               // Clear the flag after a short delay to allow subsequent changes
+               setTimeout(() => { obsSceneChangeRef.current = false; }, 1000);
+             })
+             .catch(e => {
+               addLog(`Scene verification failed: ${e.message}`);
+               obsSceneChangeRef.current = false;
+             });
         });
 
         obs.on("StreamStateChanged", async (event) => {
           addLog(`StreamStateChanged event - outputActive: ${event.outputActive}`);
+          const s = stateRef.current;
+
           if (event.outputActive) {
             addLog("OBS Stream Started! Resetting setup...");
-            
+
             const now = Date.now();
             setStreamStart(now);
             localStorage.setItem('YT_STREAM_START', String(now));
@@ -451,56 +441,48 @@ export default function GrossGauntletControl() {
               // fallback
             }
 
-            setState(s => {
-               // Switch to standby and update timestamp, but DO NOT reset accumulated time.
-               // This preserves today's already-tracked work seconds across multiple stream sessions.
-               const currentSessionNumber = (s.sessionNumber || s.streamNumber || 1);
-               const dayNumber = Math.max(1, Math.floor((Date.now() - new Date('2026-08-15').getTime()) / (1000 * 60 * 60 * 24)) + 1);
-               const title = obsTitle || s.title || `Day ${dayNumber} — Session ${currentSessionNumber}`;
-               // Only add stream heading if timestamps is empty (first stream of day)
-               const newTimestamps = s.timestamps ? s.timestamps : `STREAM ${currentSessionNumber}`;
-               
-               const standbyPayload = { 
-                  ...s, 
-                  mode: "standby", 
-                  lastBreakEndTimestamp: Date.now(),
-                  modeTimestamp: now,
-                  sessionStartTimestamp: s.session_start_timestamp || now,
-                  isStreaming: true,
-                  streamNumber: currentSessionNumber,
-                  sessionNumber: currentSessionNumber,
-                  title: title,
-                  timestamps: newTimestamps
-               };
-               addLog(`Setting isStreaming to true (Title: "${title}"), pushing update...`);
-               pushUpdate(standbyPayload);
-               return standbyPayload;
-            });
+            const currentSessionNumber = (s.sessionNumber || s.streamNumber || 1);
+            const dayNumber = Math.max(1, Math.floor((Date.now() - new Date('2026-08-15').getTime()) / (1000 * 60 * 60 * 24)) + 1);
+            const title = obsTitle || s.title || `Day ${dayNumber} — Session ${currentSessionNumber}`;
+            const newTimestamps = s.timestamps ? s.timestamps : `STREAM ${currentSessionNumber}`;
+
+            const standbyPayload = {
+               ...s,
+               mode: "standby",
+               lastBreakEndTimestamp: now,
+               modeTimestamp: now,
+               sessionStartTimestamp: s.session_start_timestamp || now,
+               isStreaming: true,
+               streamNumber: currentSessionNumber,
+               sessionNumber: currentSessionNumber,
+               title: title,
+               timestamps: newTimestamps
+            };
+            addLog(`Setting isStreaming to true (Title: "${title}"), pushing update...`);
+            pushUpdate(standbyPayload);
           } else {
             addLog("OBS Stream Stopped!");
-            setState(s => {
-               // When stream stops, capture any elapsed work time and add to accumulated
-               let nextAccumulated = s.accumulatedTodaySeconds || 0;
-               if (s.mode === 'work' && s.modeTimestamp) {
-                  const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
-                  nextAccumulated += elapsed;
-                  addLog(`Captured ${elapsed} seconds of elapsed time on stream stop`);
-               }
-               
-               // Add separator line when stream stops
-               const newTimestamps = s.timestamps ? `${s.timestamps}\n${'—'.repeat(50)}` : '';
-               
-               const streamingPayload = {
-                  ...s,
-                  isStreaming: false,
-                  accumulatedTodaySeconds: nextAccumulated,
-                  modeTimestamp: Date.now(),
-                  timestamps: newTimestamps
-               };
-               addLog(`Setting isStreaming to false, pushing update...`);
-               pushUpdate(streamingPayload);
-               return s;
-            });
+
+            // When stream stops, fold any elapsed work time into accumulated
+            let nextAccumulated = s.accumulatedTodaySeconds || 0;
+            if (s.mode === 'work' && s.modeTimestamp) {
+               const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
+               nextAccumulated += elapsed;
+               addLog(`Captured ${elapsed} seconds of elapsed time on stream stop`);
+            }
+
+            // Add separator line when stream stops
+            const newTimestamps = s.timestamps ? `${s.timestamps}\n${'—'.repeat(50)}` : '';
+
+            const streamingPayload = {
+               ...s,
+               isStreaming: false,
+               accumulatedTodaySeconds: nextAccumulated,
+               modeTimestamp: Date.now(),
+               timestamps: newTimestamps
+            };
+            addLog(`Setting isStreaming to false, pushing update...`);
+            pushUpdate(streamingPayload);
           }
         });
 
@@ -817,6 +799,8 @@ export default function GrossGauntletControl() {
       } else {
         // Set flag so CurrentProgramSceneChanged handler knows this came from UI
         uiSceneChangeRef.current = true;
+        // Safety: clear the flag if the OBS scene event never fires (e.g. already on that scene)
+        setTimeout(() => { uiSceneChangeRef.current = false; }, 2000);
         const scene = mode === "work" ? OBS_CONFIG.SCENES.WORK : isExplainTarget ? OBS_CONFIG.SCENES.EXPLAIN : mode === "break" ? OBS_CONFIG.SCENES.BREAK : OBS_CONFIG.SCENES.STANDBY;
         addLog(`Telling OBS to switch scene to: ${scene}`);
         
@@ -998,30 +982,29 @@ export default function GrossGauntletControl() {
                setYtMarkers(newMarkers);
                localStorage.setItem('YT_MARKERS', JSON.stringify(newMarkers));
                
-               // Also update the timestamps string for database sync
-               setState(s => {
-                 const newTimestamps = newMarkers.join('\n');
-                 const updatedState = { ...s, timestamps: newTimestamps };
-                 // Push to database without triggering sync loop
-                 isSyncingRef.current = true;
-                 fetch(API.postMetrics(), {
-                   method: 'POST',
-                   headers: {
-                     'Content-Type': 'application/json',
-                     'Authorization': `Bearer ${adminKey}`
-                   },
-                   body: JSON.stringify({
-                     ...updatedState,
-                     _skipPushCalc: true
-                   })
-                 }).then(res => {
-                   if (!res.ok) throw new Error(`Server returned ${res.status}`);
-                 }).catch(error => {
-                   addLog(`Timestamp sync error: ${error.message}`);
-                 }).finally(() => {
-                   isSyncingRef.current = false;
-                 });
-                 return updatedState;
+               // Also update the timestamps string for database sync (no side effects inside setState)
+               const s = stateRef.current;
+               const newTimestamps = newMarkers.join('\n');
+               const updatedState = { ...s, timestamps: newTimestamps };
+               setState(updatedState);
+               
+               isSyncingRef.current = true;
+               fetch(API.postMetrics(), {
+                 method: 'POST',
+                 headers: {
+                   'Content-Type': 'application/json',
+                   'Authorization': `Bearer ${adminKey}`
+                 },
+                 body: JSON.stringify({
+                   ...updatedState,
+                   _skipPushCalc: true
+                 })
+               }).then(res => {
+                 if (!res.ok) throw new Error(`Server returned ${res.status}`);
+               }).catch(error => {
+                 addLog(`Timestamp sync error: ${error.message}`);
+               }).finally(() => {
+                 isSyncingRef.current = false;
                });
             }}
             className="yt-textarea"

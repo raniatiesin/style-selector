@@ -64,7 +64,8 @@ export default function GrossGauntletApp({ displayMode }) {
     timestamps: "",
     streamNumber: 1,
     isPaused: false,
-    pausedTimestamp: null
+    pausedTimestamp: null,
+    lastBreakEndTimestamp: Date.now()
   });
 
   // Ref for the timeline list container to enable scroll-to-in-progress
@@ -123,7 +124,7 @@ export default function GrossGauntletApp({ displayMode }) {
       if (isStreaming && isWorking && !isPaused) {
         const elapsed = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
         todaySecs += elapsed;
-        const sinceBreak = liveStateRef.current.lastBreakEndTimestamp;
+        const sinceBreak = liveStateRef.current.lastBreakEndTimestamp || ls.modeTimestamp || 0;
         sessionSecs = Math.floor(Math.max(0, nowMs - sinceBreak) / 1000);
       } else if (isBreak && isStreaming) {
         breakSecs = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
@@ -249,7 +250,13 @@ export default function GrossGauntletApp({ displayMode }) {
             acc = 0;
             liveStateRef.current.modeTimestamp = Date.now();
           } else {
-            liveStateRef.current.modeTimestamp = Number(m.modeTimestamp || m.sessionStartTimestamp || Date.now());
+            // While streaming in work mode, the local folded timestamp is more accurate than
+            // the server (which may not have propagated the latest fold yet). Do not roll it back.
+            const lockLive = liveStateRef.current.isStreaming && liveStateRef.current.mode === 'work';
+            const newTs = Number(m.modeTimestamp || m.sessionStartTimestamp || Date.now());
+            if (!lockLive || newTs >= (liveStateRef.current.modeTimestamp || 0)) {
+              liveStateRef.current.modeTimestamp = newTs;
+            }
           }
 
           // Only update streaming state if explicitly provided (fixes the "not streaming" bug)
@@ -271,7 +278,12 @@ export default function GrossGauntletApp({ displayMode }) {
             liveStateRef.current.lastBreakEndTimestamp = Date.now();
           }
           liveStateRef.current.mode = m.mode || "standby";
-          liveStateRef.current.accumulatedTodaySeconds = acc;
+          // While streaming in work mode, the local folded/incrementing base is more accurate
+          // than the server (which may lag). Avoid rolling accumulated backwards.
+          const lockAccumulated = liveStateRef.current.isStreaming && liveStateRef.current.mode === 'work';
+          if (!lockAccumulated) {
+            liveStateRef.current.accumulatedTodaySeconds = acc;
+          }
           liveStateRef.current.previousDaysSeconds = Number(m.previousDaysSeconds || 0);
           liveStateRef.current.totalDays = Number(m.totalDays || 1);
           liveStateRef.current.standbySelection = m.standbySelection ?? "Coming Soon";
