@@ -96,6 +96,8 @@ export default function GrossGauntletControl() {
      const updatedState = { ...s, timestamps: newTimestamps };
      setState(updatedState);
      
+     // Only persist the timestamps field. Never send accumulatedTodaySeconds or
+     // other timer fields here — a stale value would overwrite the authoritative total.
      isSyncingRef.current = true;
      fetch(API.postMetrics(), {
        method: 'POST',
@@ -104,7 +106,7 @@ export default function GrossGauntletControl() {
          'Authorization': `Bearer ${adminKey}`
        },
        body: JSON.stringify({
-         ...updatedState,
+         timestamps: newTimestamps,
          _skipPushCalc: true
        })
      }).then(res => {
@@ -513,7 +515,8 @@ export default function GrossGauntletControl() {
               // Update local state immediately
               setState(s => ({ ...s, mode: expectedMode }));
               
-              // Also sync to database to ensure overlay matches
+              // Also sync to database to ensure overlay matches.
+              // Only persist the mode field — never timer fields (avoids resetting total).
               isSyncingRef.current = true;
               fetch(API.postMetrics(), {
                 method: 'POST',
@@ -522,7 +525,6 @@ export default function GrossGauntletControl() {
                   'Authorization': `Bearer ${adminKey}`
                 },
                 body: JSON.stringify({
-                  ...currentState,
                   mode: expectedMode,
                   _skipPushCalc: true
                 })
@@ -611,6 +613,20 @@ export default function GrossGauntletControl() {
     
     let payload = { ...newState };
 
+    // Fold live work elapsed into accumulatedTodaySeconds before persisting.
+    // This guarantees the authoritative today total never shrinks when a
+    // non-mode-changing action (metric +/-, title blur, etc.) pushes stale
+    // accumulated state. It is re-entrant safe:
+    //   - pause sets isPaused=true  -> skipped (already folded)
+    //   - work->break/explain/standby sets a non-work mode -> skipped (already folded)
+    //   - enter work sets modeTimestamp=now -> adds ~0
+    //   - stream stop sets isStreaming=false -> skipped (already folded)
+    if (payload.mode === 'work' && payload.isStreaming && !payload.isPaused && payload.modeTimestamp) {
+       const elapsed = Math.max(0, Math.floor((Date.now() - payload.modeTimestamp) / 1000));
+       payload.accumulatedTodaySeconds = (payload.accumulatedTodaySeconds || 0) + elapsed;
+       payload.modeTimestamp = Date.now();
+    }
+
     if (payload.accumulatedTodaySeconds === -1 || payload.todayWorkSeconds === -1) {
        payload.accumulatedTodaySeconds = 0;
        payload.modeTimestamp = Date.now();
@@ -665,9 +681,10 @@ export default function GrossGauntletControl() {
   };
 
   const handleMetric = (key, delta) => {
+    const current = stateRef.current;
     pushUpdate({
-      ...state,
-      [key]: Math.max(0, state[key] + delta)
+      ...current,
+      [key]: Math.max(0, current[key] + delta)
     });
   };
 
@@ -729,8 +746,9 @@ export default function GrossGauntletControl() {
   };
 
   const setMode = (mode) => {
+    const current = stateRef.current;
     const isExplainTarget = mode.startsWith('explain');
-    const isExplainCurrent = state.mode.startsWith('explain');
+    const isExplainCurrent = current.mode.startsWith('explain');
       const explainTopicTarget = isExplainTarget ? mode.split('|').slice(1).join('|').trim() : '';
 
       if (isExplainTarget && !explainTopicTarget) {
@@ -745,49 +763,49 @@ export default function GrossGauntletControl() {
       }
 
     
-    if (state.mode === mode) return;
+    if (current.mode === mode) return;
 
-    let nextAccumulated = state.accumulatedTodaySeconds || 0;
+    let nextAccumulated = current.accumulatedTodaySeconds || 0;
     let nextTimestamp = Date.now();
     
-    const isWorkToExplain = (state.mode === 'work' && isExplainTarget);
+    const isWorkToExplain = (current.mode === 'work' && isExplainTarget);
     const isExplainToWork = (isExplainCurrent && mode === 'work');
-    const isWorkToStandby = (state.mode === 'work' && mode === 'standby');
-    const isStandbyToWork = (state.mode === 'standby' && mode === 'work');
-    const isBreakToWork = (state.mode === 'break' && mode === 'work');
+    const isWorkToStandby = (current.mode === 'work' && mode === 'standby');
+    const isStandbyToWork = (current.mode === 'standby' && mode === 'work');
+    const isBreakToWork = (current.mode === 'break' && mode === 'work');
     
     // If paused, don't calculate elapsed time - just keep current accumulated
     // But always reset modeTimestamp when entering break (stale paused timestamp would break the break timer)
-    if (state.isPaused) {
-       nextAccumulated = state.accumulatedTodaySeconds || 0;
-       nextTimestamp = mode === 'break' ? Date.now() : (state.modeTimestamp || Date.now());
+    if (current.isPaused) {
+       nextAccumulated = current.accumulatedTodaySeconds || 0;
+       nextTimestamp = mode === 'break' ? Date.now() : (current.modeTimestamp || Date.now());
     } else if (isWorkToExplain || isWorkToStandby) {
        // Exiting work: capture elapsed, add to accumulated, reset timestamp
-       if (state.modeTimestamp) {
-          const elapsed = Math.max(0, Math.floor((Date.now() - state.modeTimestamp) / 1000));
-          nextAccumulated = (state.accumulatedTodaySeconds || 0) + elapsed;
+       if (current.modeTimestamp) {
+          const elapsed = Math.max(0, Math.floor((Date.now() - current.modeTimestamp) / 1000));
+          nextAccumulated = (current.accumulatedTodaySeconds || 0) + elapsed;
        }
        nextTimestamp = Date.now();
     } else if (isExplainToWork || isStandbyToWork || isBreakToWork) {
        // Entering work: keep accumulated unchanged, reset timestamp
-       nextAccumulated = state.accumulatedTodaySeconds || 0;
+       nextAccumulated = current.accumulatedTodaySeconds || 0;
        nextTimestamp = Date.now();
-    } else if (state.mode === 'work') {
-       if (state.modeTimestamp) {
-          const elapsed = Math.max(0, Math.floor((Date.now() - state.modeTimestamp) / 1000));
+    } else if (current.mode === 'work') {
+       if (current.modeTimestamp) {
+          const elapsed = Math.max(0, Math.floor((Date.now() - current.modeTimestamp) / 1000));
           nextAccumulated += elapsed;
        }
     }
     
     const newState = {
-      ...state,
+      ...current,
       mode,
       accumulatedTodaySeconds: nextAccumulated,
-      lastBreakEndTimestamp: isBreakToWork ? Date.now() : state.lastBreakEndTimestamp,
+      lastBreakEndTimestamp: isBreakToWork ? Date.now() : current.lastBreakEndTimestamp,
       modeTimestamp: nextTimestamp,
       standbySelection: selectedStandby,
-      timestamps: state.timestamps,
-      streamNumber: state.streamNumber,
+      timestamps: current.timestamps,
+      streamNumber: current.streamNumber,
       _skipPushCalc: true
     };
 
@@ -988,6 +1006,7 @@ export default function GrossGauntletControl() {
                const updatedState = { ...s, timestamps: newTimestamps };
                setState(updatedState);
                
+               // Only persist the timestamps field. Never send timer fields here.
                isSyncingRef.current = true;
                fetch(API.postMetrics(), {
                  method: 'POST',
@@ -996,7 +1015,7 @@ export default function GrossGauntletControl() {
                    'Authorization': `Bearer ${adminKey}`
                  },
                  body: JSON.stringify({
-                   ...updatedState,
+                   timestamps: newTimestamps,
                    _skipPushCalc: true
                  })
                }).then(res => {

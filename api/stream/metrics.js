@@ -82,6 +82,25 @@ export default async function handler(req, res) {
     let result;
     
     if (activeStreamData) {
+      // Authoritative guard: never let a non-reset push lower today_seconds.
+      // A stale/partial push (metric +/-, title blur, etc.) must not shrink the
+      // running day total. Explicit resets (-1 sentinel) are allowed through.
+      const incoming = updateData.today_seconds;
+      const current = activeStreamData.today_seconds;
+      if (
+        incoming !== undefined &&
+        incoming !== null &&
+        incoming !== -1 &&
+        current !== undefined &&
+        current !== null &&
+        current !== -1 &&
+        Number.isFinite(Number(incoming)) &&
+        Number.isFinite(Number(current)) &&
+        Number(incoming) < Number(current)
+      ) {
+        delete updateData.today_seconds;
+      }
+      
       result = await supabase
         .from('Sessions')
         .update(updateData)

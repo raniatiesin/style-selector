@@ -65,7 +65,8 @@ export default function GrossGauntletApp({ displayMode }) {
     streamNumber: 1,
     isPaused: false,
     pausedTimestamp: null,
-    lastBreakEndTimestamp: Date.now()
+    lastBreakEndTimestamp: Date.now(),
+    date: null
   });
 
   // Ref for the timeline list container to enable scroll-to-in-progress
@@ -278,12 +279,19 @@ export default function GrossGauntletApp({ displayMode }) {
             liveStateRef.current.lastBreakEndTimestamp = Date.now();
           }
           liveStateRef.current.mode = m.mode || "standby";
-          // While streaming in work mode, the local folded/incrementing base is more accurate
-          // than the server (which may lag). Avoid rolling accumulated backwards.
-          const lockAccumulated = liveStateRef.current.isStreaming && liveStateRef.current.mode === 'work';
-          if (!lockAccumulated) {
+          // Day-aware monotonic guard: the running day total may only increase within
+          // the same day. It MAY reset only when the server reports a different date.
+          // This is the definitive protection against the total visually "resetting"
+          // when a stale/partial value is broadcast or polled.
+          const serverDate = m.date || null;
+          const currentDate = liveStateRef.current.date;
+          if (serverDate && serverDate !== currentDate) {
+            liveStateRef.current.date = serverDate;
+            liveStateRef.current.accumulatedTodaySeconds = acc;
+          } else if (Number.isFinite(acc) && acc >= (liveStateRef.current.accumulatedTodaySeconds || 0)) {
             liveStateRef.current.accumulatedTodaySeconds = acc;
           }
+          // Otherwise: keep the current (higher) accumulated value.
           liveStateRef.current.previousDaysSeconds = Number(m.previousDaysSeconds || 0);
           liveStateRef.current.totalDays = Number(m.totalDays || 1);
           liveStateRef.current.standbySelection = m.standbySelection ?? "Coming Soon";
@@ -354,7 +362,11 @@ export default function GrossGauntletApp({ displayMode }) {
       if (!m) return;
       const acc = Number(m.accumulatedTodaySeconds ?? m.todayWorkSeconds ?? 0);
       liveStateRef.current.mode = m.mode || "standby";
-      liveStateRef.current.accumulatedTodaySeconds = acc;
+      // Monotonic: never roll the running total backward from an event broadcast.
+      // Day-change reconciliation is handled by the poll (which carries `date`).
+      if (Number.isFinite(acc) && acc >= (liveStateRef.current.accumulatedTodaySeconds || 0)) {
+        liveStateRef.current.accumulatedTodaySeconds = acc;
+      }
       liveStateRef.current.modeTimestamp = Number(m.modeTimestamp || m.sessionStartTimestamp || Date.now());
       liveStateRef.current.isStreaming = m.isStreaming !== undefined ? m.isStreaming : liveStateRef.current.isStreaming;
       liveStateRef.current.isPaused = m.isPaused !== undefined ? m.isPaused : liveStateRef.current.isPaused;
