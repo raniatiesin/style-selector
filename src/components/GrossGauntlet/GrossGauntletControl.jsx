@@ -52,6 +52,7 @@ export default function GrossGauntletControl() {
 
   const isSyncingRef = useRef(false);
   const obsSceneChangeRef = useRef(false); // Track OBS-initiated scene changes
+  const uiSceneChangeRef = useRef(false); // Set by setMode() before calling SetCurrentProgramScene
   const [obsConnected, setObsConnected] = useState(false);
   const [logs, setLogs] = useState([]);
   const obsRef = useRef(null);
@@ -333,14 +334,15 @@ export default function GrossGauntletControl() {
                      
                      // If this scene change was triggered by setMode() calling SetCurrentProgramScene,
                      // skip elapsed capture — setMode() already computed the correct accumulatedTodaySeconds.
-                     // obsSceneChangeRef.current is set to true at the top of this handler.
-                     // Use fresh timestamps because s is the stale pre-setMode state.
-                     if (obsSceneChangeRef.current) {
+                     if (uiSceneChangeRef.current) {
                        addLog(`Skipping elapsed capture — scene change originated from setMode()`);
+                       uiSceneChangeRef.current = false;
+                       // Do NOT call pushUpdate here — setMode() already pushed the correct state
+                       // to the server. We only need to update local React state with fresh timestamps
+                       // so the OBS handler's return value doesn't overwrite setMode()'s computed values.
                        const now = Date.now();
                        const lastBreak = mapped === 'work' ? now : (s.lastBreakEndTimestamp || now);
                        const newState = { ...s, mode: mapped, lastBreakEndTimestamp: lastBreak, modeTimestamp: now };
-                       pushUpdate(newState);
                        setTimeout(() => { obsSceneChangeRef.current = false; }, 1000);
                        return newState;
                      }
@@ -807,6 +809,8 @@ export default function GrossGauntletControl() {
         addLog(`Skipping OBS scene change (originated from OBS)`);
         obsSceneChangeRef.current = false;
       } else {
+        // Set flag so CurrentProgramSceneChanged handler knows this came from UI
+        uiSceneChangeRef.current = true;
         const scene = mode === "work" ? OBS_CONFIG.SCENES.WORK : isExplainTarget ? OBS_CONFIG.SCENES.EXPLAIN : mode === "break" ? OBS_CONFIG.SCENES.BREAK : OBS_CONFIG.SCENES.STANDBY;
         addLog(`Telling OBS to switch scene to: ${scene}`);
         
