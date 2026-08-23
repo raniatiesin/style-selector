@@ -343,6 +343,8 @@ export default function GrossGauntletControl() {
                        const now = Date.now();
                        const lastBreak = mapped === 'work' ? now : (s.lastBreakEndTimestamp || now);
                        const newState = { ...s, mode: mapped, lastBreakEndTimestamp: lastBreak, modeTimestamp: now };
+                       // Broadcast to overlay immediately so the break timer resets / session timer starts
+                       window.dispatchEvent(new CustomEvent('grossgauntlet-state-update', { detail: { ...newState, accumulatedTodaySeconds: s.accumulatedTodaySeconds } }));
                        setTimeout(() => { obsSceneChangeRef.current = false; }, 1000);
                        return newState;
                      }
