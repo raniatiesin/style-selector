@@ -335,7 +335,11 @@ export default function GrossGauntletControl() {
                      // setMode already captured elapsed before calling pushUpdate
                      if (s._skipPushCalc) {
                        addLog(`Skipping elapsed capture — already handled by setMode()`);
-                       const newState = { ...s, mode: mapped, _skipPushCalc: false };
+                       // Preserve the new lastBreakEndTimestamp that setMode() already pushed to server.
+                       // s.lastBreakEndTimestamp may still be the old value because setMode()'s pushUpdate
+                       // hasn't called setState yet (it's async). Re-read from stateRef or use now.
+                       const lastBreak = mapped === 'work' ? Date.now() : (s.lastBreakEndTimestamp || Date.now());
+                       const newState = { ...s, mode: mapped, lastBreakEndTimestamp: lastBreak, _skipPushCalc: false };
                        pushUpdate(newState);
                        setTimeout(() => { obsSceneChangeRef.current = false; }, 1000);
                        return newState;
@@ -394,6 +398,9 @@ export default function GrossGauntletControl() {
                         isStreaming: s.isStreaming
                      };
 
+                     // Re-read lastBreakEndTimestamp from the snapshot that includes the update above
+                     // This ensures the server push carries the correct value even if s was stale
+                     newState.lastBreakEndTimestamp = isBreakToWork ? Date.now() : (s.lastBreakEndTimestamp || Date.now());
                      pushUpdate(newState);
                      const hasTask = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG";
                      const workText = hasTask ? `work - ${activeTaskRef.current}` : 'work';
@@ -763,9 +770,10 @@ export default function GrossGauntletControl() {
     const isBreakToWork = (state.mode === 'break' && mode === 'work');
     
     // If paused, don't calculate elapsed time - just keep current accumulated
+    // But always reset modeTimestamp when entering break (stale paused timestamp would break the break timer)
     if (state.isPaused) {
        nextAccumulated = state.accumulatedTodaySeconds || 0;
-       nextTimestamp = state.modeTimestamp || Date.now();
+       nextTimestamp = mode === 'break' ? Date.now() : (state.modeTimestamp || Date.now());
     } else if (isWorkToExplain || isWorkToStandby) {
        // Exiting work: capture elapsed, add to accumulated, reset timestamp
        if (state.modeTimestamp) {
