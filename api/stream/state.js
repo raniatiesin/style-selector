@@ -128,7 +128,7 @@ export default async function handler(req, res) {
        const isStreaming = session.is_streaming === true;
        const normalizedMode = session.mode === 'play' || session.mode === 'minecraft' ? 'work' : session.mode;
          if (normalizedMode === 'work' && isStreaming) {
-           const timestamp = session.session_start_timestamp || session.mode_timestamp || Date.now();
+           const timestamp = session.mode_timestamp || session.session_start_timestamp || Date.now();
            activeOffset = Math.floor((Date.now() - timestamp) / 1000);
            if (activeOffset < 0) activeOffset = 0;
        }
@@ -140,7 +140,7 @@ export default async function handler(req, res) {
            todayWorkSeconds: (session.today_seconds ?? 0) + activeOffset,
            accumulatedTodaySeconds: session.today_seconds ?? 0,
            previousDaysSeconds: pastDaysAcc,
-           modeTimestamp: session.session_start_timestamp ?? session.mode_timestamp,
+            modeTimestamp: session.mode_timestamp ?? session.session_start_timestamp ?? Date.now(),
            sessionStartTimestamp: session.session_start_timestamp,
            contentCount: session.content_count ?? 0,
            salesCount: session.sales_count ?? 0,
