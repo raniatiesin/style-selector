@@ -39,16 +39,19 @@ export default async function handler(req, res) {
     if (activeStreamData) {
       session = activeStreamData;
     } else {
-      const { data: recentSession } = await supabase
+      // No active stream. Resolve today's accumulated total from the latest session
+      // for TODAY only. This preserves the total across sessions within the same day,
+      // while resetting it to 0 on a new day (no Sessions row for `today` yet).
+      const { data: recentToday } = await supabase
         .from('Sessions')
         .select('*')
-        .order('date', { ascending: false })
+        .eq('date', today)
         .order('session_number', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (recentSession) {
-        session = recentSession;
+      if (recentToday) {
+        session = recentToday;
       }
     }
 

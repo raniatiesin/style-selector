@@ -92,16 +92,22 @@ export default async function handler(req, res) {
       if (payload.isStreaming === true) {
         const { data: sessionsToday } = await supabase
           .from('Sessions')
-          .select('session_number')
+          .select('session_number, today_seconds')
           .eq('date', today)
           .order('session_number', { ascending: false })
           .limit(1);
         
-        const nextSessionNum = (sessionsToday && sessionsToday.length > 0) ? sessionsToday[0].session_number + 1 : 1;
+        const latestToday = (sessionsToday && sessionsToday.length > 0) ? sessionsToday[0] : null;
+        const nextSessionNum = latestToday ? latestToday.session_number + 1 : 1;
+        // Carry forward today's accumulated work seconds across multiple stream sessions
+        // within the same day. A brand-new day (no Sessions rows for `today`) starts at 0,
+        // which is exactly the "reset on day change" behaviour we want.
+        // Clamp to >= 0 so a -1 reset sentinel is never propagated into a new session.
+        const carriedTodaySeconds = latestToday ? Math.max(0, latestToday.today_seconds ?? 0) : 0;
         
         updateData.date = today;
         updateData.session_number = nextSessionNum;
-        updateData.today_seconds = 0;
+        updateData.today_seconds = carriedTodaySeconds;
         updateData.mode_timestamp = Date.now();
         
         result = await supabase
