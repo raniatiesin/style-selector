@@ -668,6 +668,10 @@ export default function GrossGauntletControl() {
         const currentStr = JSON.stringify(current);
         return newStr !== currentStr ? payload : current;
       });
+      
+      // Broadcast the new state to all open GrossGauntletApp windows/iframes instantly
+      // This bypasses the 1.5s poll delay for the overlay's tick() loop
+      window.dispatchEvent(new CustomEvent('grossgauntlet-state-update', { detail: payload }));
     } catch (e) {
       addLog(`Sync error: ${e.message}`);
       console.error("Failed to sync:", e);

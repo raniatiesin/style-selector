@@ -335,7 +335,43 @@ export default function GrossGauntletApp({ displayMode }) {
 
     fetchState();
     pollingInterval = setInterval(fetchState, 1500);
-    return () => clearInterval(pollingInterval);
+    
+    // Listen for instant state updates from the control panel
+    function handleStateUpdate(e) {
+      const m = e.detail;
+      if (!m) return;
+      const acc = Number(m.accumulatedTodaySeconds ?? m.todayWorkSeconds ?? 0);
+      liveStateRef.current.mode = m.mode || "standby";
+      liveStateRef.current.accumulatedTodaySeconds = acc;
+      liveStateRef.current.modeTimestamp = Number(m.modeTimestamp || m.sessionStartTimestamp || Date.now());
+      liveStateRef.current.isStreaming = m.isStreaming !== undefined ? m.isStreaming : liveStateRef.current.isStreaming;
+      liveStateRef.current.isPaused = m.isPaused !== undefined ? m.isPaused : liveStateRef.current.isPaused;
+      liveStateRef.current.pausedTimestamp = m.pausedTimestamp !== undefined ? m.pausedTimestamp : liveStateRef.current.pausedTimestamp;
+      if (m.lastBreakEndTimestamp) {
+        liveStateRef.current.lastBreakEndTimestamp = Number(m.lastBreakEndTimestamp);
+      } else if (!liveStateRef.current.lastBreakEndTimestamp) {
+        liveStateRef.current.lastBreakEndTimestamp = Date.now();
+      }
+      liveStateRef.current.standbySelection = m.standbySelection ?? liveStateRef.current.standbySelection;
+      setModeReact(m.mode || "standby");
+      setCounts({
+        content: Number(m.contentCount ?? m.contactedCount ?? 0),
+        sales: Number(m.salesCount ?? m.convertedCount ?? 0)
+      });
+      console.log('[Overlay Instant Update]', {
+        mode: liveStateRef.current.mode,
+        isStreaming: liveStateRef.current.isStreaming,
+        isPaused: liveStateRef.current.isPaused,
+        accumulatedTodaySeconds: liveStateRef.current.accumulatedTodaySeconds,
+        modeTimestamp: liveStateRef.current.modeTimestamp,
+        lastBreakEndTimestamp: liveStateRef.current.lastBreakEndTimestamp
+      });
+    }
+    window.addEventListener('grossgauntlet-state-update', handleStateUpdate);
+    return () => {
+      clearInterval(pollingInterval);
+      window.removeEventListener('grossgauntlet-state-update', handleStateUpdate);
+    };
   }, [displayMode]);
 
   // --- Render Mappings ---
