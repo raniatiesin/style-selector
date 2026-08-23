@@ -265,7 +265,11 @@ export default function GrossGauntletApp({ displayMode }) {
             liveStateRef.current.pausedTimestamp = m.pausedTimestamp;
           }
 
-          liveStateRef.current.lastBreakEndTimestamp = Number(m.lastBreakEndTimestamp || Date.now());
+          if (m.lastBreakEndTimestamp) {
+            liveStateRef.current.lastBreakEndTimestamp = Number(m.lastBreakEndTimestamp);
+          } else if (!liveStateRef.current.lastBreakEndTimestamp) {
+            liveStateRef.current.lastBreakEndTimestamp = Date.now();
+          }
           liveStateRef.current.mode = m.mode || "standby";
           liveStateRef.current.accumulatedTodaySeconds = acc;
           liveStateRef.current.previousDaysSeconds = Number(m.previousDaysSeconds || 0);
