@@ -637,8 +637,9 @@ export default function GrossGauntletControl() {
     }
     
     // Ensure lastBreakEndTimestamp is always in payload
-    if not ("lastBreakEndTimestamp" in payload):
-      payload["lastBreakEndTimestamp"] = 0
+    if (!('lastBreakEndTimestamp' in payload)) {
+      payload.lastBreakEndTimestamp = stateRef.current.lastBreakEndTimestamp ?? Date.now();
+    }
     
     delete payload._skipPushCalc;
 
