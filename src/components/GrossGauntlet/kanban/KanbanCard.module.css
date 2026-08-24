@@ -27,14 +27,6 @@
   border-color: rgba(255, 255, 255, .12);
 }
 
-.dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 0;
-  flex-shrink: 0;
-  background: var(--card-accent, rgba(255, 255, 255, 0.35));
-}
-
 .name {
   flex: 1;
   line-height: 1.4;

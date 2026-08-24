@@ -3,30 +3,19 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import styles from './KanbanCard.module.css';
 
-const STATUS_VAR_MAP = {
-  todo: 'todo',
-  up_next: 'upnext',
-  in_progress: 'progress',
-  in_review: 'review',
-  done: 'done',
-  waiting: 'waiting',
-};
-
-function StaticCard({ task, accentVar }) {
+function StaticCard({ task }) {
   return (
     <div
       className={styles.card}
       data-status={task.status}
       data-flip-id={task.id}
-      style={{ '--card-accent': `var(--status-${accentVar})` }}
     >
-      <span className={styles.dot} />
       <span className={styles.name}>{task.name}</span>
     </div>
   );
 }
 
-function EditableCard({ task, accentVar, onDelete, onRename }) {
+function EditableCard({ task, onDelete, onRename }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
   const [isEditing, setIsEditing] = useState(false);
   const [draftName, setDraftName] = useState(task.name);
@@ -42,10 +31,9 @@ function EditableCard({ task, accentVar, onDelete, onRename }) {
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? 'none' : 'transform 80ms ease, opacity .15s',
     opacity: isDragging ? 0.4 : 1,
     zIndex: isDragging ? 999 : 'auto',
-    '--card-accent': `var(--status-${accentVar})`,
   };
 
   function commit() {
@@ -70,7 +58,6 @@ function EditableCard({ task, accentVar, onDelete, onRename }) {
       {...attributes}
       {...listeners}
     >
-      <span className={styles.dot} />
       {isEditing ? (
         <input
           ref={inputRef}
@@ -92,8 +79,7 @@ function EditableCard({ task, accentVar, onDelete, onRename }) {
 }
 
 export default function KanbanCard({ task, editable, onDelete, onRename }) {
-  const accentVar = STATUS_VAR_MAP[task.status] ?? 'todo';
   return editable
-    ? <EditableCard task={task} accentVar={accentVar} onDelete={onDelete} onRename={onRename} />
-    : <StaticCard task={task} accentVar={accentVar} />;
+    ? <EditableCard task={task} onDelete={onDelete} onRename={onRename} />
+    : <StaticCard task={task} />;
 }

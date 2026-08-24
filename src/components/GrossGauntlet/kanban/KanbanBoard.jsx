@@ -58,23 +58,22 @@ export default function KanbanBoard({ initialBoard, editable, onBoardChange }) {
   }, [initialBoard]);
 
   useGSAP(() => {
-    if (!pendingBoard.current) return;
+    if (!pendingBoard.current || isDraggingRef.current) return;
     const state = Flip.getState(boardRef.current.querySelectorAll('[data-flip-id]'));
     setBoard(pendingBoard.current);
     pendingBoard.current = null;
     requestAnimationFrame(() => {
       Flip.from(state, {
         targets: '[data-flip-id]',
-        duration: 0.45,
-        ease: 'power2.inOut',
-        stagger: { amount: 0.12, from: 'start' },
+        duration: 0.2,
+        ease: 'power1.out',
         zIndex: 999,
         onEnter: elements => gsap.fromTo(elements,
           { opacity: 0 },
-          { opacity: 1, duration: 0.25, delay: 0.15 }
+          { opacity: 1, duration: 0.15 }
         ),
         onLeave: elements => gsap.to(elements,
-          { opacity: 0, duration: 0.2 }
+          { opacity: 0, duration: 0.1 }
         ),
       });
     });
