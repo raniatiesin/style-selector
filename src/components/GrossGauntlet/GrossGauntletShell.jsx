@@ -17,7 +17,56 @@ function formatHMS(totalSeconds) {
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-/** Inline-editable stat field */
+/** Inline-editable textarea (for timestamps, notes) */
+function EditableTextarea({ label, value, field, editable, onSave, className }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const textareaRef = useRef(null);
+
+  function startEdit() {
+    if (!editable) return;
+    setDraft(String(value ?? ''));
+    setEditing(true);
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }
+
+  function commit() {
+    setEditing(false);
+    if (draft !== String(value ?? '')) {
+      onSave?.(field, draft);
+    }
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Escape') { setEditing(false); }
+  }
+
+  if (editing) {
+    return (
+      <div className={styles.statRow}>
+        <span className={styles.statLabel}>{label}</span>
+        <textarea
+          ref={textareaRef}
+          className={`${styles.sidebarTextarea} ${className || ''}`}
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={handleKeyDown}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.statRow} onClick={startEdit} role={editable ? 'button' : undefined} tabIndex={editable ? 0 : undefined}>
+      <span className={styles.statLabel}>
+        {label}
+        {editable && <span className={styles.statEditHint}> (click to edit)</span>}
+      </span>
+      <pre className={`${styles.sidebarPre} ${editable ? styles.preClickable : ''}`}>{value || ''}</pre>
+    </div>
+  );
+}
 function EditableStat({ label, value, field, editable, onSave, format }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -222,11 +271,16 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
               placeholder="Stream notes…"
             />
 
-            {sessionData.timestamps && (
+            {sessionData.timestamps !== undefined && (
               <>
                 <div className={styles.divider} />
-                <div className={styles.sidebarTitle}>Timestamps</div>
-                <pre className={styles.sidebarPre}>{sessionData.timestamps}</pre>
+                <EditableTextarea
+                  label="Timestamps"
+                  value={sessionData.timestamps}
+                  field="timestamps"
+                  editable={editable}
+                  onSave={onStatChange}
+                />
               </>
             )}
 

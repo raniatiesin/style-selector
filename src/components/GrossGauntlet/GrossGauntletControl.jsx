@@ -94,6 +94,9 @@ export default function GrossGauntletControl() {
      const s = stateRef.current;
      const currentTimestamps = s.timestamps || '';
      const newTimestamps = currentTimestamps ? `${currentTimestamps}\n${m}` : m;
+// Guard: skip if last line of timestamps equals new marker (prevents duplicates like double break/standby)
+      const lastLine = currentTimestamps.split('\n').filter(Boolean).pop() || '';
+      if (lastLine === m) return;
      const updatedState = { ...s, timestamps: newTimestamps };
      setState(updatedState);
      

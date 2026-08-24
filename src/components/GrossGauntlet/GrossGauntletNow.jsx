@@ -114,6 +114,22 @@ export default function GrossGauntletNow() {
       setBoard(newBoard);
       if (!actionObj) return;
 
+      // Log timestamp when a task enters "in progress"
+      if (actionObj.action === 'move' && actionObj.toColumn === 'in_progress') {
+        const task = newBoard.in_progress?.find(t => t.id === actionObj.taskId);
+        const taskName = task?.name || 'Untitled';
+        try {
+          await pushStateUpdate({
+            ...stateRef.current,
+            timestamps: (stateRef.current?.timestamps || '')
+              ? `${stateRef.current?.timestamps || ''}\n00:00 - in_progress - ${taskName}`
+              : `00:00 - in_progress - ${taskName}`
+          });
+        } catch (e) {
+          // Non-blocking — board change is the primary action
+        }
+      }
+
       writePendingRef.current = true;
       try {
         await sendActionToApi(actionObj);
@@ -250,7 +266,8 @@ export default function GrossGauntletNow() {
                 NOW · Session {sessionData.sessionNumber}
               </span>
               <span className={`${styles.liveBadge} ${isStreaming ? styles.live : styles.offline}`}>
-                {isStreaming ? '🔴 LIVE' : '⏸️ OFFLINE'}
+                <span className={isStreaming ? styles.liveDot : styles.offlineDot} />
+                {isStreaming ? 'LIVE' : 'OFFLINE'}
               </span>
             </div>
             <div className={styles.headerActions}>

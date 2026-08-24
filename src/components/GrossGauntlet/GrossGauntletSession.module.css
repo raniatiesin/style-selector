@@ -5,7 +5,10 @@
 .headerMeta{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
 .headerMetaRow{display:flex;align-items:center;gap:12px}
 .headerActions{display:flex;align-items:center;gap:10px;margin-top:4px}
-.liveBadge{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;padding:2px 6px;border:1px solid rgba(255,255,255,.12)}
+.liveBadge{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;padding:3px 8px;border:1px solid rgba(255,255,255,.12);display:inline-flex;align-items:center;gap:5px}
+.liveBadge .liveDot,.liveBadge .offlineDot{width:5px;height:5px;display:inline-block;border-radius:0}
+.liveBadge .liveDot{background:#4DAA57}
+.liveBadge .offlineDot{background:rgba(255,255,255,.25)}
 .liveBadge.live{color:#4DAA57;border-color:rgba(77,170,87,.35)}
 .liveBadge.offline{color:rgba(255,255,255,.35);border-color:rgba(255,255,255,.08)}
 .modeChip{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:2px 0}
