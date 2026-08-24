@@ -99,7 +99,6 @@ export default function GrossGauntletControl() {
      
      // Only persist the timestamps field. Never send accumulatedTodaySeconds or
      // other timer fields here — a stale value would overwrite the authoritative total.
-     isSyncingRef.current = true;
      fetch(API.postMetrics(), {
        method: 'POST',
        headers: {
@@ -116,7 +115,6 @@ export default function GrossGauntletControl() {
      }).catch(error => {
        addLog(`Timestamp sync error: ${error.message}`);
      }).finally(() => {
-       isSyncingRef.current = false;
      });
   };
 
@@ -520,7 +518,6 @@ export default function GrossGauntletControl() {
               
               // Also sync to database to ensure overlay matches.
               // Only persist the mode field — never timer fields (avoids resetting total).
-              isSyncingRef.current = true;
               fetch(API.postMetrics(), {
                 method: 'POST',
                 headers: {
@@ -537,7 +534,6 @@ export default function GrossGauntletControl() {
               }).catch(error => {
                 addLog(`Scene sync error: ${error.message}`);
               }).finally(() => {
-                isSyncingRef.current = false;
               });
             }
           } catch (e) {
@@ -610,9 +606,6 @@ export default function GrossGauntletControl() {
       addLog('State unchanged - skipping database update');
       return;
     }
-    
-    // Always set isSyncing to prevent loadMetrics from overwriting state during push
-    isSyncingRef.current = true;
     
     let payload = { ...newState };
 
@@ -1007,7 +1000,6 @@ export default function GrossGauntletControl() {
                setState(updatedState);
                
                // Only persist the timestamps field. Never send timer fields here.
-               isSyncingRef.current = true;
                fetch(API.postMetrics(), {
                  method: 'POST',
                  headers: {
@@ -1023,7 +1015,6 @@ export default function GrossGauntletControl() {
                }).catch(error => {
                  addLog(`Timestamp sync error: ${error.message}`);
                }).finally(() => {
-                 isSyncingRef.current = false;
                });
             }}
             className="yt-textarea"
