@@ -40,7 +40,9 @@ export default function GrossGauntletControl() {
     streamNumber: 1,
     sessionNumber: 1,
     title: '',
-    timestamps: ''
+    timestamps: '',
+    alphaGross: 0,
+    totalGross: 0
   });
 
   // Sync selected standby to state when dropdown changes
@@ -50,7 +52,6 @@ export default function GrossGauntletControl() {
     }
   }, [selectedStandby, state.standbySelection]);
 
-  const isSyncingRef = useRef(false);
   const obsSceneChangeRef = useRef(false); // Track OBS-initiated scene changes
   const uiSceneChangeRef = useRef(false); // Set by setMode() before calling SetCurrentProgramScene
   const [obsConnected, setObsConnected] = useState(false);
@@ -213,7 +214,7 @@ export default function GrossGauntletControl() {
         
         // Continuously hydrate state from API to avoid stale UI overrides,
         // but temporarily block syncing updates exactly when a manual push is happening
-        if (data?.metrics && !isSyncingRef.current) {
+        if (data?.metrics) {
            setState(s => { 
               // Check if state actually changed to prevent unnecessary re-renders
               const metricsChanged = (
@@ -223,7 +224,9 @@ export default function GrossGauntletControl() {
                 (data.metrics.accumulatedTodaySeconds !== undefined && data.metrics.accumulatedTodaySeconds !== s.accumulatedTodaySeconds) ||
                 (data.metrics.modeTimestamp !== undefined && data.metrics.modeTimestamp !== s.modeTimestamp) ||
                 (data.metrics.isStreaming !== undefined && data.metrics.isStreaming !== s.isStreaming) ||
-                (data.metrics.isPaused !== undefined && data.metrics.isPaused !== s.isPaused)
+                (data.metrics.isPaused !== undefined && data.metrics.isPaused !== s.isPaused) ||
+                (data.metrics.alphaGross !== undefined && data.metrics.alphaGross !== s.alphaGross) ||
+                (data.metrics.totalGross !== undefined && data.metrics.totalGross !== s.totalGross)
               );
               
               if (!metricsChanged) {
@@ -247,10 +250,10 @@ export default function GrossGauntletControl() {
                 streamNumber: data.metrics.streamNumber ?? data.metrics.sessionNumber ?? s.streamNumber,
                 sessionNumber: data.metrics.sessionNumber ?? data.metrics.streamNumber ?? s.sessionNumber,
                 title: data.metrics.title !== undefined ? data.metrics.title : s.title,
-                // Always update pause state from API to ensure sync
-                // The isSyncingRef prevents overwriting during manual pushes
                 isPaused: data.metrics.isPaused !== undefined ? data.metrics.isPaused : s.isPaused,
-                pausedTimestamp: data.metrics.pausedTimestamp !== undefined ? data.metrics.pausedTimestamp : s.pausedTimestamp
+                pausedTimestamp: data.metrics.pausedTimestamp !== undefined ? data.metrics.pausedTimestamp : s.pausedTimestamp,
+                alphaGross: data.metrics.alphaGross !== undefined ? data.metrics.alphaGross : s.alphaGross,
+                totalGross: data.metrics.totalGross !== undefined ? data.metrics.totalGross : s.totalGross
               };
               
               // Validate the new state
@@ -627,12 +630,15 @@ export default function GrossGauntletControl() {
        payload.modeTimestamp = Date.now();
     }
 
-    if (payload.accumulatedTodaySeconds === -1 || payload.todayWorkSeconds === -1) {
+    if (payload.accumulatedTodaySeconds === -1) {
        payload.accumulatedTodaySeconds = 0;
        payload.modeTimestamp = Date.now();
        payload.mode = "standby";
-       payload.todayWorkSeconds = -1; // Keep for backend trigger just in case
     }
+    
+    // Ensure lastBreakEndTimestamp is always in payload
+    if not ("lastBreakEndTimestamp" in payload):
+      payload["lastBreakEndTimestamp"] = 0
     
     delete payload._skipPushCalc;
 
@@ -669,14 +675,9 @@ export default function GrossGauntletControl() {
         return newStr !== currentStr ? payload : current;
       });
       
-      // Broadcast the new state to all open GrossGauntletApp windows/iframes instantly
-      // This bypasses the 1.5s poll delay for the overlay's tick() loop
-      window.dispatchEvent(new CustomEvent('grossgauntlet-state-update', { detail: payload }));
     } catch (e) {
       addLog(`Sync error: ${e.message}`);
       console.error("Failed to sync:", e);
-    } finally {
-      isSyncingRef.current = false;
     }
   };
 
@@ -736,7 +737,6 @@ export default function GrossGauntletControl() {
       pushUpdate({ 
          ...state, 
          mode: "standby", 
-         todayWorkSeconds: -1, // Backend uses this as the dedicated flush flag
          accumulatedTodaySeconds: -1, // Triggers reset in pushUpdate
          modeTimestamp: Date.now(),
          contentCount: 0, 
@@ -801,7 +801,7 @@ export default function GrossGauntletControl() {
       ...current,
       mode,
       accumulatedTodaySeconds: nextAccumulated,
-      lastBreakEndTimestamp: isBreakToWork ? Date.now() : current.lastBreakEndTimestamp,
+      lastBreakEndTimestamp: (isBreakToWork || isStandbyToWork) ? Date.now() : current.lastBreakEndTimestamp,
       modeTimestamp: nextTimestamp,
       standbySelection: selectedStandby,
       timestamps: current.timestamps,
@@ -864,7 +864,6 @@ export default function GrossGauntletControl() {
    // pushUpdate will now always update local state and set isSyncing
    // Ensure we don't accidentally carry reset sentinel flags (-1) from other flows
    const sanitizedState = { ...newState };
-   if (sanitizedState.todayWorkSeconds === -1) delete sanitizedState.todayWorkSeconds;
    if (sanitizedState.accumulatedTodaySeconds === -1) sanitizedState.accumulatedTodaySeconds = 0;
    pushUpdate(sanitizedState);
     
@@ -1044,6 +1043,26 @@ export default function GrossGauntletControl() {
              <div className="inline-form">
                <button className="mode-btn button-xs" onClick={() => handleMetric('salesCount', -1)}>-</button>
                <button className="mode-btn button-xs" onClick={() => handleMetric('salesCount', 1)}>+</button>
+             </div>
+           </div>
+           <div className="side-line panel-row">
+              <span>ALPHA $: {state.alphaGross}</span>
+             <div className="inline-form">
+               <input
+                 type="number"
+                 min="0"
+                 step="0.01"
+                 value={state.alphaGross}
+                 onChange={e => {
+                   const val = Math.max(0, parseFloat(e.target.value) || 0);
+                   setState(s => ({ ...s, alphaGross: val }));
+                 }}
+                 onBlur={() => {
+                   pushUpdate({ ...stateRef.current, alphaGross: state.alphaGross });
+                 }}
+                 className="input-xs input-pad"
+                 style={{ width: 80, textAlign: 'right' }}
+               />
              </div>
            </div>
            {state.mode === 'work' && (

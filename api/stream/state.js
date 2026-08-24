@@ -139,8 +139,7 @@ export default async function handler(req, res) {
        globalMetrics = {
            mode: normalizedMode,
            isStreaming: session.is_streaming === true,
-           isPaused: session.is_paused === true ? true : (session.is_paused === false ? false : undefined),
-           todayWorkSeconds: (session.today_seconds ?? 0) + activeOffset,
+           isPaused: session.is_paused === true,
            accumulatedTodaySeconds: session.today_seconds ?? 0,
            previousDaysSeconds: pastDaysAcc,
             modeTimestamp: session.mode_timestamp ?? session.session_start_timestamp ?? Date.now(),
@@ -154,15 +153,18 @@ export default async function handler(req, res) {
            timestamps: session.timestamps ?? '',
            totalDays: count,
            pausedTimestamp: session.paused_timestamp ?? null,
-           streamNumber: session.session_number ?? 1
+           streamNumber: session.session_number ?? 1,
+           totalGross: session.total_gross ?? 0,
+           alphaGross: session.alpha_gross ?? 0
        };
     } else {
         globalMetrics = {
             mode: 'work',
             isStreaming: false,
             isPaused: false,
-            todayWorkSeconds: 0,
             accumulatedTodaySeconds: 0,
+            totalGross: 0,
+            alphaGross: 0,
             previousDaysSeconds: pastDaysAcc,
             modeTimestamp: null,
             sessionStartTimestamp: null,

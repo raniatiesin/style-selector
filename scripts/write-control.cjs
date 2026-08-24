@@ -200,8 +200,10 @@ export default function GrossGauntletControl() {
                const resetPayload = { 
                   ...s, 
                   mode: "standby", 
-                  todayWorkSeconds: -1,
+
+                  mode: "standby",
                   accumulatedTodaySeconds: -1,
+                  modeTimestamp: now,
                   modeTimestamp: now,
                   contactedCount: 0, 
                   convertedCount: 0 
@@ -304,7 +306,7 @@ export default function GrossGauntletControl() {
       pushUpdate({ 
          ...state, 
          mode: "standby", 
-         todayWorkSeconds: -1, // Backend uses this as the dedicated flush flag
+         
          accumulatedTodaySeconds: 0,
          modeTimestamp: Date.now(),
          contactedCount: 0, 

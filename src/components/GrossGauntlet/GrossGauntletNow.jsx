@@ -3,6 +3,7 @@ import { API } from '../../config/api';
 import KanbanBoard from './kanban/KanbanBoard';
 import { buildBoard } from './kanban/moveTask';
 import RunButton, { getIsUnlocked } from './RunButton';
+import GrossGauntletControl from './GrossGauntletControl';
 import { STORAGE_KEYS, POLL_INTERVALS } from './constants';
 import './GrossGauntletPages.css';
 
@@ -42,6 +43,7 @@ export default function GrossGauntletNow() {
   const [error, setError] = useState(null);
   const [syncError, setSyncError] = useState(null);
   const [isUnlocked, setIsUnlocked] = useState(getIsUnlocked);
+  const [controlPanelOpen, setControlPanelOpen] = useState(false);
 
   const writePendingRef = useRef(false);
 
@@ -165,6 +167,29 @@ export default function GrossGauntletNow() {
         editable={isEditable}
         onBoardChange={handleBoardChange}
       />
+
+      {isEditable && (
+        <div style={{ marginTop: 32, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
+          <button
+            onClick={() => setControlPanelOpen(o => !o)}
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.25)',
+              color: 'rgba(255,255,255,0.92)',
+              padding: '8px 16px',
+              fontSize: 11,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              fontFamily: 'var(--font)',
+              marginBottom: controlPanelOpen ? 16 : 0
+            }}
+          >
+            {controlPanelOpen ? 'HIDE' : 'CONTROL PANEL'}
+          </button>
+          {controlPanelOpen && <GrossGauntletControl />}
+        </div>
+      )}
     </div>
   );
 }

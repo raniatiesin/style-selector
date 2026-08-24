@@ -69,10 +69,10 @@ export default function App() {
   // Render overlay components for OBS browser source paths
   if (isOvlRoute) {
     const path = location.pathname;
-    if (path.includes('overlays/explain')) return <GrossGauntletApp displayMode="explain" />;
-    if (path.includes('overlays/break'))   return <GrossGauntletApp displayMode="break" />;
-    if (path.includes('overlays/work'))    return <GrossGauntletApp displayMode="work" />;
-    if (path.includes('overlays/standby')) return <GrossGauntletApp displayMode="standby" />;
+    if (path.includes('overlays/explain')) return <GrossGauntletApp />;
+    if (path.includes('overlays/break'))   return <GrossGauntletApp />;
+    if (path.includes('overlays/work'))    return <GrossGauntletApp />;
+    if (path.includes('overlays/standby')) return <GrossGauntletApp />;
     if (path.includes('/controls'))        return <GrossGauntletControl />;
   }
 

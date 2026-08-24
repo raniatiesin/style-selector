@@ -22,7 +22,7 @@ import {
 } from './constants';
 import './GrossGauntletApp.css';
 
-export default function GrossGauntletApp({ displayMode }) {
+export default function GrossGauntletApp() {
   // Purely data-driven state for UI lists (tasks, counts)
   const [tasks, setTasks] = useState([]);
   const [counts, setCounts] = useState({ content: 0, sales: 0 });
@@ -48,7 +48,9 @@ export default function GrossGauntletApp({ displayMode }) {
     explainTime: useRef(null),
     explainAccumulated: useRef(null),
     explainTopicText: useRef(null),
-    standbyTitle: useRef(null)
+    standbyTitle: useRef(null),
+    grossTotal: useRef(null),
+    grossAlpha: useRef(null)
   };
 
   // Mutable source of truth for the animation loop
@@ -66,7 +68,9 @@ export default function GrossGauntletApp({ displayMode }) {
     isPaused: false,
     pausedTimestamp: null,
     lastBreakEndTimestamp: Date.now(),
-    date: null
+    date: null,
+    totalGross: 0,
+    alphaGross: 0
   });
 
   // Ref for the timeline list container to enable scroll-to-in-progress
@@ -109,7 +113,6 @@ export default function GrossGauntletApp({ displayMode }) {
   useEffect(() => {
     let frame;
     function tick() {
-      console.log('TICK', Date.now(), liveStateRef.current.mode, liveStateRef.current.isStreaming, liveStateRef.current.modeTimestamp);
       const nowMs = Date.now();
       const d = new Date(nowMs);
       const ls = liveStateRef.current;
@@ -126,9 +129,8 @@ export default function GrossGauntletApp({ displayMode }) {
       if (isStreaming && isWorking && !isPaused) {
         const elapsed = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
         todaySecs += elapsed;
-        const sinceBreak = liveStateRef.current.lastBreakEndTimestamp || ls.modeTimestamp || 0;
-        sessionSecs = Math.floor(Math.max(0, nowMs - sinceBreak) / 1000);
-      } else if (isBreak && isStreaming) {
+        sessionSecs = Math.floor(Math.max(0, nowMs - (ls.lastBreakEndTimestamp || ls.modeTimestamp)) / 1000);
+      } else if (isStreaming && isBreak) {
         breakSecs = Math.floor(Math.max(0, nowMs - ls.modeTimestamp) / 1000);
       }
       
@@ -226,6 +228,16 @@ export default function GrossGauntletApp({ displayMode }) {
         }
       }
 
+      // Update gross display
+      const grossTotal = Number(ls.totalGross ?? 0);
+      const alphaGross = Number(ls.alphaGross ?? 0);
+      if (timerRefs.grossTotal.current) {
+        timerRefs.grossTotal.current.innerText = `GROSS: $${grossTotal.toLocaleString()}`;
+      }
+      if (timerRefs.grossAlpha.current) {
+        timerRefs.grossAlpha.current.innerText = `TODAY +: $${alphaGross.toLocaleString()}`;
+      }
+
       frame = requestAnimationFrame(tick);
     }
     frame = requestAnimationFrame(tick);
@@ -245,19 +257,21 @@ export default function GrossGauntletApp({ displayMode }) {
         // Update Live Refs for the clock
         if (stateData?.metrics) {
           const m = stateData.metrics;
-          console.log('POLL RESPONSE', m.mode, m.isStreaming, m.modeTimestamp, m.accumulatedTodaySeconds);
           
-          let acc = Number(m.accumulatedTodaySeconds ?? m.todayWorkSeconds ?? 0);
+          let acc = Number(m.accumulatedTodaySeconds ?? 0);
           
           if (acc === -1) {
             acc = 0;
             liveStateRef.current.modeTimestamp = Date.now();
-          } else {
-            const newTs = Number(m.modeTimestamp || m.sessionStartTimestamp || Date.now());
-            if (newTs >= (liveStateRef.current.modeTimestamp || 0)) {
-              liveStateRef.current.modeTimestamp = newTs;
-            }
           }
+
+          // Detect mode change: if poll says different mode, reset local timestamp
+          const pollMode = m.mode || "standby";
+          if (pollMode !== liveStateRef.current.mode) {
+            liveStateRef.current.mode = pollMode;
+            liveStateRef.current.modeTimestamp = Date.now();
+          }
+          // If mode is same, leave modeTimestamp completely untouched.
 
           // Only update streaming state if explicitly provided (fixes the "not streaming" bug)
           if (m.isStreaming !== undefined) {
@@ -277,7 +291,6 @@ export default function GrossGauntletApp({ displayMode }) {
           } else if (!liveStateRef.current.lastBreakEndTimestamp) {
             liveStateRef.current.lastBreakEndTimestamp = Date.now();
           }
-          liveStateRef.current.mode = m.mode || "standby";
           // Day-aware monotonic guard: the running day total may only increase within
           // the same day. It MAY reset only when the server reports a different date.
           // This is the definitive protection against the total visually "resetting"
@@ -296,6 +309,8 @@ export default function GrossGauntletApp({ displayMode }) {
           liveStateRef.current.standbySelection = m.standbySelection ?? "Coming Soon";
           liveStateRef.current.timestamps = m.timestamps ?? "";
           liveStateRef.current.streamNumber = m.streamNumber ?? 1;
+          liveStateRef.current.totalGross = Number(m.totalGross ?? 0);
+          liveStateRef.current.alphaGross = Number(m.alphaGross ?? 0);
           
           const rawMode = String(m.mode || "");
           if (rawMode.startsWith('explain|')) {
@@ -314,14 +329,6 @@ export default function GrossGauntletApp({ displayMode }) {
           setCounts({
             content: Number(m.contentCount ?? m.contactedCount ?? 0),
             sales: Number(m.salesCount ?? m.convertedCount ?? 0)
-          });
-          
-          // Console log for debugging overlay state
-          console.log('[Overlay State Update]', {
-            mode: liveStateRef.current.mode,
-            isStreaming: liveStateRef.current.isStreaming,
-            isPaused: liveStateRef.current.isPaused,
-            accumulatedTodaySeconds: liveStateRef.current.accumulatedTodaySeconds
           });
         }
 
@@ -355,47 +362,10 @@ export default function GrossGauntletApp({ displayMode }) {
     fetchState();
     pollingInterval = setInterval(fetchState, 1500);
     
-    // Listen for instant state updates from the control panel
-    function handleStateUpdate(e) {
-      const m = e.detail;
-      if (!m) return;
-      const acc = Number(m.accumulatedTodaySeconds ?? m.todayWorkSeconds ?? 0);
-      liveStateRef.current.mode = m.mode || "standby";
-      // Monotonic: never roll the running total backward from an event broadcast.
-      // Day-change reconciliation is handled by the poll (which carries `date`).
-      if (Number.isFinite(acc) && acc >= (liveStateRef.current.accumulatedTodaySeconds || 0)) {
-        liveStateRef.current.accumulatedTodaySeconds = acc;
-      }
-      liveStateRef.current.modeTimestamp = Number(m.modeTimestamp || m.sessionStartTimestamp || Date.now());
-      liveStateRef.current.isStreaming = m.isStreaming !== undefined ? m.isStreaming : liveStateRef.current.isStreaming;
-      liveStateRef.current.isPaused = m.isPaused !== undefined ? m.isPaused : liveStateRef.current.isPaused;
-      liveStateRef.current.pausedTimestamp = m.pausedTimestamp !== undefined ? m.pausedTimestamp : liveStateRef.current.pausedTimestamp;
-      if (m.lastBreakEndTimestamp) {
-        liveStateRef.current.lastBreakEndTimestamp = Number(m.lastBreakEndTimestamp);
-      } else if (!liveStateRef.current.lastBreakEndTimestamp) {
-        liveStateRef.current.lastBreakEndTimestamp = Date.now();
-      }
-      liveStateRef.current.standbySelection = m.standbySelection ?? liveStateRef.current.standbySelection;
-      setModeReact(m.mode || "standby");
-      setCounts({
-        content: Number(m.contentCount ?? m.contactedCount ?? 0),
-        sales: Number(m.salesCount ?? m.convertedCount ?? 0)
-      });
-      console.log('[Overlay Instant Update]', {
-        mode: liveStateRef.current.mode,
-        isStreaming: liveStateRef.current.isStreaming,
-        isPaused: liveStateRef.current.isPaused,
-        accumulatedTodaySeconds: liveStateRef.current.accumulatedTodaySeconds,
-        modeTimestamp: liveStateRef.current.modeTimestamp,
-        lastBreakEndTimestamp: liveStateRef.current.lastBreakEndTimestamp
-      });
-    }
-    window.addEventListener('grossgauntlet-state-update', handleStateUpdate);
     return () => {
       clearInterval(pollingInterval);
-      window.removeEventListener('grossgauntlet-state-update', handleStateUpdate);
     };
-  }, [displayMode]);
+  }, []);
 
   // --- Render Mappings ---
   const rawMode = displayMode || modeReact;
@@ -522,6 +492,10 @@ export default function GrossGauntletApp({ displayMode }) {
             <div className="context-pill stack side-line-counts">
               <div className="side-line">CONTENT: {counts.content}</div>
               <div className="side-line">SALES: {counts.sales}</div>
+            </div>
+            <div className="context-pill stack side-line-counts">
+              <div className="side-line" ref={timerRefs.grossTotal}>GROSS: $0</div>
+              <div className="side-line" ref={timerRefs.grossAlpha}>TODAY +: $0</div>
             </div>
           </div>
           <div className="webcam-col"></div>

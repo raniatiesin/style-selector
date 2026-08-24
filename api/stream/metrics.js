@@ -67,7 +67,6 @@ export default async function handler(req, res) {
     if (Object.hasOwn(payload, 'contentCount')) updateData.content_count = payload.contentCount;
     if (Object.hasOwn(payload, 'salesCount')) updateData.sales_count = payload.salesCount;
     if (Object.hasOwn(payload, 'accumulatedTodaySeconds')) updateData.today_seconds = payload.accumulatedTodaySeconds;
-    if (Object.hasOwn(payload, 'todayWorkSeconds')) updateData.today_seconds = payload.todayWorkSeconds;
     if (Object.hasOwn(payload, 'modeTimestamp')) updateData.mode_timestamp = payload.modeTimestamp;
     if (Object.hasOwn(payload, 'sessionStartTimestamp')) updateData.session_start_timestamp = payload.sessionStartTimestamp;
     if (Object.hasOwn(payload, 'isStreaming')) updateData.is_streaming = payload.isStreaming;
@@ -78,6 +77,8 @@ export default async function handler(req, res) {
     if (Object.hasOwn(payload, 'title')) updateData.title = payload.title;
     if (Object.hasOwn(payload, 'streamUrl')) updateData.stream_url = payload.streamUrl;
     if (Object.hasOwn(payload, 'notes')) updateData.notes = payload.notes;
+    if (Object.hasOwn(payload, 'alphaGross')) updateData.alpha_gross = payload.alphaGross;
+    if (Object.hasOwn(payload, 'totalGross')) updateData.total_gross = payload.totalGross;
 
     let result;
     
@@ -108,30 +109,38 @@ export default async function handler(req, res) {
         .eq('session_number', activeStreamData.session_number)
         .select();
     } else {
+      // No active stream: persist updates to the latest session for today
+      // (handles resets, metric changes, title changes when offline)
+      const { data: sessionsToday } = await supabase
+        .from('Sessions')
+        .select('session_number, today_seconds')
+        .eq('date', today)
+        .order('session_number', { ascending: false })
+        .limit(1);
+
+      const latestToday = (sessionsToday && sessionsToday.length > 0) ? sessionsToday[0] : null;
+
       if (payload.isStreaming === true) {
-        const { data: sessionsToday } = await supabase
-          .from('Sessions')
-          .select('session_number, today_seconds')
-          .eq('date', today)
-          .order('session_number', { ascending: false })
-          .limit(1);
-        
-        const latestToday = (sessionsToday && sessionsToday.length > 0) ? sessionsToday[0] : null;
         const nextSessionNum = latestToday ? latestToday.session_number + 1 : 1;
         // Carry forward today's accumulated work seconds across multiple stream sessions
-        // within the same day. A brand-new day (no Sessions rows for `today`) starts at 0,
-        // which is exactly the "reset on day change" behaviour we want.
-        // Clamp to >= 0 so a -1 reset sentinel is never propagated into a new session.
         const carriedTodaySeconds = latestToday ? Math.max(0, latestToday.today_seconds ?? 0) : 0;
-        
+
         updateData.date = today;
         updateData.session_number = nextSessionNum;
         updateData.today_seconds = carriedTodaySeconds;
         updateData.mode_timestamp = Date.now();
-        
+
         result = await supabase
           .from('Sessions')
           .insert(updateData)
+          .select();
+      } else if (latestToday) {
+        // Offline update: persist to the latest today's session
+        result = await supabase
+          .from('Sessions')
+          .update(updateData)
+          .eq('date', today)
+          .eq('session_number', latestToday.session_number)
           .select();
       } else {
         return res.status(200).json({

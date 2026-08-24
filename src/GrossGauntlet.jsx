@@ -27,13 +27,13 @@ function renderOverlay(element) {
 const path = window.location.pathname;
 
 if (path.includes('overlays/explain')) {
-  renderOverlay(<GrossGauntletApp displayMode="explain" />);
+  renderOverlay(<GrossGauntletApp />);
 } else if (path.includes('overlays/break')) {
-  renderOverlay(<GrossGauntletApp displayMode="break" />);
+  renderOverlay(<GrossGauntletApp />);
 } else if (path.includes('overlays/work')) {
-  renderOverlay(<GrossGauntletApp displayMode="work" />);
+  renderOverlay(<GrossGauntletApp />);
 } else if (path.includes('overlays/standby')) {
-  renderOverlay(<GrossGauntletApp displayMode="standby" />);
+  renderOverlay(<GrossGauntletApp />);
 } else if (path.includes('/controls') || window.location.search.includes('controls')) {
   renderOverlay(<GrossGauntletControl />);
 }

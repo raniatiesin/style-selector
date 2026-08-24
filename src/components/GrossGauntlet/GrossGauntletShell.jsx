@@ -125,6 +125,11 @@ export default function GrossGauntletShell({ children, sessionData }) {
               <span className={styles.statValue}>{sessionData.sales_count ?? 0}</span>
             </div>
 
+            <div className={styles.statRow}>
+              <span className={styles.statLabel}>Gross</span>
+              <span className={styles.statValue}>${(sessionData.total_gross ?? 0).toLocaleString()}</span>
+            </div>
+
             <div className={styles.divider} />
 
             <div className={styles.sidebarTitle}>Notes</div>
