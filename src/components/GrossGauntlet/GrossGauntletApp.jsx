@@ -109,6 +109,7 @@ export default function GrossGauntletApp({ displayMode }) {
   useEffect(() => {
     let frame;
     function tick() {
+      console.log('TICK', Date.now(), liveStateRef.current.mode, liveStateRef.current.isStreaming, liveStateRef.current.modeTimestamp);
       const nowMs = Date.now();
       const d = new Date(nowMs);
       const ls = liveStateRef.current;
@@ -244,6 +245,7 @@ export default function GrossGauntletApp({ displayMode }) {
         // Update Live Refs for the clock
         if (stateData?.metrics) {
           const m = stateData.metrics;
+          console.log('POLL RESPONSE', m.mode, m.isStreaming, m.modeTimestamp, m.accumulatedTodaySeconds);
           
           let acc = Number(m.accumulatedTodaySeconds ?? m.todayWorkSeconds ?? 0);
           
@@ -251,11 +253,8 @@ export default function GrossGauntletApp({ displayMode }) {
             acc = 0;
             liveStateRef.current.modeTimestamp = Date.now();
           } else {
-            // While streaming in work mode, the local folded timestamp is more accurate than
-            // the server (which may not have propagated the latest fold yet). Do not roll it back.
-            const lockLive = liveStateRef.current.isStreaming && liveStateRef.current.mode === 'work';
             const newTs = Number(m.modeTimestamp || m.sessionStartTimestamp || Date.now());
-            if (!lockLive || newTs >= (liveStateRef.current.modeTimestamp || 0)) {
+            if (newTs >= (liveStateRef.current.modeTimestamp || 0)) {
               liveStateRef.current.modeTimestamp = newTs;
             }
           }
