@@ -67,8 +67,9 @@ function EditableCard({ task, accentVar, onDelete, onRename }) {
       className={`${styles.card} ${isDragging ? styles.dragging : ''}`}
       data-status={task.status}
       data-flip-id={task.id}
+      {...attributes}
+      {...listeners}
     >
-      <span className={styles.handle} {...attributes} {...listeners} title="Drag to move" aria-label="Drag handle">⠿</span>
       <span className={styles.dot} />
       {isEditing ? (
         <input

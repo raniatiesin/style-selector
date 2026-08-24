@@ -14,6 +14,7 @@
   transition: background .15s ease, border-color .15s ease;
   user-select: none;
   min-height: 40px;
+  cursor: grab;
 }
 
 .card:hover {
@@ -24,29 +25,6 @@
 .dragging {
   background: rgba(255, 255, 255, .09);
   border-color: rgba(255, 255, 255, .12);
-}
-
-.handle {
-  cursor: grab;
-  color: rgba(255, 255, 255, .15);
-  font-size: 13px;
-  flex-shrink: 0;
-  opacity: 0;
-  transition: opacity .15s, color .1s;
-  user-select: none;
-  line-height: 1;
-}
-
-.card:hover .handle {
-  opacity: 1;
-}
-
-.handle:hover {
-  color: rgba(255, 255, 255, .5);
-}
-
-.handle:active {
-  cursor: grabbing;
 }
 
 .dot {
