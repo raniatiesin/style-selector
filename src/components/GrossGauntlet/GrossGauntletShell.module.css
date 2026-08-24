@@ -31,8 +31,28 @@
   padding: 32px 20px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  overflow: hidden;
+}
+
+.sidebarTop {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.timestampsFill {
+  flex: 1;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.timestampsFill::-webkit-scrollbar {
+  display: none;
 }
 
 .sidebarTitle {
@@ -182,10 +202,7 @@
   font-size: 0.68rem;
   color: rgba(255, 255, 255, 0.38);
   line-height: 1.9;
-  max-height: 180px;
-  overflow-y: auto;
   white-space: pre-wrap;
-  scrollbar-width: thin;
   margin: 0;
   font-family: var(--font);
 }

@@ -212,7 +212,7 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
       <aside className={styles.sidebar}>
         {isSession ? (
           <>
-            <div className={styles.sidebarTitle}>
+            <div className={styles.sidebarTop}><div className={styles.sidebarTitle}>
               DAY {sessionData.dayNumber} · SESSION {sessionData.sessionNumber}
             </div>
 
@@ -269,10 +269,10 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
               value={notes}
               onChange={e => handleNotesChange(e.target.value)}
               placeholder="Stream notes…"
-            />
+            /></div>
 
             {sessionData.timestamps !== undefined && (
-              <>
+              <div className={styles.timestampsFill}>
                 <div className={styles.divider} />
                 <EditableTextarea
                   label="Timestamps"
@@ -281,14 +281,13 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
                   editable={editable}
                   onSave={onStatChange}
                 />
-              </>
+              </div>
             )}
 
             {sessionData.stream_url && (
-              <>
-                <div className={styles.divider} />
+              <div style={{ flexShrink: 0 }}>
                 <a href={sessionData.stream_url} target="_blank" rel="noopener noreferrer" className={styles.nowLink}>▶ Watch on YouTube</a>
-              </>
+              </div>
             )}
           </>
         ) : (
