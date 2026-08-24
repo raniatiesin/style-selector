@@ -368,7 +368,7 @@ export default function GrossGauntletApp() {
   }, []);
 
   // --- Render Mappings ---
-  const rawMode = displayMode || modeReact;
+  const rawMode = modeReact;
   const normalizedMode = rawMode === 'play' || rawMode === 'minecraft' ? 'work' : rawMode;
   const activeMode = normalizedMode.startsWith('explain') ? 'explain' : normalizedMode;
   const inProgressIds = new Set(tasks.filter(t => t.status === "in_progress").map(t => t.id));
