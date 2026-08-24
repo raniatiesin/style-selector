@@ -23,6 +23,13 @@ import {
 import './GrossGauntletApp.css';
 
 export default function GrossGauntletApp() {
+  const rawPath = window.location.pathname.toLowerCase();
+  const urlMode = rawPath.includes('/break') ? 'break'
+    : rawPath.includes('/work') ? 'work'
+    : rawPath.includes('/standby') ? 'standby'
+    : rawPath.includes('/explain') ? 'explain'
+    : 'standby';
+
   // Purely data-driven state for UI lists (tasks, counts)
   const [tasks, setTasks] = useState([]);
   const [counts, setCounts] = useState({ content: 0, sales: 0 });
@@ -368,7 +375,7 @@ export default function GrossGauntletApp() {
   }, []);
 
   // --- Render Mappings ---
-  const rawMode = modeReact;
+  const rawMode = urlMode || modeReact;
   const normalizedMode = rawMode === 'play' || rawMode === 'minecraft' ? 'work' : rawMode;
   const activeMode = normalizedMode.startsWith('explain') ? 'explain' : normalizedMode;
   const inProgressIds = new Set(tasks.filter(t => t.status === "in_progress").map(t => t.id));
