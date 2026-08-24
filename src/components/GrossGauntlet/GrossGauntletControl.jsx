@@ -366,18 +366,20 @@ export default function GrossGauntletControl() {
                let nextAccumulated = s.accumulatedTodaySeconds || 0;
                let nextTimestamp = Date.now();
 
-               const isWorkToExplain = (s.mode === 'work' && mapped === 'explain');
                const isExplainToWork = (s.mode === 'explain' && mapped === 'work');
-               const isBreakToWork = (s.mode === 'break' && mapped === 'work');
-
-               if (isWorkToExplain) {
+                const isBreakToWork = (s.mode === 'break' && mapped === 'work');
+                const isStandbyToWork = (s.mode === 'standby' && mapped === 'work');
+                const isWorkToExplain = (s.mode === 'work' && mapped === 'explain');
+                const isWorkToStandby = (s.mode === 'work' && mapped === 'standby');
+               
+               if (isWorkToExplain || isWorkToStandby) {
                   // Exiting work: capture elapsed, add to accumulated, reset timestamp
                   if (s.modeTimestamp) {
                      const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
                      nextAccumulated = (s.accumulatedTodaySeconds || 0) + elapsed;
                   }
                   nextTimestamp = Date.now();
-               } else if (isExplainToWork || isBreakToWork) {
+               } else if (isExplainToWork || isBreakToWork || isStandbyToWork) {
                   // Entering work: keep accumulated unchanged, reset timestamp
                   nextAccumulated = s.accumulatedTodaySeconds || 0;
                   nextTimestamp = Date.now();
@@ -393,7 +395,7 @@ export default function GrossGauntletControl() {
                   ...s,
                   mode: mapped,
                   accumulatedTodaySeconds: nextAccumulated,
-                  lastBreakEndTimestamp: isBreakToWork ? Date.now() : (s.lastBreakEndTimestamp || Date.now()),
+                  lastBreakEndTimestamp: (isBreakToWork || isStandbyToWork) ? Date.now() : (s.lastBreakEndTimestamp || Date.now()),
                   modeTimestamp: nextTimestamp,
                   isStreaming: s.isStreaming
                };
