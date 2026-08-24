@@ -1,0 +1,1 @@
+take mode from last pathname segment

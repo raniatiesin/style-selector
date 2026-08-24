@@ -24,7 +24,7 @@ import './GrossGauntletApp.css';
 
 export default function GrossGauntletApp() {
   const rawPath = window.location.pathname.toLowerCase();
-  const urlMode = rawPath.endsWith('/work') ? 'work' : rawPath.endsWith('/break') ? 'break' : rawPath.endsWith('/standby') ? 'standby' : rawPath.endsWith('/explain') ? 'explain' : 'standby';
+  const urlMode = rawPath.split('/').pop();
 
   // Purely data-driven state for UI lists (tasks, counts)
   const [tasks, setTasks] = useState([]);
