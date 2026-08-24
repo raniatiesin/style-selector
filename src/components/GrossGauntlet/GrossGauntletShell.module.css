@@ -60,6 +60,79 @@
   color: rgba(255, 255, 255, 0.92);
 }
 
+.statClickable {
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.statClickable:hover {
+  color: rgba(255, 255, 255, 1);
+  border-bottom-color: rgba(255, 255, 255, 0.25);
+}
+
+.statEditHint {
+  display: none;
+  font-weight: 400;
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.08em;
+}
+
+.statRow:hover .statEditHint {
+  display: inline;
+}
+
+.statInput {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 1.1rem;
+  font-family: var(--font);
+  outline: none;
+  padding: 0 0 2px 0;
+  box-sizing: border-box;
+  -moz-appearance: textfield;
+}
+
+.statInput::-webkit-inner-spin-button,
+.statInput::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.statInput:focus {
+  border-bottom-color: rgba(255, 255, 255, 0.6);
+}
+
+.sidebarStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusDot {
+  font-size: 0.6rem;
+  line-height: 1;
+}
+
+.liveDot {
+  color: #4DAA57;
+}
+
+.offlineDot {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.sidebarStatusText {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
 .divider {
   height: 1px;
   background: rgba(255, 255, 255, 0.08);

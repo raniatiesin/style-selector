@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { API } from '../../config/api';
 import KanbanBoard from './kanban/KanbanBoard';
 import { buildBoard } from './kanban/moveTask';
+import GrossGauntletShell from './GrossGauntletShell';
 import RunButton, { getIsUnlocked } from './RunButton';
-import GrossGauntletControl from './GrossGauntletControl';
 import { STORAGE_KEYS, POLL_INTERVALS } from './constants';
+import styles from './GrossGauntletSession.module.css';
 import './GrossGauntletPages.css';
 
 const EMPTY_BOARD = buildBoard({});
@@ -34,20 +36,78 @@ async function sendActionToApi(actionObj) {
   }
 }
 
+async function pushStateUpdate(updatePayload) {
+  const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
+  if (!adminKey) throw new Error('Not authenticated');
+
+  const res = await fetch(API.postMetrics(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${adminKey}`,
+    },
+    body: JSON.stringify(updatePayload),
+  });
+
+  if (res.status === 401) {
+    localStorage.removeItem(STORAGE_KEYS.GROSSGAUNTLET_UNLOCKED);
+    throw new Error('Unauthorized — re-unlock to edit');
+  }
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Metric update failed (${res.status})`);
+  }
+}
+
 export default function GrossGauntletNow() {
   const [board, setBoard] = useState(EMPTY_BOARD);
   const [mode, setMode] = useState('standby');
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamNumber, setStreamNumber] = useState(null);
+  const [sessionNumber, setSessionNumber] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [syncError, setSyncError] = useState(null);
   const [isUnlocked, setIsUnlocked] = useState(getIsUnlocked);
-  const [controlPanelOpen, setControlPanelOpen] = useState(false);
+
+  // Live metrics from poll
+  const [todaySeconds, setTodaySeconds] = useState(0);
+  const [contentCount, setContentCount] = useState(0);
+  const [salesCount, setSalesCount] = useState(0);
+  const [totalGross, setTotalGross] = useState(0);
+  const [alphaGross, setAlphaGross] = useState(0);
+  const [timestamps, setTimestamps] = useState('');
+  const [title, setTitle] = useState('');
+  const [notes, setNotes] = useState('');
+  const [streamUrl, setStreamUrl] = useState('');
+  const [standbySelection, setStandbySelection] = useState('Coming Soon');
 
   const writePendingRef = useRef(false);
+  const stateRef = useRef(null);
 
   const isEditable = isUnlocked;
+
+  // Keep stateRef synced with all live state for pushUpdate
+  useEffect(() => {
+    stateRef.current = {
+      mode,
+      isStreaming,
+      streamNumber,
+      sessionNumber,
+      accumulatedTodaySeconds: todaySeconds,
+      contentCount,
+      salesCount,
+      totalGross,
+      alphaGross,
+      timestamps,
+      title,
+      standbySelection,
+      lastBreakEndTimestamp: Date.now(),
+      modeTimestamp: Date.now(),
+    };
+  }, [mode, isStreaming, streamNumber, sessionNumber, todaySeconds,
+      contentCount, salesCount, totalGross, alphaGross, timestamps, title, standbySelection]);
 
   const handleBoardChange = useCallback(
     async (newBoard, actionObj) => {
@@ -67,6 +127,23 @@ export default function GrossGauntletNow() {
     []
   );
 
+  /** Editable stat changed in sidebar — push to API via same path as control panel */
+  const handleStatChange = useCallback(async (field, value) => {
+    const base = stateRef.current;
+    if (!base) return;
+
+    const updatePayload = { ...base, [field]: value };
+    writePendingRef.current = true;
+    try {
+      await pushStateUpdate(updatePayload);
+      setSyncError(null);
+    } catch (e) {
+      setSyncError(e.message || 'Failed to save stat change');
+    } finally {
+      writePendingRef.current = false;
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -77,13 +154,25 @@ export default function GrossGauntletNow() {
         const data = await res.json();
         if (cancelled) return;
 
-        const metrics = data?.metrics || {};
-        const activeStream = metrics.isStreaming === true;
+        const m = data?.metrics || {};
+        const activeStream = m.isStreaming === true;
 
-        setMode(metrics.mode || 'standby');
+        setMode(m.mode || 'standby');
         setIsStreaming(activeStream);
-        setStreamNumber(metrics.streamNumber ?? null);
+        setStreamNumber(m.streamNumber ?? null);
+        setSessionNumber(m.sessionNumber ?? null);
         setIsUnlocked(getIsUnlocked());
+
+        setTodaySeconds(m.accumulatedTodaySeconds ?? 0);
+        setContentCount(m.contentCount ?? 0);
+        setSalesCount(m.salesCount ?? 0);
+        setTotalGross(m.totalGross ?? 0);
+        setAlphaGross(m.alphaGross ?? 0);
+        setTimestamps(m.timestamps ?? '');
+        setTitle(m.title ?? '');
+        setNotes(m.notes ?? '');
+        setStreamUrl(m.stream_url ?? '');
+        setStandbySelection(m.standbySelection ?? 'Coming Soon');
 
         if (!writePendingRef.current && data.board) {
           setBoard(buildBoard(data.board));
@@ -91,7 +180,7 @@ export default function GrossGauntletNow() {
 
         setError(null);
       } catch (e) {
-        if (!cancelled) setError(e.message || 'Failed to load tasks');
+        if (!cancelled) setError(e.message || 'Failed to load stream state');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -105,91 +194,105 @@ export default function GrossGauntletNow() {
     };
   }, []);
 
+  /* ── derive done / total tasks from the board ── */
+  const totalTasks = Object.values(board).flat().length;
+  const doneTasks = board.done?.length ?? 0;
+
+  /* ── build sessionData for the shell sidebar ── */
+  const sessionData = {
+    dayNumber: 'now',
+    sessionNumber: sessionNumber ?? streamNumber ?? 1,
+    today_seconds: todaySeconds,
+    doneTasks,
+    totalTasks,
+    content_count: contentCount,
+    sales_count: salesCount,
+    total_gross: totalGross,
+    alpha_gross: alphaGross,
+    timestamps,
+    stream_url: streamUrl,
+    notes,
+    title,
+    mode,
+    isStreaming,
+  };
+
+  /* ── loading / error states ── */
   if (loading) {
     return (
-      <div className="gg-tasks-editor">
-        <h1 className="gg-page-title">Tasks</h1>
-        <p className="gg-page-subtitle">Loading tasks…</p>
-      </div>
+      <GrossGauntletShell>
+        <div className={styles.loading}>Loading stream state…</div>
+      </GrossGauntletShell>
     );
   }
 
   if (error) {
     return (
-      <div className="gg-tasks-editor">
-        <h1 className="gg-page-title">Tasks</h1>
-        <p className="gg-page-subtitle gg-error">{error}</p>
-      </div>
+      <GrossGauntletShell>
+        <div className={styles.loading}>{error}</div>
+      </GrossGauntletShell>
     );
   }
 
+  /* ── main render ── */
   return (
-    <div className="gg-tasks-editor">
-      <header className="gg-tasks-header">
-        <div>
-          <h1 className="gg-page-title">Tasks</h1>
-          <p className="gg-page-subtitle">
-            {isStreaming ? '🔴 Live' : '⏸️ Offline'}
-            {streamNumber != null && ` · Session ${streamNumber}`}
-            {!isEditable && ' — Read-only (unlock to edit)'}
-            {isEditable && ' — Editable'}
-          </p>
-        </div>
-        <div className="gg-tasks-header-actions">
-          <RunButton
-            isUnlocked={isUnlocked}
-            onUnlock={() => setIsUnlocked(getIsUnlocked())}
-          />
-          <span className="gg-mode-badge">Mode: {mode}</span>
-        </div>
-      </header>
+    <GrossGauntletShell
+      sessionData={sessionData}
+      editable={isEditable}
+      onStatChange={handleStatChange}
+    >
+      <div className={styles.page}>
+        <header className={styles.header}>
+          <Link to="/grossgauntlet" className={styles.back}>← Back</Link>
+          <div className={styles.headerMeta}>
+            <div className={styles.headerMetaRow}>
+              <span className={styles.dayLabel}>
+                NOW · Session {sessionData.sessionNumber}
+              </span>
+              <span className={`${styles.liveBadge} ${isStreaming ? styles.live : styles.offline}`}>
+                {isStreaming ? '🔴 LIVE' : '⏸️ OFFLINE'}
+              </span>
+            </div>
+            <div className={styles.headerActions}>
+              <RunButton
+                isUnlocked={isUnlocked}
+                onUnlock={() => setIsUnlocked(getIsUnlocked())}
+              />
+              <span className={styles.modeChip}>Mode: {mode}</span>
+            </div>
+          </div>
+        </header>
 
-      {!isStreaming && (
-        <div className="gg-session-notice">
-          📖 Between streams. Board is active and edits will apply to the upcoming session.
-        </div>
-      )}
+        {syncError && (
+          <div className="gg-sync-error" role="alert" style={{ marginBottom: 16 }}>
+            ⚠ {syncError}
+          </div>
+        )}
 
-      {!isEditable && isStreaming && (
-        <div className="gg-session-notice">
-          🔒 Stream is locked. Click Run and enter your admin key to edit.
-        </div>
-      )}
+        {!isStreaming && (
+          <div className="gg-session-notice" style={{ marginBottom: 16 }}>
+            📖 Between streams. Board and stats are active — edits apply to the upcoming session.
+          </div>
+        )}
 
-      {syncError && (
-        <div className="gg-sync-error" role="alert">
-          ⚠ {syncError}
-        </div>
-      )}
+        {!isEditable && isStreaming && (
+          <div className="gg-session-notice" style={{ marginBottom: 16 }}>
+            🔒 Stream is locked. Click Run and enter your admin key to edit.
+          </div>
+        )}
 
-      <KanbanBoard
-        initialBoard={board}
-        editable={isEditable}
-        onBoardChange={handleBoardChange}
-      />
-
-      {isEditable && (
-        <div style={{ marginTop: 32, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
-          <button
-            onClick={() => setControlPanelOpen(o => !o)}
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(255,255,255,0.25)',
-              color: 'rgba(255,255,255,0.92)',
-              padding: '8px 16px',
-              fontSize: 11,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              fontFamily: 'var(--font)',
-              marginBottom: controlPanelOpen ? 16 : 0
-            }}
-          >
-            {controlPanelOpen ? 'HIDE' : 'CONTROL PANEL'}
-          </button>
-          {controlPanelOpen && <GrossGauntletControl />}
+        <div className={styles.body}>
+          <div className={styles.left}>
+            <div className={styles.boardWrap}>
+              <KanbanBoard
+                initialBoard={board}
+                editable={isEditable}
+                onBoardChange={handleBoardChange}
+              />
+            </div>
+          </div>
         </div>
-      )}
-    </div>
+      </div>
+    </GrossGauntletShell>
   );
 }

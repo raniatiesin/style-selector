@@ -17,7 +17,67 @@ function formatHMS(totalSeconds) {
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-export default function GrossGauntletShell({ children, sessionData }) {
+/** Inline-editable stat field */
+function EditableStat({ label, value, field, editable, onSave, format }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef(null);
+
+  const displayValue = format ? format(value) : value;
+
+  function startEdit() {
+    if (!editable) return;
+    setDraft(String(value ?? 0));
+    setEditing(true);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }
+
+  function commit() {
+    const parsed = Number(draft);
+    if (isNaN(parsed)) {
+      setEditing(false);
+      return;
+    }
+    setEditing(false);
+    if (parsed !== Number(value ?? 0)) {
+      onSave?.(field, parsed);
+    }
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') { inputRef.current?.blur(); }
+    if (e.key === 'Escape') { setEditing(false); }
+  }
+
+  if (editing) {
+    return (
+      <div className={styles.statRow}>
+        <span className={styles.statLabel}>{label}</span>
+        <input
+          ref={inputRef}
+          className={styles.statInput}
+          type="number"
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={handleKeyDown}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.statRow} onClick={startEdit} role={editable ? 'button' : undefined} tabIndex={editable ? 0 : undefined}>
+      <span className={styles.statLabel}>
+        {label}
+        {editable && <span className={styles.statEditHint}> (click to edit)</span>}
+      </span>
+      <span className={`${styles.statValue} ${editable ? styles.statClickable : ''}`}>{displayValue}</span>
+    </div>
+  );
+}
+
+export default function GrossGauntletShell({ children, sessionData, editable, onStatChange }) {
   const [stats, setStats] = useState({
     totalDays: 0,
     totalHours: 0,
@@ -103,7 +163,19 @@ export default function GrossGauntletShell({ children, sessionData }) {
       <aside className={styles.sidebar}>
         {isSession ? (
           <>
-            <div className={styles.sidebarTitle}>DAY {sessionData.dayNumber} · SESSION {sessionData.sessionNumber}</div>
+            <div className={styles.sidebarTitle}>
+              DAY {sessionData.dayNumber} · SESSION {sessionData.sessionNumber}
+            </div>
+
+            {sessionData.isStreaming !== undefined && (
+              <div className={styles.sidebarStatusRow}>
+                <span className={`${styles.statusDot} ${sessionData.isStreaming ? styles.liveDot : styles.offlineDot}`}>●</span>
+                <span className={styles.sidebarStatusText}>
+                  {sessionData.isStreaming ? 'LIVE' : 'OFFLINE'}
+                  {sessionData.mode ? ` · ${sessionData.mode[0].toUpperCase() + sessionData.mode.slice(1)}` : ''}
+                </span>
+              </div>
+            )}
 
             <div className={styles.statRow}>
               <span className={styles.statLabel}>Today</span>
@@ -115,20 +187,30 @@ export default function GrossGauntletShell({ children, sessionData }) {
               <span className={styles.statValue}>{sessionData.doneTasks ?? 0} / {sessionData.totalTasks ?? 0}</span>
             </div>
 
-            <div className={styles.statRow}>
-              <span className={styles.statLabel}>Content</span>
-              <span className={styles.statValue}>{sessionData.content_count ?? 0}</span>
-            </div>
+            <EditableStat
+              label="Content"
+              value={sessionData.content_count ?? 0}
+              field="contentCount"
+              editable={editable}
+              onSave={onStatChange}
+            />
 
-            <div className={styles.statRow}>
-              <span className={styles.statLabel}>Sales</span>
-              <span className={styles.statValue}>{sessionData.sales_count ?? 0}</span>
-            </div>
+            <EditableStat
+              label="Sales"
+              value={sessionData.sales_count ?? 0}
+              field="salesCount"
+              editable={editable}
+              onSave={onStatChange}
+            />
 
-            <div className={styles.statRow}>
-              <span className={styles.statLabel}>Gross</span>
-              <span className={styles.statValue}>${(sessionData.total_gross ?? 0).toLocaleString()}</span>
-            </div>
+            <EditableStat
+              label="Gross"
+              value={sessionData.total_gross ?? 0}
+              field="totalGross"
+              editable={editable}
+              onSave={onStatChange}
+              format={v => `$${Number(v).toLocaleString()}`}
+            />
 
             <div className={styles.divider} />
 

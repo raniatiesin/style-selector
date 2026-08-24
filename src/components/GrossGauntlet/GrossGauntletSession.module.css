@@ -2,7 +2,14 @@
 .header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:var(--space-28)}
 .back,.dayLabel,.dateLabel,.time,.modeIndicator,.boardWrap{font-family:var(--font)}
 .back{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.3);text-decoration:none;padding-top:3px}.back:hover{color:rgba(255,255,255,.75)}
-.headerMeta{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.dayLabel{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.4)}.dateLabel{font-size:.82rem;color:rgba(255,255,255,.55)}
+.headerMeta{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.headerMetaRow{display:flex;align-items:center;gap:12px}
+.headerActions{display:flex;align-items:center;gap:10px;margin-top:4px}
+.liveBadge{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;padding:2px 6px;border:1px solid rgba(255,255,255,.12)}
+.liveBadge.live{color:#4DAA57;border-color:rgba(77,170,87,.35)}
+.liveBadge.offline{color:rgba(255,255,255,.35);border-color:rgba(255,255,255,.08)}
+.modeChip{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:2px 0}
+.dayLabel{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.4)}.dateLabel{font-size:.82rem;color:rgba(255,255,255,.55)}
 .body{display:flex;gap:var(--space-20);align-items:flex-start}.left{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-16)}
 .modeIndicator{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.3);text-align:center;padding:var(--space-8) 0 0}.boardWrap{transition:opacity .4s ease,filter .4s ease}.boardInactive{opacity:.25;filter:grayscale(1);pointer-events:none}
 .scrubber{width:100%;height:2px;accent-color:rgba(255,255,255,.6);cursor:pointer}

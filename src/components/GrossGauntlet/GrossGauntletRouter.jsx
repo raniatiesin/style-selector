@@ -9,7 +9,7 @@ export default function GrossGauntletRouter() {
   return (
     <Routes>
       <Route path="/grossgauntlet" element={<GrossGauntletShell><GrossGauntletHome /></GrossGauntletShell>} />
-      <Route path="/grossgauntlet/now" element={<GrossGauntletShell><GrossGauntletNow /></GrossGauntletShell>} />
+      <Route path="/grossgauntlet/now" element={<GrossGauntletNow />} />
       <Route path="/grossgauntlet/:dayNumber" element={<GrossGauntletShell><GrossGauntletDay /></GrossGauntletShell>} />
       <Route path="/grossgauntlet/:dayNumber/:sessionNumber" element={<GrossGauntletSession />} />
     </Routes>
