@@ -111,10 +111,12 @@ export default function GrossGauntletNow() {
 
   const handleBoardChange = useCallback(
     async (newBoard, actionObj) => {
+      // Lock poll BEFORE touching local state — prevents poll from overwriting
+      writePendingRef.current = true;
       setBoard(newBoard);
-      if (!actionObj) return;
+      if (!actionObj) { writePendingRef.current = false; return; }
 
-      // Log timestamp when a task enters "in progress"
+      // Log timestamp when a task enters "in progress" (non-blocking, best effort)
       if (actionObj.action === 'move' && actionObj.toColumn === 'in_progress') {
         const task = newBoard.in_progress?.find(t => t.id === actionObj.taskId);
         const taskName = task?.name || 'Untitled';
@@ -130,7 +132,6 @@ export default function GrossGauntletNow() {
         }
       }
 
-      writePendingRef.current = true;
       try {
         await sendActionToApi(actionObj);
         setSyncError(null);
