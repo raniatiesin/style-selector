@@ -896,6 +896,44 @@ export default function GrossGauntletControl() {
 
   const workText = activeTaskRef.current && activeTaskRef.current !== "INITIAL_LOAD_FLAG" ? `work - ${activeTaskRef.current}` : 'work';
 
+  const toggleStream = () => {
+    const s = stateRef.current;
+    if (s.isStreaming) {
+      let nextAccumulated = s.accumulatedTodaySeconds || 0;
+      if (s.mode === 'work' && s.modeTimestamp) {
+        const elapsed = Math.max(0, Math.floor((Date.now() - s.modeTimestamp) / 1000));
+        nextAccumulated += elapsed;
+      }
+      const newTimestamps = s.timestamps ? `${s.timestamps}\n${'—'.repeat(50)}` : '';
+      const stopPayload = {
+        ...s,
+        isStreaming: false,
+        accumulatedTodaySeconds: nextAccumulated,
+        modeTimestamp: Date.now(),
+        timestamps: newTimestamps
+      };
+      addLog("Manual stream stop — pushing update...");
+      pushUpdate(stopPayload);
+    } else {
+      const now = Date.now();
+      const currentSessionNumber = (s.sessionNumber || s.streamNumber || 1);
+      const newTimestamps = s.timestamps || `STREAM ${currentSessionNumber}`;
+      const startPayload = {
+        ...s,
+        mode: s.mode || "standby",
+        lastBreakEndTimestamp: now,
+        modeTimestamp: now,
+        sessionStartTimestamp: s.session_start_timestamp || now,
+        isStreaming: true,
+        streamNumber: currentSessionNumber,
+        sessionNumber: currentSessionNumber,
+        timestamps: newTimestamps
+      };
+      addLog("Manual stream start — pushing update...");
+      pushUpdate(startPayload);
+    }
+  };
+
   async function handleSaveStreamUrl() {
     if (!streamUrl.trim()) return;
     try {
@@ -942,6 +980,16 @@ export default function GrossGauntletControl() {
                 className="input-full input-pad"
              />
           </div>
+<div className="grid-2 grid-gap-top">
+              <button
+                 className={`mode-btn button-wide ${state.isStreaming ? 'active' : ''}`}
+                 onClick={toggleStream}
+                 style={state.isStreaming ? { borderColor: '#ff4444', color: '#ff4444' } : { borderColor: '#4DAA57', color: '#4DAA57' }}
+              >
+                 {state.isStreaming ? 'END STREAM' : 'GO LIVE'}
+              </button>
+              <span></span>
+           </div>
        </div>
 
        {/* Mode Panel */}
