@@ -51,9 +51,7 @@ export default function GrossGauntletApp() {
     explainTime: useRef(null),
     explainAccumulated: useRef(null),
     explainTopicText: useRef(null),
-    standbyTitle: useRef(null),
-    grossTotal: useRef(null),
-    grossAlpha: useRef(null)
+    standbyTitle: useRef(null)
   };
 
   // Mutable source of truth for the animation loop
@@ -71,9 +69,7 @@ export default function GrossGauntletApp() {
     isPaused: false,
     pausedTimestamp: null,
     lastBreakEndTimestamp: Date.now(),
-    date: null,
-    totalGross: 0,
-    alphaGross: 0
+    date: null
   });
 
   // Ref for the timeline list container to enable scroll-to-in-progress
@@ -231,16 +227,6 @@ export default function GrossGauntletApp() {
         }
       }
 
-      // Update gross display
-      const grossTotal = Number(ls.totalGross ?? 0);
-      const alphaGross = Number(ls.alphaGross ?? 0);
-      if (timerRefs.grossTotal.current) {
-        timerRefs.grossTotal.current.innerText = `GROSS: $${grossTotal.toLocaleString()}`;
-      }
-      if (timerRefs.grossAlpha.current) {
-        timerRefs.grossAlpha.current.innerText = `TODAY +: $${alphaGross.toLocaleString()}`;
-      }
-
       frame = requestAnimationFrame(tick);
     }
     frame = requestAnimationFrame(tick);
@@ -312,8 +298,6 @@ export default function GrossGauntletApp() {
           liveStateRef.current.standbySelection = m.standbySelection ?? "Coming Soon";
           liveStateRef.current.timestamps = m.timestamps ?? "";
           liveStateRef.current.streamNumber = m.streamNumber ?? 1;
-          liveStateRef.current.totalGross = Number(m.totalGross ?? 0);
-          liveStateRef.current.alphaGross = Number(m.alphaGross ?? 0);
           
           const rawMode = String(m.mode || "");
           if (rawMode.startsWith('explain|')) {
@@ -495,10 +479,6 @@ export default function GrossGauntletApp() {
             <div className="context-pill stack side-line-counts">
               <div className="side-line">CONTENT: {counts.content}</div>
               <div className="side-line">SALES: {counts.sales}</div>
-            </div>
-            <div className="context-pill stack side-line-counts">
-              <div className="side-line" ref={timerRefs.grossTotal}>GROSS: $0</div>
-              <div className="side-line" ref={timerRefs.grossAlpha}>TODAY +: $0</div>
             </div>
           </div>
           <div className="webcam-col"></div>
