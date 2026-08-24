@@ -1,0 +1,1 @@
+sidebar scrolls fully, timestamps edit in-place via contentEditable

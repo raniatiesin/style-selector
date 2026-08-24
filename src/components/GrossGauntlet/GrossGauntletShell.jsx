@@ -17,53 +17,37 @@ function formatHMS(totalSeconds) {
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-/** Inline-editable textarea (for timestamps, notes) */
-function EditableTextarea({ label, value, field, editable, onSave, className }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState('');
-  const textareaRef = useRef(null);
+/** Inline-editable content — uses contentEditable on the pre itself, no textbox */
+function EditableTextarea({ label, value, field, editable, onSave }) {
+  const preRef = useRef(null);
 
-  function startEdit() {
-    if (!editable) return;
-    setDraft(String(value ?? ''));
-    setEditing(true);
-    requestAnimationFrame(() => textareaRef.current?.focus());
-  }
-
-  function commit() {
-    setEditing(false);
-    if (draft !== String(value ?? '')) {
-      onSave?.(field, draft);
+  function handleBlur() {
+    const text = preRef.current?.textContent ?? '';
+    if (text !== String(value ?? '')) {
+      onSave?.(field, text);
     }
   }
 
   function handleKeyDown(e) {
-    if (e.key === 'Escape') { setEditing(false); }
-  }
-
-  if (editing) {
-    return (
-      <div className={styles.statRow}>
-        <span className={styles.statLabel}>{label}</span>
-        <textarea
-          ref={textareaRef}
-          className={`${styles.sidebarTextarea} ${className || ''}`}
-          value={draft}
-          onChange={e => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={handleKeyDown}
-        />
-      </div>
-    );
+    if (e.key === 'Escape') {
+      if (preRef.current) {
+        preRef.current.textContent = String(value ?? '');
+        preRef.current.blur();
+      }
+    }
   }
 
   return (
-    <div className={styles.statRow} onClick={startEdit} role={editable ? 'button' : undefined} tabIndex={editable ? 0 : undefined}>
-      <span className={styles.statLabel}>
-        {label}
-        {editable && <span className={styles.statEditHint}> (click to edit)</span>}
-      </span>
-      <pre className={`${styles.sidebarPre} ${editable ? styles.preClickable : ''}`}>{value || ''}</pre>
+    <div className={styles.statRow}>
+      <span className={styles.statLabel}>{label}</span>
+      <pre
+        ref={preRef}
+        className={`${styles.sidebarPre} ${editable ? styles.preEditable : ''}`}
+        contentEditable={editable}
+        suppressContentEditableWarning
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+      >{value || ''}</pre>
     </div>
   );
 }
@@ -212,7 +196,7 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
       <aside className={styles.sidebar}>
         {isSession ? (
           <>
-            <div className={styles.sidebarTop}><div className={styles.sidebarTitle}>
+            <div className={styles.sidebarTitle}>
               DAY {sessionData.dayNumber} · SESSION {sessionData.sessionNumber}
             </div>
 
@@ -269,10 +253,10 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
               value={notes}
               onChange={e => handleNotesChange(e.target.value)}
               placeholder="Stream notes…"
-            /></div>
+            />
 
             {sessionData.timestamps !== undefined && (
-              <div className={styles.timestampsFill}>
+              <>
                 <div className={styles.divider} />
                 <EditableTextarea
                   label="Timestamps"
@@ -281,13 +265,14 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
                   editable={editable}
                   onSave={onStatChange}
                 />
-              </div>
+              </>
             )}
 
             {sessionData.stream_url && (
-              <div style={{ flexShrink: 0 }}>
+              <>
+                <div className={styles.divider} />
                 <a href={sessionData.stream_url} target="_blank" rel="noopener noreferrer" className={styles.nowLink}>▶ Watch on YouTube</a>
-              </div>
+              </>
             )}
           </>
         ) : (

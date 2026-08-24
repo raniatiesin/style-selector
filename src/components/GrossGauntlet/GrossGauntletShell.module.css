@@ -31,27 +31,13 @@
   padding: 32px 20px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-}
-
-.sidebarTop {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.timestampsFill {
-  flex: 1;
+  gap: 24px;
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
 }
 
-.timestampsFill::-webkit-scrollbar {
+.sidebar::-webkit-scrollbar {
   display: none;
 }
 
@@ -207,16 +193,13 @@
   font-family: var(--font);
 }
 
-.preClickable {
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
-  border: 1px solid transparent;
-  padding: 4px 8px;
+.preEditable {
+  cursor: text;
+  outline: none;
 }
 
-.preClickable:hover {
-  color: rgba(255, 255, 255, 0.55);
-  border-color: rgba(255, 255, 255, 0.1);
+.preEditable:focus {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .main {
