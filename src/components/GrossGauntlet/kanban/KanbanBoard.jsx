@@ -1,9 +1,4 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { Flip } from 'gsap/dist/Flip';
-import { useGSAP } from '@gsap/react';
-
-gsap.registerPlugin(Flip);
 import {
   DndContext,
   DragOverlay,
@@ -45,39 +40,15 @@ function getDropIndex(board, overId, overCol) {
 export default function KanbanBoard({ initialBoard, editable, onBoardChange }) {
   const [board, setBoard] = useState(initialBoard);
   const [activeCard, setActiveCard] = useState(null);
-  const [pendingFlip, setPendingFlip] = useState(0);
   const boardRef = useRef(null);
   const boardAtDragStart = useRef(null);
   const isDraggingRef = useRef(false);
-  const pendingBoard = useRef(null);
 
+  // Sync board from parent without animation
   useEffect(() => {
     if (isDraggingRef.current) return;
-    pendingBoard.current = initialBoard;
-    setPendingFlip(s => s + 1);
+    setBoard(initialBoard);
   }, [initialBoard]);
-
-  useGSAP(() => {
-    if (!pendingBoard.current || isDraggingRef.current) return;
-    const state = Flip.getState(boardRef.current.querySelectorAll('[data-flip-id]'));
-    setBoard(pendingBoard.current);
-    pendingBoard.current = null;
-    requestAnimationFrame(() => {
-      Flip.from(state, {
-        targets: '[data-flip-id]',
-        duration: 0.2,
-        ease: 'power1.out',
-        zIndex: 999,
-        onEnter: elements => gsap.fromTo(elements,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.15 }
-        ),
-        onLeave: elements => gsap.to(elements,
-          { opacity: 0, duration: 0.1 }
-        ),
-      });
-    });
-  }, [pendingFlip]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

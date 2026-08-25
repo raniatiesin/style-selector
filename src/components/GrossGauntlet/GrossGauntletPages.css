@@ -634,3 +634,202 @@
   white-space: nowrap;
   font-family: var(--font);
 }
+
+/* ============================================================
+   Mode Scene Buttons (embedded in /now page)
+   ============================================================ */
+
+.gg-mode-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.gg-mode-btn {
+  font-family: inherit;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+  border-radius: 0;
+  user-select: none;
+}
+
+.gg-mode-btn:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.gg-mode-btn.active {
+  border-color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.gg-obs-indicator {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gg-obs-indicator.connected {
+  color: #4DAA57;
+}
+
+.gg-obs-indicator.disconnected {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.gg-obs-dot {
+  font-size: 1em;
+  display: inline-block;
+}
+
+.gg-obs-indicator.connected .gg-obs-dot {
+  color: #4DAA57;
+}
+
+.gg-obs-indicator.disconnected .gg-obs-dot {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* ============================================================
+   Modal Overlays (Explain topic, Standby text)
+   ============================================================ */
+
+.gg-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.gg-modal {
+  background: rgba(26, 26, 26, 0.85);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 24px 28px;
+  min-width: 320px;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: inherit;
+}
+
+.gg-modal-title {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.gg-modal-input {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.gg-modal-input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.gg-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.gg-modal-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gg-modal-option {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 9px 14px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+  border-radius: 0;
+}
+
+.gg-modal-option:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.gg-modal-option.selected {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: var(--white-100);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.gg-modal-btn {
+  font-family: inherit;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 7px 18px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+  border-radius: 0;
+}
+
+.gg-modal-btn:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.gg-modal-btn--confirm {
+  border-color: rgba(77, 170, 87, 0.4);
+  color: #4DAA57;
+}
+
+.gg-modal-btn--confirm:hover {
+  border-color: #4DAA57;
+  background: rgba(77, 170, 87, 0.08);
+}
+
+.gg-modal-btn--cancel {
+  border-color: rgba(249, 87, 56, 0.3);
+  color: rgba(249, 87, 56, 0.7);
+}
+
+.gg-modal-btn--cancel:hover {
+  border-color: #F95738;
+  background: rgba(249, 87, 56, 0.08);
+}

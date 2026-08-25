@@ -1,18 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import OBSWebSocket from 'obs-websocket-js';
 import { API } from '../../config/api';
 import KanbanBoard from './kanban/KanbanBoard';
 import { buildBoard } from './kanban/moveTask';
 import GrossGauntletShell from './GrossGauntletShell';
-import RunButton, { getIsUnlocked } from './RunButton';
-import { STORAGE_KEYS, POLL_INTERVALS } from './constants';
+import RunButton, { getIsUnlocked, getAdminKey } from './RunButton';
+import { STORAGE_KEYS, POLL_INTERVALS, OBS_CONFIG, STANDBY_OPTIONS } from './constants';
 import styles from './GrossGauntletSession.module.css';
 import './GrossGauntletPages.css';
 
 const EMPTY_BOARD = buildBoard({});
 
 async function sendActionToApi(actionObj) {
-  if (!actionObj) return;
+  if (!actionObj) return null;
   const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
   if (!adminKey) throw new Error('Not authenticated');
 
@@ -34,6 +35,9 @@ async function sendActionToApi(actionObj) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || `Action failed (${res.status})`);
   }
+
+  const data = await res.json();
+  return data?.board || null;
 }
 
 async function pushStateUpdate(updatePayload) {
@@ -82,6 +86,22 @@ export default function GrossGauntletNow() {
   const [notes, setNotes] = useState('');
   const [streamUrl, setStreamUrl] = useState('');
   const [standbySelection, setStandbySelection] = useState('Coming Soon');
+  const [isPaused, setIsPaused] = useState(false);
+  const [pausedTimestamp, setPausedTimestamp] = useState(null);
+  const [lastBreakEndTimestamp, setLastBreakEndTimestamp] = useState(Date.now());
+  const [modeTimestamp, setModeTimestamp] = useState(Date.now());
+
+  // OBS WebSocket state
+  const [obsConnected, setObsConnected] = useState(false);
+  const obsRef = useRef(null);
+  const obsSceneChangeRef = useRef(false);
+  const uiSceneChangeRef = useRef(false);
+
+  // Modal state
+  const [showExplainModal, setShowExplainModal] = useState(false);
+  const [explainTopicInput, setExplainTopicInput] = useState('');
+  const [showStandbyModal, setShowStandbyModal] = useState(false);
+  const [standbySelectedOption, setStandbySelectedOption] = useState('Coming Soon');
 
   const writePendingRef = useRef(false);
   const stateRef = useRef(null);
@@ -103,11 +123,13 @@ export default function GrossGauntletNow() {
       timestamps,
       title,
       standbySelection,
-      lastBreakEndTimestamp: Date.now(),
-      modeTimestamp: Date.now(),
+      isPaused,
+      pausedTimestamp: pausedTimestamp ?? null,
+      lastBreakEndTimestamp: lastBreakEndTimestamp || Date.now(),
+      modeTimestamp: modeTimestamp || Date.now(),
     };
   }, [mode, isStreaming, streamNumber, sessionNumber, todaySeconds,
-      contentCount, salesCount, totalGross, alphaGross, timestamps, title, standbySelection]);
+      contentCount, salesCount, totalGross, alphaGross, timestamps, title, standbySelection, isPaused, pausedTimestamp, lastBreakEndTimestamp, modeTimestamp]);
 
   const handleBoardChange = useCallback(
     async (newBoard, actionObj) => {
@@ -133,7 +155,14 @@ export default function GrossGauntletNow() {
       }
 
       try {
-        await sendActionToApi(actionObj);
+        const returnedBoard = await sendActionToApi(actionObj);
+        // Stash authoritative board for poll fallback and reload resilience,
+        // but DON'T re-setBoard — the optimistic update already placed cards
+        // correctly. Re-setting from server creates a new object reference that
+        // triggers KanbanBoard's Flip animation, causing a visual stutter.
+        if (returnedBoard) {
+          try { localStorage.setItem('GG_STASHED_BOARD', JSON.stringify(returnedBoard)); } catch { /* noop */ }
+        }
         setSyncError(null);
       } catch (e) {
         setSyncError(e.message || 'Failed to save changes');
@@ -160,6 +189,113 @@ export default function GrossGauntletNow() {
       writePendingRef.current = false;
     }
   }, []);
+
+  /* ── Mode change handler (same logic as control panel's setMode) ── */
+  const handleModeChange = useCallback(async (targetMode) => {
+    const current = stateRef.current;
+    if (!current) return;
+
+    const isExplainTarget = targetMode.startsWith('explain');
+    const isExplainCurrent = current.mode.startsWith('explain');
+    let modeStr = targetMode;
+    let explainTopicTarget = '';
+
+    if (isExplainTarget) {
+      explainTopicTarget = targetMode.split('|').slice(1).join('|').trim();
+      if (!explainTopicTarget) return;
+      try { localStorage.setItem('EXPLAIN_TOPIC', explainTopicTarget); } catch { /* */ }
+    }
+
+    if (current.mode === modeStr) return;
+
+    let nextAccumulated = current.accumulatedTodaySeconds || 0;
+    let nextTimestamp = Date.now();
+
+    const isWorkToExplain = (current.mode === 'work' && isExplainTarget);
+    const isExplainToWork = (isExplainCurrent && modeStr === 'work');
+    const isWorkToStandby = (current.mode === 'work' && modeStr === 'standby');
+    const isStandbyToWork = (current.mode === 'standby' && modeStr === 'work');
+    const isBreakToWork = (current.mode === 'break' && modeStr === 'work');
+
+    if (current.isPaused) {
+      nextAccumulated = current.accumulatedTodaySeconds || 0;
+      nextTimestamp = modeStr === 'break' ? Date.now() : (current.modeTimestamp || Date.now());
+    } else if (isWorkToExplain || isWorkToStandby) {
+      if (current.modeTimestamp) {
+        const elapsed = Math.max(0, Math.floor((Date.now() - current.modeTimestamp) / 1000));
+        nextAccumulated = (current.accumulatedTodaySeconds || 0) + elapsed;
+      }
+      nextTimestamp = Date.now();
+    } else if (isExplainToWork || isStandbyToWork || isBreakToWork) {
+      nextAccumulated = current.accumulatedTodaySeconds || 0;
+      nextTimestamp = Date.now();
+    } else if (current.mode === 'work') {
+      if (current.modeTimestamp) {
+        const elapsed = Math.max(0, Math.floor((Date.now() - current.modeTimestamp) / 1000));
+        nextAccumulated += elapsed;
+      }
+      nextTimestamp = Date.now();
+    }
+
+    const newState = {
+      ...current,
+      mode: modeStr,
+      accumulatedTodaySeconds: nextAccumulated,
+      lastBreakEndTimestamp: (isBreakToWork || isStandbyToWork) ? Date.now() : (current.lastBreakEndTimestamp || Date.now()),
+      modeTimestamp: nextTimestamp,
+      standbySelection: modeStr === 'standby' ? (standbySelectedOption || current.standbySelection || 'Coming Soon') : current.standbySelection,
+      _skipPushCalc: true,
+    };
+
+    // Update local React state immediately for snappy feedback
+    setMode(modeStr);
+    setModeTimestamp(nextTimestamp);
+    setTodaySeconds(nextAccumulated);
+    if (isBreakToWork || isStandbyToWork) setLastBreakEndTimestamp(Date.now());
+
+    // OBS scene change
+    if (obsRef.current && obsConnected) {
+      if (obsSceneChangeRef.current) {
+        obsSceneChangeRef.current = false;
+      } else {
+        uiSceneChangeRef.current = true;
+        setTimeout(() => { uiSceneChangeRef.current = false; }, 2000);
+        const scene = modeStr === 'work' ? OBS_CONFIG.SCENES.WORK
+          : isExplainTarget ? OBS_CONFIG.SCENES.EXPLAIN
+          : modeStr === 'break' ? OBS_CONFIG.SCENES.BREAK
+          : OBS_CONFIG.SCENES.STANDBY;
+
+        obsRef.current.call('SetCurrentProgramScene', { sceneName: scene })
+          .catch(e => console.error('OBS scene change failed:', e));
+      }
+    }
+
+    // Push to API
+    writePendingRef.current = true;
+    try {
+      await pushStateUpdate(newState);
+      setSyncError(null);
+    } catch (e) {
+      setSyncError(e.message || 'Mode change failed');
+    } finally {
+      writePendingRef.current = false;
+    }
+  }, [obsConnected, standbySelectedOption]);
+
+  /* ── Modal handlers ── */
+  const handleExplainConfirm = useCallback(() => {
+    const topic = explainTopicInput.trim();
+    if (!topic) return;
+    setShowExplainModal(false);
+    handleModeChange('explain|' + topic);
+  }, [explainTopicInput, handleModeChange]);
+
+  const handleStandbyConfirm = useCallback(() => {
+    const text = standbySelectedOption || 'Coming Soon';
+    setShowStandbyModal(false);
+    setStandbySelection(text);
+    handleModeChange('standby');
+  }, [standbySelectedOption, handleModeChange]);
 
   useEffect(() => {
     let cancelled = false;
@@ -190,9 +326,30 @@ export default function GrossGauntletNow() {
         setNotes(m.notes ?? '');
         setStreamUrl(m.stream_url ?? '');
         setStandbySelection(m.standbySelection ?? 'Coming Soon');
+        setIsPaused(m.isPaused ?? false);
+        setPausedTimestamp(m.pausedTimestamp ?? null);
+        if (m.modeTimestamp) setModeTimestamp(Number(m.modeTimestamp));
 
         if (!writePendingRef.current && data.board) {
-          setBoard(buildBoard(data.board));
+          const apiBoard = data.board;
+          const hasCards = Object.values(apiBoard).some(col => col && col.length > 0);
+          if (hasCards) {
+            setBoard(buildBoard(apiBoard));
+            // Update stash with fresh server data
+            try { localStorage.setItem('GG_STASHED_BOARD', JSON.stringify(apiBoard)); } catch { /* noop */ }
+          } else {
+            // API returned empty board — fall back to stashed board so offline-created
+            // cards (linked to non-today sessions) survive page reloads and poll cycles.
+            const stashed = localStorage.getItem('GG_STASHED_BOARD');
+            if (stashed) {
+              try {
+                const parsed = JSON.parse(stashed);
+                if (parsed && Object.values(parsed).some(col => col && col.length > 0)) {
+                  setBoard(buildBoard(parsed));
+                }
+              } catch { /* ignore corrupt stash */ }
+            }
+          }
         }
 
         setError(null);
@@ -210,6 +367,72 @@ export default function GrossGauntletNow() {
       clearInterval(interval);
     };
   }, []);
+
+  /* ── OBS WebSocket connection ── */
+  useEffect(() => {
+    if (!isUnlocked) return;
+
+    let keepConnecting = true;
+    let reconnectTimer;
+
+    const obs = new OBSWebSocket();
+    obsRef.current = obs;
+
+    async function connect() {
+      if (!keepConnecting) return;
+      try {
+        const obsPassword = localStorage.getItem(STORAGE_KEYS.OBS_PASS) || '';
+        await obs.connect(OBS_CONFIG.WS_URL, obsPassword);
+        if (!keepConnecting) { obs.disconnect(); return; }
+        setObsConnected(true);
+
+        obs.on("CurrentProgramSceneChanged", (event) => {
+          const map = {
+            [OBS_CONFIG.SCENES.WORK]: "work",
+            [OBS_CONFIG.SCENES.EXPLAIN]: "explain",
+            [OBS_CONFIG.SCENES.BREAK]: "break",
+            [OBS_CONFIG.SCENES.STANDBY]: "standby",
+          };
+          const mapped = map[event.sceneName];
+          if (!mapped) return;
+
+          obsSceneChangeRef.current = true;
+
+          if (uiSceneChangeRef.current) {
+            uiSceneChangeRef.current = false;
+            setMode(mapped);
+            setTimeout(() => { obsSceneChangeRef.current = false; }, 1000);
+            return;
+          }
+
+          // OBS-initiated change: update local mode but don't push back (avoids loop)
+          setMode(mapped);
+          setTimeout(() => { obsSceneChangeRef.current = false; }, 1000);
+        });
+
+        obs.on("ConnectionClosed", () => {
+          if (!keepConnecting) return;
+          setObsConnected(false);
+          reconnectTimer = setTimeout(connect, 5000);
+        });
+      } catch (err) {
+        if (!keepConnecting) return;
+        setObsConnected(false);
+        reconnectTimer = setTimeout(connect, 5000);
+      }
+    }
+
+    connect();
+
+    return () => {
+      keepConnecting = false;
+      clearTimeout(reconnectTimer);
+      if (obsRef.current) {
+        obsRef.current.disconnect();
+        obsRef.current = null;
+      }
+    };
+  }, [isUnlocked]);
 
   /* ── derive done / total tasks from the board ── */
   const totalTasks = Object.values(board).flat().length;
@@ -287,12 +510,6 @@ export default function GrossGauntletNow() {
           </div>
         )}
 
-        {!isStreaming && (
-          <div className="gg-session-notice" style={{ marginBottom: 16 }}>
-            📖 Between streams. Board and stats are active — edits apply to the upcoming session.
-          </div>
-        )}
-
         {!isEditable && isStreaming && (
           <div className="gg-session-notice" style={{ marginBottom: 16 }}>
             🔒 Stream is locked. Click Run and enter your admin key to edit.
@@ -301,6 +518,47 @@ export default function GrossGauntletNow() {
 
         <div className={styles.body}>
           <div className={styles.left}>
+
+            {/* ── Mode scene buttons (visible when unlocked) ── */}
+            {isEditable && (
+              <div className="gg-mode-bar">
+                <button
+                  className={`gg-mode-btn ${mode === 'work' ? 'active' : ''}`}
+                  onClick={() => handleModeChange('work')}
+                  title="Switch to Work scene"
+                >
+                  Work
+                </button>
+                <button
+                  className={`gg-mode-btn ${mode.startsWith('explain') ? 'active' : ''}`}
+                  onClick={() => { setExplainTopicInput(''); setShowExplainModal(true); }}
+                  title="Switch to Explain scene"
+                >
+                  Explain
+                </button>
+                <button
+                  className={`gg-mode-btn ${mode === 'break' ? 'active' : ''}`}
+                  onClick={() => handleModeChange('break')}
+                  title="Switch to Break scene"
+                >
+                  Break
+                </button>
+                <button
+                  className={`gg-mode-btn ${mode === 'standby' ? 'active' : ''}`}
+                  onClick={() => { setStandbySelectedOption(standbySelection); setShowStandbyModal(true); }}
+                  title="Switch to Standby scene"
+                >
+                  Standby
+                </button>
+
+                {/* OBS connection indicator */}
+                <span className={`gg-obs-indicator ${obsConnected ? 'connected' : 'disconnected'}`}>
+                  <span className="gg-obs-dot">●</span>
+                  OBS {obsConnected ? 'On' : 'Off'}
+                </span>
+              </div>
+            )}
+
             <div className={styles.boardWrap}>
               <KanbanBoard
                 initialBoard={board}
@@ -310,6 +568,52 @@ export default function GrossGauntletNow() {
             </div>
           </div>
         </div>
+
+        {/* ── Explain Topic Modal ── */}
+        {showExplainModal && (
+          <div className="gg-modal-overlay" onClick={() => setShowExplainModal(false)}>
+            <div className="gg-modal" onClick={e => e.stopPropagation()}>
+              <div className="gg-modal-title">Explain Topic</div>
+              <input
+                type="text"
+                className="gg-modal-input"
+                placeholder="what are you explaining?"
+                value={explainTopicInput}
+                onChange={e => setExplainTopicInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleExplainConfirm(); }}
+                autoFocus
+              />
+              <div className="gg-modal-actions">
+                <button className="gg-modal-btn gg-modal-btn--confirm" onClick={handleExplainConfirm}>Switch</button>
+                <button className="gg-modal-btn gg-modal-btn--cancel" onClick={() => setShowExplainModal(false)}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Standby Selection Modal ── */}
+        {showStandbyModal && (
+          <div className="gg-modal-overlay" onClick={() => setShowStandbyModal(false)}>
+            <div className="gg-modal" onClick={e => e.stopPropagation()}>
+              <div className="gg-modal-title">Standby — What are you doing?</div>
+              <div className="gg-modal-options">
+                {STANDBY_OPTIONS.map(opt => (
+                  <button
+                    key={opt}
+                    className={`gg-modal-option ${standbySelectedOption === opt ? 'selected' : ''}`}
+                    onClick={() => setStandbySelectedOption(opt)}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+              <div className="gg-modal-actions">
+                <button className="gg-modal-btn gg-modal-btn--confirm" onClick={handleStandbyConfirm}>Switch</button>
+                <button className="gg-modal-btn gg-modal-btn--cancel" onClick={() => setShowStandbyModal(false)}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </GrossGauntletShell>
   );

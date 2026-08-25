@@ -477,8 +477,8 @@ export default function GrossGauntletApp() {
               <div className="side-line" ref={timerRefs.nowTimeMain}>--- - --:-- --</div>
             </div>
             <div className="context-pill stack side-line-counts">
-              <div className="side-line">CONTENT: {counts.content}</div>
-              <div className="side-line">SALES: {counts.sales}</div>
+              <div className="side-line">GROSS: ${counts.content}</div>
+              <div className="side-line">ALPHA: ${counts.sales}</div>
             </div>
           </div>
           <div className="webcam-col"></div>

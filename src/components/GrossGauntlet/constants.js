@@ -60,12 +60,13 @@ export const MODES = {
 // Daily work target (in seconds)
 export const DAILY_WORK_TARGET_SECONDS = 10 * 3600; // 10 hours
 
-// Standby options
+// Standby options (must match control panel dropdown)
 export const STANDBY_OPTIONS = [
+  'Beach',
+  'Gym',
+  'Lunch',
+  'Dinner',
   'Coming Soon',
-  'Break',
-  'Offline',
-  'Setting Up',
 ];
 
 // Logging configuration
