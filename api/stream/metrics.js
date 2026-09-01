@@ -81,7 +81,7 @@ export default async function handler(req, res) {
     if (Object.hasOwn(payload, 'totalGross')) updateData.total_gross = payload.totalGross;
 
     let result;
-    
+
     if (activeStreamData) {
       // Authoritative guard: never let a non-reset push lower today_seconds.
       // A stale/partial push (metric +/-, title blur, etc.) must not shrink the
@@ -108,12 +108,26 @@ export default async function handler(req, res) {
         .eq('date', activeStreamData.date)
         .eq('session_number', activeStreamData.session_number)
         .select();
+
+      // Record SessionLogs on mode change
+      if (Object.hasOwn(payload, 'mode') && payload.mode !== activeStreamData.mode) {
+        const { error: slErr } = await supabase
+          .from('SessionLogs')
+          .insert({
+            session_date: activeStreamData.date,
+            session_number: activeStreamData.session_number,
+            mode: payload.mode,
+            occurred_at: new Date().toISOString()
+          });
+        if (slErr) console.error('[SessionLogs] Failed to insert mode change:', slErr);
+      }
     } else {
       // No active stream: persist updates to the latest session for today
       // (handles resets, metric changes, title changes when offline)
+      delete updateData.timestamps;
       const { data: sessionsToday } = await supabase
         .from('Sessions')
-        .select('session_number, today_seconds')
+        .select('session_number, today_seconds, mode')
         .eq('date', today)
         .order('session_number', { ascending: false })
         .limit(1);
@@ -134,6 +148,38 @@ export default async function handler(req, res) {
           .from('Sessions')
           .insert(updateData)
           .select();
+
+        // Record initial SessionLogs for new session
+        const initialMode = Object.hasOwn(payload, 'mode') ? payload.mode : 'standby';
+        const { error: slErr } = await supabase
+          .from('SessionLogs')
+          .insert({
+            session_date: today,
+            session_number: nextSessionNum,
+            mode: initialMode,
+            occurred_at: new Date().toISOString()
+          });
+        if (slErr) console.error('[SessionLogs] Failed to insert initial mode:', slErr);
+
+        // Claim floating logs: attach orphaned rows to this new session
+        if (result && result.length > 0) {
+          const newDate = result[0].date;
+          const newSessionNum = result[0].session_number;
+
+          const claimTables = ['TaskLogs', 'NoteLogs', 'SessionLogs'];
+          for (const table of claimTables) {
+            try {
+              const { error: claimErr } = await supabase
+                .from(table)
+                .update({ session_date: newDate, session_number: newSessionNum })
+                .is('session_date', null)
+                .is('session_number', null);
+              if (claimErr) console.error(`[Claim ${table}] Failed:`, claimErr);
+            } catch (claimErr) {
+              console.error(`[Claim ${table}] Exception:`, claimErr);
+            }
+          }
+        }
       } else if (latestToday) {
         // Offline update: persist to the latest today's session
         result = await supabase
@@ -142,6 +188,19 @@ export default async function handler(req, res) {
           .eq('date', today)
           .eq('session_number', latestToday.session_number)
           .select();
+
+        // Record SessionLogs on mode change
+        if (Object.hasOwn(payload, 'mode') && payload.mode !== latestToday.mode) {
+          const { error: slErr } = await supabase
+            .from('SessionLogs')
+            .insert({
+              session_date: null,
+              session_number: null,
+              mode: payload.mode,
+              occurred_at: new Date().toISOString()
+            });
+          if (slErr) console.error('[SessionLogs] Failed to insert mode change:', slErr);
+        }
       } else {
         return res.status(200).json({
           success: true,

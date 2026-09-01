@@ -75,16 +75,19 @@ export default async function handler(req, res) {
 
     const sDate = session.date;
     const sNum = session.session_number;
+    // When offline (no active stream), null the log entry session fields
+    const logDate = activeSession ? sDate : null;
+    const logNum = activeSession ? sNum : null;
 
     if (action === 'sync') {
       // Delete all existing logs for this session
-      await supabase.from('Logs').delete().eq('session_date', sDate).eq('session_number', sNum);
+      await supabase.from('TaskLogs').delete().eq('session_date', sDate).eq('session_number', sNum);
       
       const insertLogs = [];
       const now = new Date().toISOString();
       const createEvent = (task, col) => ({
-        session_date: sDate,
-        session_number: sNum,
+        session_date: logDate,
+        session_number: logNum,
         task_id: String(task.id),
         event_type: 'create',
         to_column: col,
@@ -98,14 +101,14 @@ export default async function handler(req, res) {
       (doneTasks || []).forEach(t => insertLogs.push(createEvent(t, 'done')));
 
       if (insertLogs.length > 0) {
-        await supabase.from('Logs').insert(insertLogs);
+        await supabase.from('TaskLogs').insert(insertLogs);
       }
     } else {
       if (!taskId) taskId = String(Date.now());
       
       const logEntry = {
-        session_date: sDate,
-        session_number: sNum,
+        session_date: logDate,
+        session_number: logNum,
         task_id: String(taskId),
         event_type: action,
         occurred_at: new Date().toISOString()
@@ -123,13 +126,13 @@ export default async function handler(req, res) {
         // No payload needed
       }
 
-      const { error: insertErr } = await supabase.from('Logs').insert(logEntry);
+      const { error: insertErr } = await supabase.from('TaskLogs').insert(logEntry);
       if (insertErr) throw insertErr;
     }
 
     // Refold logs
     const { data: logs } = await supabase
-      .from('Logs')
+      .from('TaskLogs')
       .select('*')
       .eq('session_date', sDate)
       .eq('session_number', sNum)

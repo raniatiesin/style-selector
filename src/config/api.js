@@ -18,6 +18,7 @@ export const API = {
   getStreamState:  ()                      => `${BASE}/stream/state`,
   postMetrics:     ()                      => `${BASE}/stream/metrics`,
   postTask:        ()                      => `${BASE}/stream/tasks`,
+  postMode:        ()                      => `${BASE}/stream/mode`,
 
   // Archive — query-param based, all through /days
   getAllDays:      ()                      => `${BASE}/grossgauntlet/days`,
@@ -25,6 +26,10 @@ export const API = {
   getSession:      (dayNumber, sessionNumber) => `${BASE}/grossgauntlet/days?dayNumber=${encodeURIComponent(Number(dayNumber))}&sessionNumber=${encodeURIComponent(Number(sessionNumber))}`,
   getEvents:       (dayNumber, sessionNumber) => `${BASE}/grossgauntlet/days?dayNumber=${encodeURIComponent(Number(dayNumber))}&sessionNumber=${encodeURIComponent(Number(sessionNumber))}&events=true`,
 
-  // Notes autosave
-  postNotes:       ()                      => `${BASE}/grossgauntlet/notes`,
+  // NoteLogs read (GET) and create (POST)
+  getNotes:        (dayNumber, sessionNumber) => `${BASE}/grossgauntlet/note?dayNumber=${encodeURIComponent(Number(dayNumber))}&sessionNumber=${encodeURIComponent(Number(sessionNumber))}`,
+  postNote:        ()                      => `${BASE}/grossgauntlet/note`,
+
+  // SessionLogs read (GET)
+  getSessionLogs:  (dayNumber, sessionNumber) => `${BASE}/grossgauntlet/sessionlogs?dayNumber=${encodeURIComponent(Number(dayNumber))}&sessionNumber=${encodeURIComponent(Number(sessionNumber))}`,
 };

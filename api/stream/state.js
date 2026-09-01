@@ -39,19 +39,17 @@ export default async function handler(req, res) {
     if (activeStreamData) {
       session = activeStreamData;
     } else {
-      // No active stream. Resolve today's accumulated total from the latest session
-      // for TODAY only. This preserves the total across sessions within the same day,
-      // while resetting it to 0 on a new day (no Sessions row for `today` yet).
-      const { data: recentToday } = await supabase
+      // No active stream. Fall back to the absolute latest session across all dates.
+      const { data: recentSession } = await supabase
         .from('Sessions')
         .select('*')
-        .eq('date', today)
+        .order('date', { ascending: false })
         .order('session_number', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (recentToday) {
-        session = recentToday;
+      if (recentSession) {
+        session = recentSession;
       }
     }
 
@@ -82,7 +80,7 @@ export default async function handler(req, res) {
 
     if (session) {
        const { data: logs } = await supabase
-          .from('Logs')
+          .from('TaskLogs')
           .select('*')
           .eq('session_date', session.date)
           .eq('session_number', session.session_number)
@@ -179,6 +177,55 @@ export default async function handler(req, res) {
             pausedTimestamp: null,
             streamNumber: 1
         };
+    }
+
+    // ── Always fold in NULL-session TaskLogs (offline prep work) ──
+    {
+       const { data: nullLogs } = await supabase
+          .from('TaskLogs')
+          .select('*')
+          .is('session_date', null)
+          .is('session_number', null)
+          .order('occurred_at', { ascending: true });
+
+       function removeFromBoard(board, taskId) {
+         for (const col of ['todo', 'up_next', 'in_progress', 'in_review', 'done']) {
+           const idx = board[col].findIndex(t => String(t.id) === String(taskId));
+           if (idx !== -1) return board[col].splice(idx, 1)[0];
+         }
+         return null;
+       }
+
+       function updateInBoard(board, taskId, updates) {
+         for (const col of ['todo', 'up_next', 'in_progress', 'in_review', 'done']) {
+           const idx = board[col].findIndex(t => String(t.id) === String(taskId));
+           if (idx !== -1) {
+             Object.assign(board[col][idx], updates);
+             return true;
+           }
+         }
+         return false;
+       }
+
+       if (nullLogs) {
+         for (const event of nullLogs) {
+           const toCol = event.to_column || 'todo';
+           if (!board[toCol]) board[toCol] = [];
+           if (event.event_type === 'create') {
+             board[toCol].push({ id: event.task_id, name: event.payload?.name || 'Untitled', createdAt: event.occurred_at });
+           } else if (event.event_type === 'move') {
+             const task = removeFromBoard(board, event.task_id);
+             if (task) {
+                 if (!board[toCol]) board[toCol] = [];
+                 board[toCol].push(task);
+             }
+           } else if (event.event_type === 'rename') {
+             updateInBoard(board, event.task_id, { name: event.payload?.new });
+           } else if (event.event_type === 'delete') {
+             removeFromBoard(board, event.task_id);
+           }
+         }
+       }
     }
 
     const flattenedTasks = [

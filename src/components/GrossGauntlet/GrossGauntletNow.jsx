@@ -7,6 +7,7 @@ import { buildBoard } from './kanban/moveTask';
 import GrossGauntletShell from './GrossGauntletShell';
 import RunButton, { getIsUnlocked, getAdminKey } from './RunButton';
 import { STORAGE_KEYS, POLL_INTERVALS, OBS_CONFIG, STANDBY_OPTIONS } from './constants';
+import NowPanel from './NowPanel';
 import styles from './GrossGauntletSession.module.css';
 import './GrossGauntletPages.css';
 
@@ -83,7 +84,6 @@ export default function GrossGauntletNow() {
   const [alphaGross, setAlphaGross] = useState(0);
   const [timestamps, setTimestamps] = useState('');
   const [title, setTitle] = useState('');
-  const [notes, setNotes] = useState('');
   const [streamUrl, setStreamUrl] = useState('');
   const [standbySelection, setStandbySelection] = useState('Coming Soon');
   const [isPaused, setIsPaused] = useState(false);
@@ -105,6 +105,11 @@ export default function GrossGauntletNow() {
 
   const writePendingRef = useRef(false);
   const stateRef = useRef(null);
+  const writeCooldownRef = useRef(0);
+  const notesRef = useRef(null);
+
+  const [blocs, setBlocs] = useState([]);
+  const [activeBloc, setActiveBloc] = useState(null);
 
   const isEditable = isUnlocked;
 
@@ -168,6 +173,7 @@ export default function GrossGauntletNow() {
         setSyncError(e.message || 'Failed to save changes');
       } finally {
         writePendingRef.current = false;
+        writeCooldownRef.current = Date.now() + 4000;
       }
     },
     []
@@ -187,6 +193,7 @@ export default function GrossGauntletNow() {
       setSyncError(e.message || 'Failed to save stat change');
     } finally {
       writePendingRef.current = false;
+      writeCooldownRef.current = Date.now() + 4000;
     }
   }, []);
 
@@ -275,10 +282,20 @@ export default function GrossGauntletNow() {
     try {
       await pushStateUpdate(newState);
       setSyncError(null);
+      // Fire-and-forget: record mode change in SessionLogs
+      const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
+      if (adminKey) {
+        fetch(API.postMode(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminKey}` },
+          body: JSON.stringify({ mode: modeStr }),
+        }).catch(() => {});
+      }
     } catch (e) {
       setSyncError(e.message || 'Mode change failed');
     } finally {
       writePendingRef.current = false;
+      writeCooldownRef.current = Date.now() + 4000;
     }
   }, [obsConnected, standbySelectedOption]);
 
@@ -306,6 +323,7 @@ export default function GrossGauntletNow() {
         if (!res.ok) throw new Error(`Server returned ${res.status}`);
         const data = await res.json();
         if (cancelled) return;
+        if (Date.now() < writeCooldownRef.current) return;
 
         const m = data?.metrics || {};
         const activeStream = m.isStreaming === true;
@@ -323,7 +341,6 @@ export default function GrossGauntletNow() {
         setAlphaGross(m.alphaGross ?? 0);
         setTimestamps(m.timestamps ?? '');
         setTitle(m.title ?? '');
-        setNotes(m.notes ?? '');
         setStreamUrl(m.stream_url ?? '');
         setStandbySelection(m.standbySelection ?? 'Coming Soon');
         setIsPaused(m.isPaused ?? false);
@@ -451,13 +468,182 @@ export default function GrossGauntletNow() {
     alpha_gross: alphaGross,
     timestamps,
     stream_url: streamUrl,
-    notes,
     title,
     mode,
     isStreaming,
   };
 
-  /* ── loading / error states ── */
+  /* ── Fetch blocs (NoteLogs) on mount (one-time) ── */
+  useEffect(() => {
+    let cancelled = false;
+    async function fn() {
+      try {
+        const res = await fetch(API.getNotes(0, 0));
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (cancelled) return;
+        if (json.success && Array.isArray(json.notes)) setBlocs(json.notes);
+      } catch (e) { console.error('Failed to fetch notes blocs:', e); }
+    }
+    fn();
+    return () => { cancelled = true; };
+  }, []);
+
+  /* ── Bloc handlers ── */
+  function handleBlocBlur(blocId, type, e) {
+    const newContent = e.target.textContent || '';
+    const bloc = blocs.find(b => b.bloc_id === blocId);
+    if (!bloc) return;
+    if (bloc.content === newContent) { setActiveBloc(null); return; }
+    setBlocs(prev => prev.map(b => b.bloc_id === blocId ? { ...b, content: newContent } : b));
+    setActiveBloc(null);
+    const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
+    if (!adminKey) return;
+    fetch(API.postNote(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminKey}` },
+      body: JSON.stringify({ bloc_id: blocId, type, content: newContent }),
+    }).catch(e => console.error('Failed to save note:', e));
+  }
+
+  function handleBlocKeyDown(blocId, type, e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const newId = crypto.randomUUID();
+      const newBloc = { bloc_id: newId, type: 'normal', content: '' };
+      const idx = blocs.findIndex(b => b.bloc_id === blocId);
+      const updated = [...blocs];
+      updated.splice(idx + 1, 0, newBloc);
+      setBlocs(updated);
+      setActiveBloc(newId);
+      const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
+      if (adminKey) {
+        fetch(API.postNote(), {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminKey}` },
+          body: JSON.stringify({ bloc_id: newId, type: 'normal', content: '' }),
+        }).catch(e => console.error('Failed to create note:', e));
+      }
+      requestAnimationFrame(() => {
+        const el = notesRef.current?.querySelector(`[data-bloc-id="${newId}"]`);
+        if (el) el.focus();
+      });
+      return;
+    }
+    if (e.key === 'Backspace' && !e.target.textContent) {
+      e.preventDefault();
+      const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
+      setBlocs(prev => prev.filter(b => b.bloc_id !== blocId));
+      setActiveBloc(null);
+      if (adminKey) {
+        fetch(API.postNote(), {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminKey}` },
+          body: JSON.stringify({ bloc_id: blocId, type, content: '' }),
+        }).catch(e => console.error('Failed to delete note:', e));
+      }
+      return;
+    }
+    // Heading shortcut: type "# " at start of empty bloc
+    if (e.key === ' ' && e.target.textContent === '#') {
+      e.preventDefault();
+      e.target.textContent = '';
+      setBlocs(prev => prev.map(b => b.bloc_id === blocId ? { ...b, type: 'heading', content: '' } : b));
+      const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
+      if (adminKey) {
+        fetch(API.postNote(), {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminKey}` },
+          body: JSON.stringify({ bloc_id: blocId, type: 'heading', content: '' }),
+        }).catch(e => console.error('Failed to convert to heading:', e));
+      }
+      return;
+    }
+    // Divider shortcut: type "--- " at start of bloc
+    if (e.key === ' ' && e.target.textContent === '---') {
+      e.preventDefault();
+      e.target.textContent = '';
+      const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
+      setBlocs(prev => prev.map(b => b.bloc_id === blocId ? { ...b, type: 'divider', content: '' } : b));
+      if (adminKey) {
+        fetch(API.postNote(), {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminKey}` },
+          body: JSON.stringify({ bloc_id: blocId, type: 'divider', content: '' }),
+        }).catch(e => console.error('Failed to convert to divider:', e));
+      }
+      // Create a fresh empty normal bloc below the divider
+      const newId = crypto.randomUUID();
+      const newBloc = { bloc_id: newId, type: 'normal', content: '' };
+      const idx = blocs.findIndex(b => b.bloc_id === blocId);
+      const updated = [...blocs];
+      updated.splice(idx + 1, 0, newBloc);
+      setBlocs(updated);
+      setActiveBloc(newId);
+      if (adminKey) {
+        fetch(API.postNote(), {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminKey}` },
+          body: JSON.stringify({ bloc_id: newId, type: 'normal', content: '' }),
+        }).catch(e => console.error('Failed to create note:', e));
+      }
+      requestAnimationFrame(() => {
+        const el = notesRef.current?.querySelector(`[data-bloc-id="${newId}"]`);
+        if (el) el.focus();
+      });
+      return;
+    }
+  }
+
+  function handleEmptyLineBlur(e) {
+    const content = e.target.textContent || '';
+    if (!content.trim()) { e.target.textContent = ''; setActiveBloc(null); return; }
+    const newId = crypto.randomUUID();
+    const newBloc = { bloc_id: newId, type: 'normal', content };
+    setBlocs(prev => [...prev, newBloc]);
+    setActiveBloc(null);
+    const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
+    if (adminKey) {
+      fetch(API.postNote(), {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminKey}` },
+        body: JSON.stringify({ bloc_id: newId, type: 'normal', content }),
+      }).catch(e => console.error('Failed to create note:', e));
+    }
+    e.target.textContent = '';
+  }
+
+  function handleEmptyLineKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const content = e.target.textContent || '';
+      if (!content.trim()) return;
+      const newId = crypto.randomUUID();
+      const newBloc = { bloc_id: newId, type: 'normal', content };
+      setBlocs(prev => [...prev, newBloc]);
+      const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
+      if (adminKey) {
+        fetch(API.postNote(), {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminKey}` },
+          body: JSON.stringify({ bloc_id: newId, type: 'normal', content }),
+        }).catch(e => console.error('Failed to create note:', e));
+      }
+      e.target.textContent = '';
+    }
+  }
+
+  function handleAddBloc() {
+    const newId = crypto.randomUUID();
+    const newBloc = { bloc_id: newId, type: 'normal', content: '' };
+    setBlocs(prev => [...prev, newBloc]);
+    setActiveBloc(newId);
+    const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
+    if (adminKey) {
+      fetch(API.postNote(), {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminKey}` },
+        body: JSON.stringify({ bloc_id: newId, type: 'normal', content: '' }),
+      }).catch(e => console.error('Failed to create note:', e));
+    }
+    requestAnimationFrame(() => {
+      const el = notesRef.current?.querySelector(`[data-bloc-id="${newId}"]`);
+      if (el) el.focus();
+    });
+  }
+
   if (loading) {
     return (
       <GrossGauntletShell>
@@ -480,26 +666,58 @@ export default function GrossGauntletNow() {
       sessionData={sessionData}
       editable={isEditable}
       onStatChange={handleStatChange}
+      sidebarAction={
+        <RunButton
+          isUnlocked={isUnlocked}
+          onUnlock={() => setIsUnlocked(getIsUnlocked())}
+        />
+      }
     >
-      <div className={styles.page}>
+      <div className={`${styles.page} ${styles.pageFlex}`}>
         <header className={styles.header}>
           <Link to="/grossgauntlet" className={styles.back}>← Back</Link>
+
+          {isEditable && (
+            <div className={styles.headerCenter}>
+              <button
+                className={`gg-mode-btn ${mode === 'work' ? 'active' : ''}`}
+                onClick={() => handleModeChange('work')}
+                title="Switch to Work scene"
+              >
+                Work
+              </button>
+              <button
+                className={`gg-mode-btn ${mode.startsWith('explain') ? 'active' : ''}`}
+                onClick={() => { setExplainTopicInput(''); setShowExplainModal(true); }}
+                title="Switch to Explain scene"
+              >
+                Explain
+              </button>
+              <button
+                className={`gg-mode-btn ${mode === 'break' ? 'active' : ''}`}
+                onClick={() => handleModeChange('break')}
+                title="Switch to Break scene"
+              >
+                Break
+              </button>
+              <button
+                className={`gg-mode-btn ${mode === 'standby' ? 'active' : ''}`}
+                onClick={() => { setStandbySelectedOption(standbySelection); setShowStandbyModal(true); }}
+                title="Switch to Standby scene"
+              >
+                Standby
+              </button>
+            </div>
+          )}
+
           <div className={styles.headerMeta}>
             <div className={styles.headerMetaRow}>
-              <span className={styles.dayLabel}>
-                NOW · Session {sessionData.sessionNumber}
-              </span>
               <span className={`${styles.liveBadge} ${isStreaming ? styles.live : styles.offline}`}>
                 <span className={isStreaming ? styles.liveDot : styles.offlineDot} />
                 {isStreaming ? 'LIVE' : 'OFFLINE'}
               </span>
             </div>
             <div className={styles.headerActions}>
-              <RunButton
-                isUnlocked={isUnlocked}
-                onUnlock={() => setIsUnlocked(getIsUnlocked())}
-              />
-              <span className={styles.modeChip}>Mode: {mode}</span>
             </div>
           </div>
         </header>
@@ -516,58 +734,53 @@ export default function GrossGauntletNow() {
           </div>
         )}
 
-        <div className={styles.body}>
-          <div className={styles.left}>
-
-            {/* ── Mode scene buttons (visible when unlocked) ── */}
-            {isEditable && (
-              <div className="gg-mode-bar">
-                <button
-                  className={`gg-mode-btn ${mode === 'work' ? 'active' : ''}`}
-                  onClick={() => handleModeChange('work')}
-                  title="Switch to Work scene"
-                >
-                  Work
-                </button>
-                <button
-                  className={`gg-mode-btn ${mode.startsWith('explain') ? 'active' : ''}`}
-                  onClick={() => { setExplainTopicInput(''); setShowExplainModal(true); }}
-                  title="Switch to Explain scene"
-                >
-                  Explain
-                </button>
-                <button
-                  className={`gg-mode-btn ${mode === 'break' ? 'active' : ''}`}
-                  onClick={() => handleModeChange('break')}
-                  title="Switch to Break scene"
-                >
-                  Break
-                </button>
-                <button
-                  className={`gg-mode-btn ${mode === 'standby' ? 'active' : ''}`}
-                  onClick={() => { setStandbySelectedOption(standbySelection); setShowStandbyModal(true); }}
-                  title="Switch to Standby scene"
-                >
-                  Standby
-                </button>
-
-                {/* OBS connection indicator */}
-                <span className={`gg-obs-indicator ${obsConnected ? 'connected' : 'disconnected'}`}>
-                  <span className="gg-obs-dot">●</span>
-                  OBS {obsConnected ? 'On' : 'Off'}
-                </span>
-              </div>
-            )}
-
-            <div className={styles.boardWrap}>
-              <KanbanBoard
-                initialBoard={board}
-                editable={isEditable}
-                onBoardChange={handleBoardChange}
+        <NowPanel
+          blocs={blocs}
+          activeBlocId={activeBloc}
+          onBlocChange={setActiveBloc}
+          isEditable={isEditable}
+          notesContainerRef={notesRef}
+          kanbanContent={
+            <KanbanBoard
+              initialBoard={board}
+              editable={isEditable}
+              onBoardChange={handleBoardChange}
+            />
+          }
+          renderBloc={(bloc) => {
+            if (bloc.type === 'divider') {
+              return (
+                <div className={`${styles.noteBloc} ${styles.noteBlocDivider}`}>
+                  <hr />
+                </div>
+              );
+            }
+            return (
+              <div
+                className={`${styles.noteBloc} ${bloc.type === 'heading' ? styles.noteBlocHeading : ''} ${bloc.bloc_id === activeBloc ? styles.noteBlocActive : ''}`}
+                contentEditable={isEditable}
+                suppressContentEditableWarning
+                data-bloc-id={bloc.bloc_id}
+                onClick={() => setActiveBloc(bloc.bloc_id)}
+                onBlur={e => handleBlocBlur(bloc.bloc_id, bloc.type, e)}
+                onKeyDown={e => handleBlocKeyDown(bloc.bloc_id, bloc.type, e)}
+                dangerouslySetInnerHTML={{ __html: bloc.content || '' }}
               />
-            </div>
-          </div>
-        </div>
+            );
+          }}
+          renderEmptyLine={() => (
+            <div
+              className={`${styles.noteBloc} ${styles.emptyLine} ${activeBloc === '__empty__' ? styles.noteBlocActive : ''}`}
+              contentEditable={isEditable}
+              suppressContentEditableWarning
+              data-empty-line
+              onClick={() => setActiveBloc('__empty__')}
+              onBlur={handleEmptyLineBlur}
+              onKeyDown={handleEmptyLineKeyDown}
+              onFocus={() => setActiveBloc('__empty__')}
+            />
+          )}
+        />
 
         {/* ── Explain Topic Modal ── */}
         {showExplainModal && (

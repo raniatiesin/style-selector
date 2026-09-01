@@ -202,6 +202,14 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
+.hr {
+  width: 100%;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  margin: 8px 0;
+  opacity: 1;
+}
+
 .main {
   flex: 1;
   min-width: 0;

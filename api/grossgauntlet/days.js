@@ -42,7 +42,7 @@ export default async function handler(req, res) {
     if (events === 'true' && dayNumber && sessionNumber) {
       const dateStr = dayNumberToDate(dayNumber);
       const { data: logs, error } = await supabase
-        .from('Logs')
+        .from('TaskLogs')
         .select('*')
         .eq('session_date', dateStr)
         .eq('session_number', sessionNumber)
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
       if (!session) return res.status(404).json({ error: 'Session not found' });
 
       const { data: logs, error: logsError } = await supabase
-        .from('Logs')
+        .from('TaskLogs')
         .select('*')
         .eq('session_date', dateStr)
         .eq('session_number', sessionNumber)
@@ -152,7 +152,7 @@ export default async function handler(req, res) {
     if (error) throw error;
 
     const { data: logs, error: logsError } = await supabase
-      .from('Logs')
+      .from('TaskLogs')
       .select('session_date, session_number, event_type, to_column, from_column, task_id');
       
     if (logsError) throw logsError;

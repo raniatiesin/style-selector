@@ -110,7 +110,7 @@ function EditableStat({ label, value, field, editable, onSave, format }) {
   );
 }
 
-export default function GrossGauntletShell({ children, sessionData, editable, onStatChange }) {
+export default function GrossGauntletShell({ children, sessionData, editable, onStatChange, sidebarAction }) {
   const [stats, setStats] = useState({
     totalDays: 0,
     totalHours: 0,
@@ -119,12 +119,12 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
   });
   const [notes, setNotes] = useState('');
   const notesTimerRef = useRef(null);
+  const [nextDayNumber, setNextDayNumber] = useState(null);
+  const [nextSessionNumber, setNextSessionNumber] = useState(null);
 
   const isSession = sessionData !== null && sessionData !== undefined;
 
   useEffect(() => {
-    if (isSession) return; // skip global stats fetch when rendering session sidebar
-
     let cancelled = false;
 
     async function fetchStats() {
@@ -138,12 +138,17 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
         const totalDays = records.length;
         let totalSeconds = 0;
         let tasksDone = 0;
+        let todaySessionCount = 0;
+        const todayStr = new Date().toISOString().slice(0, 10);
 
         for (const day of records) {
           const sessions = Array.isArray(day.sessions) ? day.sessions : [];
           for (const session of sessions) {
             totalSeconds += session.today_seconds || 0;
             tasksDone += session.done_count || 0;
+          }
+          if (day.date === todayStr) {
+            todaySessionCount = sessions.length;
           }
         }
 
@@ -155,6 +160,12 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
           avgDailyHours: formatHours(avgDailySeconds),
           tasksDone,
         });
+
+        // Compute what the next day/session would be
+        const DAY_OFFSET = new Date('2026-08-15');
+        const dayNum = Math.floor((Date.now() - DAY_OFFSET) / 86400000) + 1;
+        setNextDayNumber(dayNum);
+        setNextSessionNumber(todaySessionCount + 1);
       } catch (e) {
         if (!cancelled) {
           console.error('Failed to fetch shell stats:', e);
@@ -176,19 +187,6 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
     clearTimeout(notesTimerRef.current);
   }, []);
 
-  function handleNotesChange(value) {
-    setNotes(value);
-    clearTimeout(notesTimerRef.current);
-    notesTimerRef.current = setTimeout(() => fetch(API.postNotes(), {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        dayNumber: Number(sessionData.dayNumber),
-        sessionNumber: Number(sessionData.sessionNumber),
-        notes: value,
-      }),
-    }), 800);
-  }
-
   return (
     <div className={styles.shell}>
       <main className={styles.main}>{children}</main>
@@ -197,18 +195,10 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
         {isSession ? (
           <>
             <div className={styles.sidebarTitle}>
-              DAY {sessionData.dayNumber} · SESSION {sessionData.sessionNumber}
+              {sessionData.dayNumber === 'now' && nextDayNumber
+                ? `DAY ${nextDayNumber} · SESSION ${nextSessionNumber}`
+                : `DAY ${sessionData.dayNumber} · SESSION ${sessionData.sessionNumber}`}
             </div>
-
-            {sessionData.isStreaming !== undefined && (
-              <div className={styles.sidebarStatusRow}>
-                <span className={`${styles.statusDot} ${sessionData.isStreaming ? styles.liveDot : styles.offlineDot}`}>●</span>
-                <span className={styles.sidebarStatusText}>
-                  {sessionData.isStreaming ? 'LIVE' : 'OFFLINE'}
-                  {sessionData.mode ? ` · ${sessionData.mode[0].toUpperCase() + sessionData.mode.slice(1)}` : ''}
-                </span>
-              </div>
-            )}
 
             <div className={styles.statRow}>
               <span className={styles.statLabel}>Today</span>
@@ -245,19 +235,10 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
               format={v => `$${Number(v).toLocaleString()}`}
             />
 
-            <div className={styles.divider} />
-
-            <div className={styles.sidebarTitle}>Notes</div>
-            <textarea
-              className={styles.sidebarTextarea}
-              value={notes}
-              onChange={e => handleNotesChange(e.target.value)}
-              placeholder="Stream notes…"
-            />
+            <hr className={styles.hr} />
 
             {sessionData.timestamps !== undefined && (
               <>
-                <div className={styles.divider} />
                 <EditableTextarea
                   label="Timestamps"
                   value={sessionData.timestamps}
@@ -273,6 +254,12 @@ export default function GrossGauntletShell({ children, sessionData, editable, on
                 <div className={styles.divider} />
                 <a href={sessionData.stream_url} target="_blank" rel="noopener noreferrer" className={styles.nowLink}>▶ Watch on YouTube</a>
               </>
+            )}
+
+            {sidebarAction && (
+              <div style={{ marginTop: 'auto' }}>
+                {sidebarAction}
+              </div>
             )}
           </>
         ) : (

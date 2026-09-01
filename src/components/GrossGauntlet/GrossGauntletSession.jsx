@@ -30,6 +30,7 @@ export default function GrossGauntletSession() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [sessionLogs, setSessionLogs] = useState([]);
   const [sliderValue, setSliderValue] = useState(100);
   const [totalSessions, setTotalSessions] = useState(1);
 
@@ -49,15 +50,17 @@ export default function GrossGauntletSession() {
           }
           return payload;
         };
-        const [sessionRes, eventsRes, dayRes] = await Promise.all([
+        const [sessionRes, eventsRes, dayRes, sessionLogsRes] = await Promise.all([
           fetchJson(API.getSession(dayNumber, sessionNumber)),
           fetchJson(API.getEvents(dayNumber, sessionNumber)),
           fetchJson(API.getDay(dayNumber)),
+          fetchJson(API.getSessionLogs(dayNumber, sessionNumber)),
         ]);
         const sessionData = sessionRes.session ?? sessionRes.data ?? null;
         setSession(sessionData);
         setEvents(Array.isArray(eventsRes.events) ? eventsRes.events : []);
         setTotalSessions(Array.isArray(dayRes.sessions) && dayRes.sessions.length ? dayRes.sessions.length : 1);
+        setSessionLogs(Array.isArray(sessionLogsRes.sessionLogs) ? sessionLogsRes.sessionLogs : []);
       } catch (error) {
         setSession(null);
         setEvents([]);
@@ -74,6 +77,14 @@ export default function GrossGauntletSession() {
   const totalMs = endTime - startTime || 1;
   const currentMs = startTime + (sliderValue / 100) * totalMs;
   const currentTime = new Date(currentMs);
+  const modeDots = sessionLogs
+    .filter(log => log.occurred_at && log.mode)
+    .map(log => {
+      const logTime = new Date(log.occurred_at).getTime();
+      const pct = totalMs > 0 ? ((logTime - startTime) / totalMs) * 100 : 0;
+      return { mode: log.mode, pct };
+    })
+    .filter(dot => dot.pct >= 0 && dot.pct <= 100);
   const board = events.length ? replayToTime(events, currentTime) : EMPTY_BOARD;
   const modeAtTime = getModeAtTime(session?.timestamps, session?.session_start_timestamp, currentTime);
   const isInactive = ['break', 'standby', 'explain'].includes(modeAtTime);
@@ -123,16 +134,29 @@ export default function GrossGauntletSession() {
 
       {events.length > 0 && (
         <div className="gg-bottom-bar">
-          <input
-            className={styles.scrubber}
-            type="range"
-            min="0"
-            max="100"
-            step="0.01"
-            value={sliderValue}
-            aria-label="Replay position"
-            onChange={e => setSliderValue(Number(e.target.value))}
-          />
+          <div className={styles.scrubberWrap}>
+            <input
+              className={styles.scrubber}
+              type="range"
+              min="0"
+              max="100"
+              step="0.01"
+              value={sliderValue}
+              aria-label="Replay position"
+              onChange={e => setSliderValue(Number(e.target.value))}
+            />
+            <div className={styles.scrubberDots}>
+              {modeDots.map((dot, i) => (
+                <span
+                  key={i}
+                  className={styles.scrubberDot}
+                  data-mode={dot.mode}
+                  title={dot.mode}
+                  style={{ left: `${dot.pct}%` }}
+                />
+              ))}
+            </div>
+          </div>
           <span className={styles.time}>{formatElapsed(currentMs - startTime)} / {formatElapsed(totalMs)}</span>
         </div>
       )}

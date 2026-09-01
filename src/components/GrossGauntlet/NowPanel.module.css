@@ -1,0 +1,63 @@
+/* ── Container rules ── */
+.leftPanel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ── Kanban Wrapper ── */
+.kanbanWrapper {
+  width: 100%;
+  opacity: 1;
+  transform: translateY(0);
+  will-change: transform, opacity;
+  flex-shrink: 0;
+}
+
+.kanbanWrapper.boardWrapGone {
+  display: none !important;
+}
+
+/* ── Notes Section Wrapper (base — no scroll, no flex-grow) ── */
+.notesSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+/* HybridMode: docked at absolute bottom, no scrolling */
+.notesSectionKanban {
+  margin-top: auto;
+  padding-top: 48px;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+/* FullMode: fills available space, scrollable */
+.notesSectionFull {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ── Bloc styles ── */
+.noteBloc {
+  width: 100%;
+  box-sizing: border-box;
+  will-change: transform, opacity;
+}
+
+.noteBlocHidden {
+  display: none !important;
+}
+
+/* LinkBloc dynamic anchor */
+.linkBloc {
+  position: relative;
+  z-index: 10;
+}

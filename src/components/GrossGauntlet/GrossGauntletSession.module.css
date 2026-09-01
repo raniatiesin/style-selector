@@ -1,5 +1,7 @@
 .page{max-width:1200px;margin:0 auto;padding:var(--space-36) var(--space-24) 64px}
-.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:var(--space-28)}
+.pageFlex{display:flex;flex-direction:column;min-height:calc(100dvh - 80px);box-sizing:border-box}
+.headerCenter{display:flex;align-items:center;gap:6px;position:absolute;left:50%;transform:translateX(-50%)}
+.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:var(--space-28);position:relative}
 .back,.dayLabel,.dateLabel,.time,.modeIndicator,.boardWrap{font-family:var(--font)}
 .back{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.3);text-decoration:none;padding-top:3px}.back:hover{color:rgba(255,255,255,.75)}
 .headerMeta{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
@@ -13,10 +15,31 @@
 .liveBadge.offline{color:rgba(255,255,255,.35);border-color:rgba(255,255,255,.08)}
 .modeChip{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:2px 0}
 .dayLabel{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.4)}.dateLabel{font-size:.82rem;color:rgba(255,255,255,.55)}
-.body{display:flex;gap:var(--space-20);align-items:flex-start}.left{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-16)}
-.modeIndicator{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.3);text-align:center;padding:var(--space-8) 0 0}.boardWrap{transition:opacity .4s ease,filter .4s ease}.boardInactive{opacity:.25;filter:grayscale(1);pointer-events:none}
+.body{display:flex;gap:var(--space-20);align-items:flex-start}.left{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-16);min-height:calc(100vh - 200px)}
+.modeIndicator{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.3);text-align:center;padding:var(--space-8) 0 0}.boardInactive{opacity:.25;filter:grayscale(1);pointer-events:none}
+.boardWrapGone{display:none}
 .scrubber{width:100%;height:2px;accent-color:rgba(255,255,255,.6);cursor:pointer}
 .time{font-size:.7rem;letter-spacing:.06em;color:rgba(255,255,255,.3);white-space:nowrap;font-family:var(--font)}
 .loading{padding:var(--space-60) var(--space-24);text-align:center;font-family:var(--font);font-size:.82rem;color:rgba(255,255,255,.28)}
 @media (max-width:900px){.body{flex-direction:column}.page{padding:var(--space-24) var(--space-16) var(--space-40)}}
 @media (max-width:520px){.header{margin-bottom:var(--space-20)}.dayLabel{font-size:.62rem}.dateLabel{font-size:.72rem}}
+
+.scrubberWrap{position:relative;width:100%}
+.scrubberDots{position:absolute;top:50%;left:0;right:0;height:0;pointer-events:none}
+.scrubberDot{position:absolute;width:8px;height:8px;border-radius:50%;border:1px solid rgba(0,0,0,.35);transform:translate(-50%,-50%);transition:transform .15s ease;cursor:default}
+.scrubberDot[data-mode="work"]{background:#2ECC71}
+.scrubberDot[data-mode="break"]{background:#F0A500}
+.scrubberDot[data-mode="standby"]{background:rgba(255,255,255,.45)}
+.scrubberDot[data-mode="explain"]{background:#8A4FFF}
+.scrubberDot:hover{transform:translate(-50%,-50%) scale(1.5)}
+
+.notesSection{display:flex;flex-direction:column;gap:2px}
+.notesSectionKanban{padding-top:48px;margin-top:auto}
+.noteBloc{font-size:.82rem;color:rgba(255,255,255,.55);line-height:1.55;padding:4px 0 4px 12px;border-left:1px solid transparent;outline:none;transition:border-color .2s ease,color .2s ease;min-height:1.4em;cursor:text;word-break:break-word}
+.noteBlocHeading{font-size:.92rem;font-weight:600;color:rgba(255,255,255,.7);padding:6px 0 6px 12px}
+.noteBlocActive{border-left-color:rgba(255,255,255,.18);color:#fff}
+.noteBlocHidden{visibility:hidden;height:0;padding:0;margin:0;overflow:hidden;border-left-color:transparent;pointer-events:none}
+.noteBlocDivider{pointer-events:none;cursor:default;padding:8px 0 8px 12px;min-height:0;border-left-color:transparent}
+.noteBlocDivider hr{margin:0;border:0;border-top:1px solid rgba(255,255,255,.08)}
+.emptyLine{min-height:1.5em}
+.emptyLine:empty:not(:focus)::before{content:'—  write something...';font-size:.78rem;color:rgba(255,255,255,.22);letter-spacing:.03em;pointer-events:none;transition:opacity .2s ease}
