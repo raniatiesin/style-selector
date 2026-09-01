@@ -282,15 +282,6 @@ export default function GrossGauntletNow() {
     try {
       await pushStateUpdate(newState);
       setSyncError(null);
-      // Fire-and-forget: record mode change in SessionLogs
-      const adminKey = localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY);
-      if (adminKey) {
-        fetch(API.postMode(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminKey}` },
-          body: JSON.stringify({ mode: modeStr }),
-        }).catch(() => {});
-      }
     } catch (e) {
       setSyncError(e.message || 'Mode change failed');
     } finally {

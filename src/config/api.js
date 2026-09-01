@@ -18,7 +18,6 @@ export const API = {
   getStreamState:  ()                      => `${BASE}/stream/state`,
   postMetrics:     ()                      => `${BASE}/stream/metrics`,
   postTask:        ()                      => `${BASE}/stream/tasks`,
-  postMode:        ()                      => `${BASE}/stream/mode`,
 
   // Archive — query-param based, all through /days
   getAllDays:      ()                      => `${BASE}/grossgauntlet/days`,
