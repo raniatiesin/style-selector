@@ -42,10 +42,10 @@ export default function NowPanel({
   // ── Shared helpers ──────────────────────────────────────────
   const $ = gsap;
 
-  /** Kill all GSAP tweens on an element (or list of elements) */
+  /** Kill all GSAP tweens on an element (or list of elements) — unconditional */
   function killAll(arr) {
-    const list = arr instanceof NodeList ? Array.from(arr) : Array.isArray(arr) ? arr : [arr];
-    list.forEach(el => { if (el) el._gsap && el._gsap.kill && $.killTweensOf(el); });
+    const list = Array.isArray(arr) ? arr : arr instanceof NodeList ? Array.from(arr) : [arr];
+    list.forEach(el => el && $.killTweensOf(el));
   }
 
   /** Pre-clear: strip any leftover `transform` and `marginTop` inline from previous transitions */
