@@ -39,6 +39,22 @@ export default function NowPanel({
     }
   });
 
+  // ── Shared helpers ──────────────────────────────────────────
+  const $ = gsap;
+
+  /** Kill all GSAP tweens on an element (or list of elements) */
+  function killAll(arr) {
+    const list = arr instanceof NodeList ? Array.from(arr) : Array.isArray(arr) ? arr : [arr];
+    list.forEach(el => { if (el) el._gsap && el._gsap.kill && $.killTweensOf(el); });
+  }
+
+  /** Pre-clear: strip any leftover `transform` and `marginTop` inline from previous transitions */
+  function clearSafe(el) {
+    if (!el) return;
+    killAll(el);
+    $.set(el, { clearProps: 'transform,marginTop,top,left,opacity' });
+  }
+
   // ─────────────────────────────────────────────────
   // HYBRID → FULL
   // ─────────────────────────────────────────────────
@@ -50,10 +66,10 @@ export default function NowPanel({
     const container = internalNotesRef.current;
     if (!linkBloc || !container) { isTransitioningRef.current = false; return; }
 
-    // 0. Clear any residual GSAP transforms before snapshot
-    //    (prevents transform accumulation from breaking dnd-kit overlay)
+    // 0. Pre-clear ALL animated targets (SYMMETRIC — includes kanbanRef)
     const allBlocs = container.querySelectorAll(`.${styles.noteBloc}`);
-    allBlocs.forEach(el => gsap.set(el, { clearProps: 'transform' }));
+    allBlocs.forEach(clearSafe);
+    clearSafe(kanbanRef.current);
 
     // 1. Snapshot layout state before DOM change
     const state = Flip.getState(linkBloc);
@@ -69,38 +85,51 @@ export default function NowPanel({
       linkBloc.offsetTop - (container.clientHeight / 2) + (linkBloc.clientHeight / 2)
     );
 
-    // 4. Let GSAP Flip handle the layout interpolation automatically.
-    //    Flip.from() reads the post-scroll DOM position as the LAST state,
-    //    pairs it with the FIRST state (captured above), computes the delta,
-    //    and animates to zero — no manual Y math needed.
+    // 4. Kanban slides up-and-out using marginTop (safe — no containing block)
+    //    then hidden. Use overwrite:true so spam-toggling mid-anim kills stale tweens.
+    if (kanbanRef.current) {
+      $.to(kanbanRef.current, {
+        marginTop: -60,
+        opacity: 0,
+        duration: 0.25,
+        overwrite: 'auto',
+        ease: 'power2.out',
+        onComplete: () => {
+          $.set(kanbanRef.current, { clearProps: 'marginTop' });
+          kanbanRef.current.classList.add(styles.boardWrapGone);
+        }
+      });
+    }
+
+    // 5. GSAP Flip interpolates the linkBloc layout change
     Flip.from(state, {
       duration: 0.35,
       ease: 'power2.out',
-      onStart: () => {
-        gsap.to(kanbanRef.current, { opacity: 0, duration: 0.25 });
-      },
+      overwrite: true,
       onComplete: () => {
-        // Clear ALL transforms on ALL affected elements so dnd-kit overlay
-        // doesn't get a broken coordinate system.
-        [linkBloc, ...allBlocs].forEach(el => gsap.set(el, { clearProps: 'transform' }));
-        if (kanbanRef.current) {
-          kanbanRef.current.classList.add(styles.boardWrapGone);
-        }
+        // Strip any residual transform Flip may have left on linkBloc
+        clearSafe(linkBloc);
         isTransitioningRef.current = false;
       }
     });
 
-    // Preceding blocs: stagger fade in using only opacity (NO y/transform)
+    // 6. Preceding blocs stagger fade-in with a subtle marginTop settle
+    //    (NO transform — marginTop is safe for dnd-kit coordinate space)
     const precedingBlocs = containerRef.current?.querySelectorAll(
       `.${styles.noteBloc}:not(.${styles.linkBloc})`
     );
     if (precedingBlocs && precedingBlocs.length > 0) {
-      gsap.fromTo(precedingBlocs,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.35, stagger: 0.03, ease: 'power2.out', delay: 0.1,
+      killAll(precedingBlocs);
+      $.fromTo(precedingBlocs,
+        { opacity: 0, marginTop: 12 },
+        {
+          opacity: 1, marginTop: 0,
+          duration: 0.35, stagger: 0.03,
+          ease: 'power2.out', delay: 0.1,
+          overwrite: 'auto',
           onComplete: () => {
-            // Critical: clear any residual transform from stagger animation
-            precedingBlocs.forEach(el => gsap.set(el, { clearProps: 'transform' }));
+            // Strip the synthetic marginTop after animation so layout isn't shifted
+            precedingBlocs.forEach(el => $.set(el, { clearProps: 'marginTop' }));
           }
         }
       );
@@ -118,16 +147,16 @@ export default function NowPanel({
     const container = internalNotesRef.current;
     if (!linkBloc || !container) { isTransitioningRef.current = false; return; }
 
-    // 0. Clear any residual transforms from previous transitions
+    // 0. Pre-clear ALL animated targets (SYMMETRIC — same as animateToFull)
     const allBlocs = container.querySelectorAll(`.${styles.noteBloc}`);
-    allBlocs.forEach(el => gsap.set(el, { clearProps: 'transform' }));
+    allBlocs.forEach(clearSafe);
+    clearSafe(kanbanRef.current);
 
-    // 1. Unhide Kanban (render-tree present, visually hidden)
+    // 1. Unhide Kanban, set initial marginTop so it slides in from above
     if (kanbanRef.current) {
       kanbanRef.current.classList.remove(styles.boardWrapGone);
-      // Use opacity-only — NO y/transform on kanbanRef because it's the
-      // DndContext ancestor and any transform breaks drag overlay coordinates
-      gsap.set(kanbanRef.current, { opacity: 0 });
+      // marginTop is safe — does NOT create a containing block for position:fixed
+      $.set(kanbanRef.current, { opacity: 0, marginTop: -60 });
     }
 
     // 2. Snapshot layout state before DOM change
@@ -142,20 +171,28 @@ export default function NowPanel({
     // 4. Reset scroll (Hybrid docks via margin-top:auto, no scroll)
     container.scrollTop = 0;
 
-    // 5. Flip handles the interpolation automatically
+    // 5. Kanban slides back into view using marginTop (safe), then clear it
+    if (kanbanRef.current) {
+      $.to(kanbanRef.current, {
+        marginTop: 0,
+        opacity: 1,
+        duration: 0.25,
+        overwrite: 'auto',
+        ease: 'power2.out'
+      });
+    }
+
+    // 6. GSAP Flip handles the linkBloc interpolation
     Flip.from(state, {
       duration: 0.35,
       ease: 'power2.inOut',
-      onStart: () => {
-        // Opacity-only reveal (no y/transform to avoid breaking dnd-kit)
-        gsap.to(kanbanRef.current, { opacity: 1, duration: 0.25 });
-      },
+      overwrite: true,
       onComplete: () => {
-        // Clear ALL transforms from ALL affected elements
-        [linkBloc, ...allBlocs].forEach(el => gsap.set(el, { clearProps: 'transform' }));
-        if (kanbanRef.current) {
-          gsap.set(kanbanRef.current, { clearProps: 'transform' });
-        }
+        // Strip any residual transforms Flip may have left on linkBloc,
+        // and also strip the synthetic marginTop from kanbanRef
+        clearSafe(linkBloc);
+        if (kanbanRef.current) $.set(kanbanRef.current, { clearProps: 'marginTop' });
+        allBlocs.forEach(el => $.set(el, { clearProps: 'marginTop' }));
         isTransitioningRef.current = false;
       }
     });
