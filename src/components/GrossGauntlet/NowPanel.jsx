@@ -18,7 +18,9 @@ export default function NowPanel({
   kanbanContent,
   renderBloc,
   renderEmptyLine,
-  notesContainerRef
+  notesContainerRef,
+  notifications,
+  onDismissNotification
 }) {
   const [mode, setMode] = useState('HYBRID');
   const [scrollPastThreshold, setScrollPastThreshold] = useState(false);
@@ -218,6 +220,29 @@ export default function NowPanel({
         })}
         {renderEmptyLine()}
       </div>
+      {notifications && notifications.length > 0 && (
+        <div className={styles.notifContainer}>
+          {notifications.map(n => (
+            <div
+              key={n.id}
+              className={`${styles.notif} ${styles['notif_' + n.type] || ''}`}
+              onClick={() => onDismissNotification?.(n.id)}
+              role="alert"
+            >
+              <div className={styles.notifHeader}>
+                <span className={styles.notifAction}>{n.action}</span>
+                <span className={styles.notifEndpoint}>{n.endpoint}</span>
+                {n.statusCode && (
+                  <span className={`${styles.notifStatus} ${n.statusCode < 300 ? styles.notifStatusOk : styles.notifStatusErr}`}>
+                    {n.statusCode}
+                  </span>
+                )}
+              </div>
+              <div className={styles.notifMessage}>{n.message}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -44,10 +44,21 @@ export default function KanbanBoard({ initialBoard, editable, onBoardChange }) {
   const boardAtDragStart = useRef(null);
   const isDraggingRef = useRef(false);
 
-  // Sync board from parent without animation
+  // Sync board from parent without animation — but ONLY when the data
+  // genuinely differs (avoid overwriting optimistic local changes with
+  // stale poll results that happen to be the same reference).
   useEffect(() => {
     if (isDraggingRef.current) return;
-    setBoard(initialBoard);
+    // Shallow compare — if same cards (by id) in same columns, skip
+    const prev = board;
+    const next = initialBoard;
+    let changed = false;
+    for (const col of COLUMNS) {
+      const p = (prev[col] || []).map(t => t.id).sort().join(',');
+      const n = (next[col] || []).map(t => t.id).sort().join(',');
+      if (p !== n) { changed = true; break; }
+    }
+    if (changed) setBoard(initialBoard);
   }, [initialBoard]);
 
   const sensors = useSensors(

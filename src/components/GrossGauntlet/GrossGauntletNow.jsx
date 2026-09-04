@@ -9,6 +9,7 @@ import RunButton, { getIsUnlocked, getAdminKey } from './RunButton';
 import { STORAGE_KEYS, POLL_INTERVALS, OBS_CONFIG, STANDBY_OPTIONS } from './constants';
 import NowPanel from './NowPanel';
 import styles from './GrossGauntletSession.module.css';
+import useNotifications from './useNotifications';
 import './GrossGauntletPages.css';
 
 const EMPTY_BOARD = buildBoard({});
@@ -113,6 +114,8 @@ export default function GrossGauntletNow() {
 
   const isEditable = isUnlocked;
 
+  const { notifications: notifs, add: addNotif, dismiss: dismissNotif } = useNotifications();
+
   // Keep stateRef synced with all live state for pushUpdate
   useEffect(() => {
     stateRef.current = {
@@ -138,12 +141,11 @@ export default function GrossGauntletNow() {
 
   const handleBoardChange = useCallback(
     async (newBoard, actionObj) => {
-      // Lock poll BEFORE touching local state — prevents poll from overwriting
       writePendingRef.current = true;
       setBoard(newBoard);
       if (!actionObj) { writePendingRef.current = false; return; }
 
-      // Log timestamp when a task enters "in progress" (non-blocking, best effort)
+      // Log timestamp when a task enters "in progress"
       if (actionObj.action === 'move' && actionObj.toColumn === 'in_progress') {
         const task = newBoard.in_progress?.find(t => t.id === actionObj.taskId);
         const taskName = task?.name || 'Untitled';
@@ -154,29 +156,38 @@ export default function GrossGauntletNow() {
               ? `${stateRef.current?.timestamps || ''}\n00:00 - in_progress - ${taskName}`
               : `00:00 - in_progress - ${taskName}`
           });
+          addNotif({ type: 'info', action: 'auto_timestamp', endpoint: API.postMetrics(), message: `Auto-timestamped: in_progress - ${taskName}` });
         } catch (e) {
-          // Non-blocking — board change is the primary action
+          // non-blocking
         }
       }
 
+      const actionLabel = {
+        create: 'Create Task',
+        move: 'Move Task',
+        rename: 'Rename Task',
+        delete: 'Delete Task',
+      }[actionObj.action] || actionObj.action;
+
       try {
         const returnedBoard = await sendActionToApi(actionObj);
-        // Stash authoritative board for poll fallback and reload resilience,
-        // but DON'T re-setBoard — the optimistic update already placed cards
-        // correctly. Re-setting from server creates a new object reference that
-        // triggers KanbanBoard's Flip animation, causing a visual stutter.
         if (returnedBoard) {
+          // Always accept the authoritative server board — never fall back to stale stash
+          setBoard(buildBoard(returnedBoard));
           try { localStorage.setItem('GG_STASHED_BOARD', JSON.stringify(returnedBoard)); } catch { /* noop */ }
+          const serverCardCount = Object.values(returnedBoard).reduce((s, col) => s + (col?.length || 0), 0);
+          addNotif({ type: 'success', action: actionLabel, endpoint: API.postTask(), statusCode: 200, message: `✓ ${actionLabel} synced. Board now has ${serverCardCount} cards.` });
         }
         setSyncError(null);
       } catch (e) {
         setSyncError(e.message || 'Failed to save changes');
+        addNotif({ type: 'error', action: actionLabel, endpoint: API.postTask(), message: `✗ ${actionLabel} FAILED — ${e.message}` });
       } finally {
         writePendingRef.current = false;
         writeCooldownRef.current = Date.now() + 4000;
       }
     },
-    []
+    [addNotif]
   );
 
   /** Editable stat changed in sidebar — push to API via same path as control panel */
@@ -189,13 +200,15 @@ export default function GrossGauntletNow() {
     try {
       await pushStateUpdate(updatePayload);
       setSyncError(null);
+      addNotif({ type: 'success', action: 'Update Stat', endpoint: API.postMetrics(), statusCode: 200, message: `✓ Updated ${field} = ${value}` });
     } catch (e) {
       setSyncError(e.message || 'Failed to save stat change');
+      addNotif({ type: 'error', action: 'Update Stat', endpoint: API.postMetrics(), message: `✗ Failed to update ${field}: ${e.message}` });
     } finally {
       writePendingRef.current = false;
       writeCooldownRef.current = Date.now() + 4000;
     }
-  }, []);
+  }, [addNotif]);
 
   /* ── Mode change handler (same logic as control panel's setMode) ── */
   const handleModeChange = useCallback(async (targetMode) => {
@@ -282,13 +295,15 @@ export default function GrossGauntletNow() {
     try {
       await pushStateUpdate(newState);
       setSyncError(null);
+      addNotif({ type: 'success', action: 'Mode Change', endpoint: API.postMetrics(), statusCode: 200, message: `✓ Mode switched to ${modeStr}${explainTopicTarget ? ' — ' + explainTopicTarget : ''}` });
     } catch (e) {
       setSyncError(e.message || 'Mode change failed');
+      addNotif({ type: 'error', action: 'Mode Change', endpoint: API.postMetrics(), message: `✗ Mode change to ${modeStr} FAILED: ${e.message}` });
     } finally {
       writePendingRef.current = false;
       writeCooldownRef.current = Date.now() + 4000;
     }
-  }, [obsConnected, standbySelectedOption]);
+  }, [obsConnected, standbySelectedOption, addNotif]);
 
   /* ── Modal handlers ── */
   const handleExplainConfirm = useCallback(() => {
@@ -340,14 +355,14 @@ export default function GrossGauntletNow() {
 
         if (!writePendingRef.current && data.board) {
           const apiBoard = data.board;
-          const hasCards = Object.values(apiBoard).some(col => col && col.length > 0);
+          const boardCardCount = Object.values(apiBoard).reduce((s, col) => s + (col?.length || 0), 0);
+          const hasCards = boardCardCount > 0;
+          const hasSession = !!m.sessionNumber;
           if (hasCards) {
             setBoard(buildBoard(apiBoard));
-            // Update stash with fresh server data
             try { localStorage.setItem('GG_STASHED_BOARD', JSON.stringify(apiBoard)); } catch { /* noop */ }
-          } else {
-            // API returned empty board — fall back to stashed board so offline-created
-            // cards (linked to non-today sessions) survive page reloads and poll cycles.
+          } else if (!hasSession) {
+            // No session at all AND empty board — fall back to stash for offline-first
             const stashed = localStorage.getItem('GG_STASHED_BOARD');
             if (stashed) {
               try {
@@ -358,11 +373,17 @@ export default function GrossGauntletNow() {
               } catch { /* ignore corrupt stash */ }
             }
           }
+          // If hasSession=true and board is empty, it's genuinely empty — show it as-is
         }
 
         setError(null);
+        // Only notify on poll if there was a previous error (recovery)
+        if (error) addNotif({ type: 'success', action: 'Poll Recovery', endpoint: API.getStreamState(), statusCode: res.status, message: `Poll recovered — session #${m.sessionNumber || '?'} OK` });
       } catch (e) {
-        if (!cancelled) setError(e.message || 'Failed to load stream state');
+        if (!cancelled) {
+          setError(e.message || 'Failed to load stream state');
+          addNotif({ type: 'error', action: 'Poll', endpoint: API.getStreamState(), message: `✗ Poll FAILED — ${e.message}` });
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -731,6 +752,8 @@ export default function GrossGauntletNow() {
           onBlocChange={setActiveBloc}
           isEditable={isEditable}
           notesContainerRef={notesRef}
+          notifications={notifs}
+          onDismissNotification={dismissNotif}
           kanbanContent={
             <KanbanBoard
               initialBoard={board}

@@ -1,187 +1,125 @@
+/* ============================================================
+   /api/stream/tasks — Bulletproof task action endpoint
+   • Handles null / empty / string body safely
+   • Exact-match auth (no substring)
+   • Folds BOTH session-specific AND null-session TaskLogs
+     so offline-created cards are always returned.
+   ============================================================ */
+
+function extractBody(req) {
+  if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) return req.body;
+  return new Promise((resolve) => {
+    let raw = '';
+    req.on('data', c => raw += c);
+    req.on('end', () => { try { resolve(JSON.parse(raw)); } catch { resolve({}); } });
+  });
+}
+
+function foldBoard(logs) {
+  const b = { todo: [], up_next: [], in_progress: [], in_review: [], done: [] };
+  if (!Array.isArray(logs)) return b;
+  function rm(b2, tid) {
+    for (const c of Object.keys(b2)) {
+      const i = b2[c].findIndex(t => String(t.id) === String(tid));
+      if (i !== -1) return b2[c].splice(i, 1)[0];
+    }
+    return null;
+  }
+  function up(b2, tid, u) {
+    for (const c of Object.keys(b2)) {
+      const i = b2[c].findIndex(t => String(t.id) === String(tid));
+      if (i !== -1) { Object.assign(b2[c][i], u); return true; }
+    }
+    return false;
+  }
+  for (const ev of logs) {
+    const tc = ev.to_column || 'todo';
+    if (!b[tc]) b[tc] = [];
+    switch (ev.event_type) {
+      case 'create':
+        b[tc].push({ id: ev.task_id, name: ev.payload?.name || 'Untitled', createdAt: ev.occurred_at });
+        break;
+      case 'move': { const t = rm(b, ev.task_id); if (t) b[tc].push(t); break; }
+      case 'rename': up(b, ev.task_id, { name: ev.payload?.new }); break;
+      case 'delete': rm(b, ev.task_id); break;
+    }
+  }
+  return b;
+}
+
 export default async function handler(req, res) {
-  // CORS Security
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type'); 
+  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Api-Key');
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  const secret = process.env.OVERLAY_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET || process.env.STREAM_ADMIN_KEY;
+  if (!secret) return res.status(500).json({ error: 'Missing server secret' });
 
-  // Same Secret Auth Lock
-  const WEBHOOK_SECRET = process.env.OVERLAY_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET || process.env.STREAM_ADMIN_KEY;
-
-  if (!WEBHOOK_SECRET) {
-    return res.status(500).json({ error: "Missing Secret" });
-  }
-
-  const authHeader = req.headers.authorization || req.headers['x-api-key'] || '';
-  
-  let isValidAuth = false;
-  if (authHeader.includes(WEBHOOK_SECRET)) isValidAuth = true;
-  if (req.method !== 'GET' && req.body && req.body.secret === WEBHOOK_SECRET) isValidAuth = true;
-  if (req.query && req.query.secret === WEBHOOK_SECRET) isValidAuth = true;
-
-  if (!isValidAuth) {
-    return res.status(401).json({ error: "Unauthorized access blocked. Secret mismatch or missing." });     
-  }
+  const body = await extractBody(req);
+  const authH = req.headers.authorization || req.headers['x-api-key'] || '';
+  const ok = authH === `Bearer ${secret}` || authH === secret || body?.secret === secret || req.query?.secret === secret;
+  if (!ok) return res.status(401).json({ error: 'Unauthorized — invalid secret' });
 
   try {
-    let body = req.body;
-    if (typeof body === 'object' && Object.keys(body).length === 0) {
-      body = await new Promise((resolve) => {
-        let raw = '';
-        req.on('data', chunk => raw += chunk);
-        req.on('end', () => resolve(raw));
-      });
-    }
-    
-    if (typeof body === 'string') {
-      try { body = JSON.parse(body); } catch(e) { body = {}; }
-    }
-    
-    const payload = req.method === 'DELETE' ? (Object.keys(body || {}).length ? body : req.query) : body;
-    let { action, taskId, toColumn, fromColumn, name, oldName, newName, inProgressTasks, inReviewTasks, upNextTasks, doneTasks } = payload || {};
+    const { action, taskId, toColumn, fromColumn, name, oldName, newName } = body;
 
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Find active session
-    const { data: activeSession } = await supabase
-      .from('Sessions')
-      .select('*')
-      .eq('is_streaming', true)
-      .single();
+    /* Resolve session */
+    const { data: activeSesh } = await supabase
+      .from('Sessions').select('*').eq('is_streaming', true).maybeSingle();
 
-    let session = activeSession;
-    if (!session) {
-      const { data: recentSession } = await supabase
-        .from('Sessions')
-        .select('*')
-        .order('date', { ascending: false })
-        .order('session_number', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      session = recentSession;
+    let sesh = activeSesh;
+    if (!sesh) {
+      const { data: recent } = await supabase
+        .from('Sessions').select('*')
+        .order('date', { ascending: false }).order('session_number', { ascending: false })
+        .limit(1).maybeSingle();
+      sesh = recent;
     }
 
-    if (!session) {
-      return res.status(404).json({ error: "No session found to perform task actions." });
+    const logDate = activeSesh && sesh ? sesh.date : null;
+    const logNum  = activeSesh && sesh ? sesh.session_number : null;
+
+    /* Insert log */
+    const entry = {
+      session_date: logDate, session_number: logNum,
+      task_id: String(taskId || Date.now()),
+      event_type: action || 'create',
+      occurred_at: new Date().toISOString()
+    };
+    if (action === 'create') { entry.to_column = toColumn || 'todo'; entry.payload = { name: name || 'Untitled' }; }
+    else if (action === 'move') { entry.from_column = fromColumn; entry.to_column = toColumn; }
+    else if (action === 'rename') { entry.payload = { old: oldName, new: newName }; }
+
+    const { error: ie } = await supabase.from('TaskLogs').insert(entry);
+    if (ie) throw ie;
+
+    /* Refold session logs + null-session logs */
+    let seshLogs = [];
+    if (sesh) {
+      const { data: a } = await supabase.from('TaskLogs').select('*')
+        .eq('session_date', sesh.date).eq('session_number', sesh.session_number)
+        .order('occurred_at', { ascending: true });
+      seshLogs = a || [];
     }
-
-    const sDate = session.date;
-    const sNum = session.session_number;
-    // When offline (no active stream), null the log entry session fields
-    const logDate = activeSession ? sDate : null;
-    const logNum = activeSession ? sNum : null;
-
-    if (action === 'sync') {
-      // Delete all existing logs for this session
-      await supabase.from('TaskLogs').delete().eq('session_date', sDate).eq('session_number', sNum);
-      
-      const insertLogs = [];
-      const now = new Date().toISOString();
-      const createEvent = (task, col) => ({
-        session_date: logDate,
-        session_number: logNum,
-        task_id: String(task.id),
-        event_type: 'create',
-        to_column: col,
-        payload: { name: task.name || task.task || 'Untitled' },
-        occurred_at: task.createdAt ? new Date(task.createdAt).toISOString() : now
-      });
-
-      (inProgressTasks || []).forEach(t => insertLogs.push(createEvent(t, 'in_progress')));
-      (inReviewTasks || []).forEach(t => insertLogs.push(createEvent(t, 'in_review')));
-      (upNextTasks || []).forEach(t => insertLogs.push(createEvent(t, 'up_next')));
-      (doneTasks || []).forEach(t => insertLogs.push(createEvent(t, 'done')));
-
-      if (insertLogs.length > 0) {
-        await supabase.from('TaskLogs').insert(insertLogs);
-      }
-    } else {
-      if (!taskId) taskId = String(Date.now());
-      
-      const logEntry = {
-        session_date: logDate,
-        session_number: logNum,
-        task_id: String(taskId),
-        event_type: action,
-        occurred_at: new Date().toISOString()
-      };
-
-      if (action === 'create') {
-        logEntry.to_column = toColumn || 'todo';
-        logEntry.payload = { name: name };
-      } else if (action === 'move') {
-        logEntry.from_column = fromColumn;
-        logEntry.to_column = toColumn;
-      } else if (action === 'rename') {
-        logEntry.payload = { old: oldName, new: newName };
-      } else if (action === 'delete') {
-        // No payload needed
-      }
-
-      const { error: insertErr } = await supabase.from('TaskLogs').insert(logEntry);
-      if (insertErr) throw insertErr;
-    }
-
-    // Refold logs
-    const { data: logs } = await supabase
-      .from('TaskLogs')
-      .select('*')
-      .eq('session_date', sDate)
-      .eq('session_number', sNum)
+    const { data: b } = await supabase.from('TaskLogs').select('*')
+      .is('session_date', null).is('session_number', null)
       .order('occurred_at', { ascending: true });
 
-    const board = { todo: [], up_next: [], in_progress: [], in_review: [], done: [] };
-    
-    function removeFromBoard(board, tId) {
-      for (const col of ['todo', 'up_next', 'in_progress', 'in_review', 'done']) {
-        const idx = board[col].findIndex(t => String(t.id) === String(tId));
-        if (idx !== -1) return board[col].splice(idx, 1)[0];
-      }
-      return null;
-    }
-    function updateInBoard(board, tId, updates) {
-      for (const col of ['todo', 'up_next', 'in_progress', 'in_review', 'done']) {
-        const idx = board[col].findIndex(t => String(t.id) === String(tId));
-        if (idx !== -1) {
-          Object.assign(board[col][idx], updates);
-          return true;
-        }
-      }
-      return false;
-    }
-
-    if (logs) {
-      for (const event of logs) {
-        const toCol = event.to_column || 'todo';
-        if (!board[toCol]) board[toCol] = [];
-        if (event.event_type === 'create') {
-          board[toCol].push({ id: event.task_id, name: event.payload?.name || 'Untitled', createdAt: event.occurred_at });
-        } else if (event.event_type === 'move') {
-          const task = removeFromBoard(board, event.task_id);
-          if (task) {
-              if (!board[toCol]) board[toCol] = [];
-              board[toCol].push(task);
-          }
-        } else if (event.event_type === 'rename') {
-          updateInBoard(board, event.task_id, { name: event.payload?.new });
-        } else if (event.event_type === 'delete') {
-          removeFromBoard(board, event.task_id);
-        }
-      }
-    }
+    const board = foldBoard([...seshLogs, ...(b || [])]);
 
     return res.status(200).json({
       success: true,
-      message: `Task action '${action}' processed.`,
-      board
+      message: `Task action '${action || 'create'}' processed.`,
+      board,
+      sessionBoard: foldBoard(seshLogs),
+      logCount: { session: seshLogs.length, nullSession: (b || []).length }
     });
 
   } catch (error) {

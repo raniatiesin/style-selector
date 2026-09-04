@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       .from('Sessions')
       .select('*')
       .eq('is_streaming', true)
-      .single();
+      .maybeSingle();
 
     let session = null;
 

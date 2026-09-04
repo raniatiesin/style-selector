@@ -61,3 +61,86 @@
   position: relative;
   z-index: 10;
 }
+/* ── Notification Toast Container (bottom-right of left panel) ── */
+.notifContainer {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 340px;
+  pointer-events: none;
+}
+
+.notif {
+  pointer-events: auto;
+  background: rgba(10, 10, 10, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 0;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: opacity 0.2s ease, border-color 0.15s ease;
+  animation: notifSlideIn 0.25s ease-out;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.notif:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.notif_success { border-left: 3px solid #2ECC71; }
+.notif_error   { border-left: 3px solid #F95738; }
+.notif_info    { border-left: 3px solid #8A4FFF; }
+.notif_pending { border-left: 3px solid #F0A500; }
+
+.notifHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.notifAction {
+  font-family: var(--font);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.notifEndpoint {
+  font-family: var(--font);
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.06em;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notifStatus {
+  font-family: var(--font);
+  font-size: 0.55rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 0;
+}
+.notifStatusOk { color: #2ECC71; border: 1px solid rgba(46, 204, 113, 0.3); }
+.notifStatusErr { color: #F95738; border: 1px solid rgba(249, 87, 56, 0.3); }
+
+.notifMessage {
+  font-family: var(--font);
+  font-size: 0.65rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.85);
+  word-break: break-word;
+}
+
+@keyframes notifSlideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}

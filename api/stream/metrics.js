@@ -44,9 +44,7 @@ export default async function handler(req, res) {
       .from('Sessions')
       .select('*')
       .eq('is_streaming', true)
-      .single();
-    
-    const activeDate = activeStreamData ? activeStreamData.date : today;
+      .maybeSingle();
     
     const validationErrors = [];
     if (payload.isStreaming !== undefined && typeof payload.isStreaming !== 'boolean') validationErrors.push('isStreaming must be a boolean');
@@ -135,6 +133,13 @@ export default async function handler(req, res) {
       const latestToday = (sessionsToday && sessionsToday.length > 0) ? sessionsToday[0] : null;
 
       if (payload.isStreaming === true) {
+        // ── Ensure NO other session has is_streaming=true ──
+        const { error: clearErr } = await supabase
+          .from('Sessions')
+          .update({ is_streaming: false, updated_at: new Date().toISOString() })
+          .eq('is_streaming', true);
+        if (clearErr) console.error('[Metrics] Failed to clear prior streaming flag:', clearErr);
+
         const nextSessionNum = latestToday ? latestToday.session_number + 1 : 1;
         // Carry forward today's accumulated work seconds across multiple stream sessions
         const carriedTodaySeconds = latestToday ? Math.max(0, latestToday.today_seconds ?? 0) : 0;
