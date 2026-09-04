@@ -50,6 +50,11 @@ export default function NowPanel({
     const container = internalNotesRef.current;
     if (!linkBloc || !container) { isTransitioningRef.current = false; return; }
 
+    // 0. Clear any residual GSAP transforms before snapshot
+    //    (prevents transform accumulation from breaking dnd-kit overlay)
+    const allBlocs = container.querySelectorAll(`.${styles.noteBloc}`);
+    allBlocs.forEach(el => gsap.set(el, { clearProps: 'transform' }));
+
     // 1. Snapshot layout state before DOM change
     const state = Flip.getState(linkBloc);
 
@@ -75,7 +80,9 @@ export default function NowPanel({
         gsap.to(kanbanRef.current, { opacity: 0, duration: 0.25 });
       },
       onComplete: () => {
-        gsap.set(linkBloc, { clearProps: 'transform' });
+        // Clear ALL transforms on ALL affected elements so dnd-kit overlay
+        // doesn't get a broken coordinate system.
+        [linkBloc, ...allBlocs].forEach(el => gsap.set(el, { clearProps: 'transform' }));
         if (kanbanRef.current) {
           kanbanRef.current.classList.add(styles.boardWrapGone);
         }
@@ -83,14 +90,19 @@ export default function NowPanel({
       }
     });
 
-    // Preceding blocs: stagger fade in (they went from display:none → visible)
+    // Preceding blocs: stagger fade in using only opacity (NO y/transform)
     const precedingBlocs = containerRef.current?.querySelectorAll(
       `.${styles.noteBloc}:not(.${styles.linkBloc})`
     );
     if (precedingBlocs && precedingBlocs.length > 0) {
       gsap.fromTo(precedingBlocs,
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 0.35, stagger: 0.03, ease: 'power2.out', delay: 0.1 }
+        { opacity: 0 },
+        { opacity: 1, duration: 0.35, stagger: 0.03, ease: 'power2.out', delay: 0.1,
+          onComplete: () => {
+            // Critical: clear any residual transform from stagger animation
+            precedingBlocs.forEach(el => gsap.set(el, { clearProps: 'transform' }));
+          }
+        }
       );
     }
   }, [mode]);
@@ -106,10 +118,16 @@ export default function NowPanel({
     const container = internalNotesRef.current;
     if (!linkBloc || !container) { isTransitioningRef.current = false; return; }
 
-    // 1. Unhide Kanban (render-tree present, visually hidden via GSAP)
+    // 0. Clear any residual transforms from previous transitions
+    const allBlocs = container.querySelectorAll(`.${styles.noteBloc}`);
+    allBlocs.forEach(el => gsap.set(el, { clearProps: 'transform' }));
+
+    // 1. Unhide Kanban (render-tree present, visually hidden)
     if (kanbanRef.current) {
       kanbanRef.current.classList.remove(styles.boardWrapGone);
-      gsap.set(kanbanRef.current, { opacity: 0, y: -30 });
+      // Use opacity-only — NO y/transform on kanbanRef because it's the
+      // DndContext ancestor and any transform breaks drag overlay coordinates
+      gsap.set(kanbanRef.current, { opacity: 0 });
     }
 
     // 2. Snapshot layout state before DOM change
@@ -129,10 +147,15 @@ export default function NowPanel({
       duration: 0.35,
       ease: 'power2.inOut',
       onStart: () => {
-        gsap.to(kanbanRef.current, { opacity: 1, y: 0, duration: 0.25 });
+        // Opacity-only reveal (no y/transform to avoid breaking dnd-kit)
+        gsap.to(kanbanRef.current, { opacity: 1, duration: 0.25 });
       },
       onComplete: () => {
-        gsap.set(linkBloc, { clearProps: 'transform' });
+        // Clear ALL transforms from ALL affected elements
+        [linkBloc, ...allBlocs].forEach(el => gsap.set(el, { clearProps: 'transform' }));
+        if (kanbanRef.current) {
+          gsap.set(kanbanRef.current, { clearProps: 'transform' });
+        }
         isTransitioningRef.current = false;
       }
     });
