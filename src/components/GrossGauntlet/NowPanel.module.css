@@ -14,9 +14,10 @@
 .kanbanWrapper {
   width: 100%;
   opacity: 1;
-  transform: translateY(0);
-  will-change: transform, opacity;
   flex-shrink: 0;
+  /* ⚠️ NO transform property here — even translateY(0) breaks
+     @dnd-kit's DragOverlay fixed-position coordinate system,
+     causing the dragged card cursor to offset ~5cm from the card. */
 }
 
 .kanbanWrapper.boardWrapGone {
