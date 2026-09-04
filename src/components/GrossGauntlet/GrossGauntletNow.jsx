@@ -116,6 +116,11 @@ export default function GrossGauntletNow() {
 
   const { notifications: notifs, add: addNotif, dismiss: dismissNotif } = useNotifications();
 
+  // Clear stale localStorage stash on mount — forces server-first board loading
+  useEffect(() => {
+    try { localStorage.removeItem('GG_STASHED_BOARD'); } catch { /* noop */ }
+  }, []);
+
   // Keep stateRef synced with all live state for pushUpdate
   useEffect(() => {
     stateRef.current = {
@@ -172,8 +177,59 @@ export default function GrossGauntletNow() {
       try {
         const returnedBoard = await sendActionToApi(actionObj);
         if (returnedBoard) {
-          // Always accept the authoritative server board — never fall back to stale stash
-          setBoard(buildBoard(returnedBoard));
+          // Check if card survived delete — if so, force-purge it
+          if (actionObj.action === 'delete' && actionObj.taskId) {
+            const cardStillThere = Object.values(returnedBoard).some(
+              col => Array.isArray(col) && col.some(t => String(t.id) === String(actionObj.taskId))
+            );
+            if (cardStillThere) {
+              addNotif({ type: 'info', action: 'Force Delete', endpoint: API.postTask(), message: `Card ${actionObj.taskId.slice(0,8)}… still present after normal delete — issuing force purge.` });
+              const forceRes = await fetch(API.postTask(), {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY)}`,
+                },
+                body: JSON.stringify({ action: 'forceDelete', taskId: actionObj.taskId }),
+              });
+              if (forceRes.ok) {
+                const forceData = await forceRes.json();
+                setBoard(buildBoard(forceData.board || returnedBoard));
+                addNotif({ type: 'success', action: 'Force Delete', endpoint: API.postTask(), statusCode: 200, message: `✓ Force-purged ${forceData.purgedCount || 0} ghost log entries for ghost card.` });
+              } else {
+                // Fallback: just accept the returned board as-is
+                setBoard(buildBoard(returnedBoard));
+              }
+            } else {
+              setBoard(buildBoard(returnedBoard));
+            }
+          } else if (actionObj.action === 'move' && actionObj.taskId) {
+            // Check if card arrived at target column
+            const inTarget = returnedBoard[actionObj.toColumn] || [];
+            const atTarget = inTarget.some(t => String(t.id) === String(actionObj.taskId));
+            if (!atTarget) {
+              addNotif({ type: 'info', action: 'Force Move', endpoint: API.postTask(), message: `Card ${actionObj.taskId.slice(0,8)}… not in target after normal move — issuing force move.` });
+              const forceRes = await fetch(API.postTask(), {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY)}`,
+                },
+                body: JSON.stringify({ action: 'forceMove', taskId: actionObj.taskId, toColumn: actionObj.toColumn, fromColumn: actionObj.fromColumn }),
+              });
+              if (forceRes.ok) {
+                const forceData = await forceRes.json();
+                setBoard(buildBoard(forceData.board || returnedBoard));
+                addNotif({ type: 'success', action: 'Force Move', endpoint: API.postTask(), statusCode: 200, message: `✓ Force-moved ghost card to ${actionObj.toColumn}.` });
+              } else {
+                setBoard(buildBoard(returnedBoard));
+              }
+            } else {
+              setBoard(buildBoard(returnedBoard));
+            }
+          } else {
+            setBoard(buildBoard(returnedBoard));
+          }
           try { localStorage.setItem('GG_STASHED_BOARD', JSON.stringify(returnedBoard)); } catch { /* noop */ }
           const serverCardCount = Object.values(returnedBoard).reduce((s, col) => s + (col?.length || 0), 0);
           addNotif({ type: 'success', action: actionLabel, endpoint: API.postTask(), statusCode: 200, message: `✓ ${actionLabel} synced. Board now has ${serverCardCount} cards.` });

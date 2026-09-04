@@ -1,19 +1,19 @@
 .card {
   display: flex;
   align-items: center;
-  gap: var(--space-8);
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.04);
+  gap: var(--space-12);
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0;
   font-family: var(--font);
-  font-size: .8rem;
-  color: rgba(255, 255, 255, .72);
+  font-size: .92rem;
+  color: rgba(255, 255, 255, .82);
   transition: background .15s ease, border-color .15s ease;
   user-select: none;
-  min-height: 40px;
+  min-height: 48px;
   cursor: grab;
 }
 
@@ -29,10 +29,10 @@
 
 .name {
   flex: 1;
-  line-height: 1.4;
+  line-height: 1.5;
   word-break: break-word;
-  font-size: .8rem;
-  color: rgba(255, 255, 255, .72);
+  font-size: .92rem;
+  color: rgba(255, 255, 255, .82);
 }
 
 .renameInput {

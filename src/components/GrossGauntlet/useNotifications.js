@@ -39,7 +39,7 @@ export default function useNotifications() {
       endpoint: opts.endpoint || '',
       statusCode: opts.statusCode ?? null,
       message: opts.message || '',
-      autoDismissMs: opts.autoDismissMs ?? 8000,
+      autoDismissMs: opts.autoDismissMs ?? 12000,
     };
     setNotifications(prev => [...prev, n]);
 

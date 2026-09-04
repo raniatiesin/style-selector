@@ -79,11 +79,12 @@ export default async function handler(req, res) {
     let board = { todo: [], up_next: [], in_progress: [], in_review: [], done: [] };
 
     if (session) {
+       // Fold ALL logs for this date (across ALL session numbers for the same day)
+       // so that cards from Session 1 also appear when viewing Session 2 on the /now page.
        const { data: logs } = await supabase
           .from('TaskLogs')
           .select('*')
           .eq('session_date', session.date)
-          .eq('session_number', session.session_number)
           .order('occurred_at', { ascending: true });
 
        function removeFromBoard(board, taskId) {

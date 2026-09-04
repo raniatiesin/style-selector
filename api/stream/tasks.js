@@ -1,9 +1,9 @@
 /* ============================================================
    /api/stream/tasks — Bulletproof task action endpoint
-   • Handles null / empty / string body safely
-   • Exact-match auth (no substring)
-   • Folds BOTH session-specific AND null-session TaskLogs
-     so offline-created cards are always returned.
+   • forceDelete: PURGES ALL TaskLog rows for a task_id
+     (solves ghost cards from old sessions)
+   • forceMove: updates ALL events for a task_id to new column
+   • Normal actions fold BOTH session + null-session logs
    ============================================================ */
 
 function extractBody(req) {
@@ -48,7 +48,7 @@ function foldBoard(logs) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Api-Key');
@@ -70,14 +70,39 @@ export default async function handler(req, res) {
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    /* Resolve session */
+    /* ── forceDelete: PURGE all rows for this task_id ── */
+    if (action === 'forceDelete') {
+      const { data: purged, error: purgeErr } = await supabase
+        .from('TaskLogs').delete().eq('task_id', String(taskId)).select();
+      if (purgeErr) throw purgeErr;
+      return res.status(200).json({
+        success: true,
+        message: `Force-purged ${purged?.length || 0} log entries for task_id=${taskId}.`,
+        board: { todo: [], up_next: [], in_progress: [], in_review: [], done: [] },
+        purgedCount: purged?.length || 0
+      });
+    }
+
+    /* ── forceMove: update ALL events to target column ── */
+    if (action === 'forceMove') {
+      if (!toColumn) return res.status(400).json({ error: 'toColumn required' });
+      await supabase.from('TaskLogs').update({ to_column: toColumn, from_column: fromColumn || null })
+        .eq('task_id', String(taskId)).eq('event_type', 'move');
+      await supabase.from('TaskLogs').update({ to_column: toColumn })
+        .eq('task_id', String(taskId)).eq('event_type', 'create');
+      const { data: allLogs } = await supabase.from('TaskLogs').select('*').order('occurred_at', { ascending: true });
+      return res.status(200).json({
+        success: true, message: `Force-moved task_id=${taskId} to ${toColumn}.`,
+        board: foldBoard(allLogs || [])
+      });
+    }
+
+    /* ── Normal actions ── */
     const { data: activeSesh } = await supabase
       .from('Sessions').select('*').eq('is_streaming', true).maybeSingle();
-
     let sesh = activeSesh;
     if (!sesh) {
-      const { data: recent } = await supabase
-        .from('Sessions').select('*')
+      const { data: recent } = await supabase.from('Sessions').select('*')
         .order('date', { ascending: false }).order('session_number', { ascending: false })
         .limit(1).maybeSingle();
       sesh = recent;
@@ -86,7 +111,6 @@ export default async function handler(req, res) {
     const logDate = activeSesh && sesh ? sesh.date : null;
     const logNum  = activeSesh && sesh ? sesh.session_number : null;
 
-    /* Insert log */
     const entry = {
       session_date: logDate, session_number: logNum,
       task_id: String(taskId || Date.now()),
@@ -100,11 +124,12 @@ export default async function handler(req, res) {
     const { error: ie } = await supabase.from('TaskLogs').insert(entry);
     if (ie) throw ie;
 
-    /* Refold session logs + null-session logs */
     let seshLogs = [];
     if (sesh) {
+      // Fold ALL TaskLogs for this date (across ALL session numbers for the day)
+      // so cards from any session that day appear in the board.
       const { data: a } = await supabase.from('TaskLogs').select('*')
-        .eq('session_date', sesh.date).eq('session_number', sesh.session_number)
+        .eq('session_date', sesh.date)
         .order('occurred_at', { ascending: true });
       seshLogs = a || [];
     }
