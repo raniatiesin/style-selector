@@ -116,11 +116,6 @@ export default function GrossGauntletNow() {
 
   const { notifications: notifs, add: addNotif, dismiss: dismissNotif } = useNotifications();
 
-  // Clear stale localStorage stash on mount — forces server-first board loading
-  useEffect(() => {
-    try { localStorage.removeItem('GG_STASHED_BOARD'); } catch { /* noop */ }
-  }, []);
-
   // Keep stateRef synced with all live state for pushUpdate
   useEffect(() => {
     stateRef.current = {
@@ -162,7 +157,7 @@ export default function GrossGauntletNow() {
               : `00:00 - in_progress - ${taskName}`
           });
           addNotif({ type: 'info', action: 'auto_timestamp', endpoint: API.postMetrics(), message: `Auto-timestamped: in_progress - ${taskName}` });
-        } catch (e) {
+        } catch {
           // non-blocking
         }
       }
@@ -177,60 +172,8 @@ export default function GrossGauntletNow() {
       try {
         const returnedBoard = await sendActionToApi(actionObj);
         if (returnedBoard) {
-          // Check if card survived delete — if so, force-purge it
-          if (actionObj.action === 'delete' && actionObj.taskId) {
-            const cardStillThere = Object.values(returnedBoard).some(
-              col => Array.isArray(col) && col.some(t => String(t.id) === String(actionObj.taskId))
-            );
-            if (cardStillThere) {
-              addNotif({ type: 'info', action: 'Force Delete', endpoint: API.postTask(), message: `Card ${actionObj.taskId.slice(0,8)}… still present after normal delete — issuing force purge.` });
-              const forceRes = await fetch(API.postTask(), {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY)}`,
-                },
-                body: JSON.stringify({ action: 'forceDelete', taskId: actionObj.taskId }),
-              });
-              if (forceRes.ok) {
-                const forceData = await forceRes.json();
-                setBoard(buildBoard(forceData.board || returnedBoard));
-                addNotif({ type: 'success', action: 'Force Delete', endpoint: API.postTask(), statusCode: 200, message: `✓ Force-purged ${forceData.purgedCount || 0} ghost log entries for ghost card.` });
-              } else {
-                // Fallback: just accept the returned board as-is
-                setBoard(buildBoard(returnedBoard));
-              }
-            } else {
-              setBoard(buildBoard(returnedBoard));
-            }
-          } else if (actionObj.action === 'move' && actionObj.taskId) {
-            // Check if card arrived at target column
-            const inTarget = returnedBoard[actionObj.toColumn] || [];
-            const atTarget = inTarget.some(t => String(t.id) === String(actionObj.taskId));
-            if (!atTarget) {
-              addNotif({ type: 'info', action: 'Force Move', endpoint: API.postTask(), message: `Card ${actionObj.taskId.slice(0,8)}… not in target after normal move — issuing force move.` });
-              const forceRes = await fetch(API.postTask(), {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${localStorage.getItem(STORAGE_KEYS.STREAM_ADMIN_KEY)}`,
-                },
-                body: JSON.stringify({ action: 'forceMove', taskId: actionObj.taskId, toColumn: actionObj.toColumn, fromColumn: actionObj.fromColumn }),
-              });
-              if (forceRes.ok) {
-                const forceData = await forceRes.json();
-                setBoard(buildBoard(forceData.board || returnedBoard));
-                addNotif({ type: 'success', action: 'Force Move', endpoint: API.postTask(), statusCode: 200, message: `✓ Force-moved ghost card to ${actionObj.toColumn}.` });
-              } else {
-                setBoard(buildBoard(returnedBoard));
-              }
-            } else {
-              setBoard(buildBoard(returnedBoard));
-            }
-          } else {
-            setBoard(buildBoard(returnedBoard));
-          }
-          try { localStorage.setItem('GG_STASHED_BOARD', JSON.stringify(returnedBoard)); } catch { /* noop */ }
+          // Accept the server board — it contains ALL undone cards across all sessions
+          setBoard(buildBoard(returnedBoard));
           const serverCardCount = Object.values(returnedBoard).reduce((s, col) => s + (col?.length || 0), 0);
           addNotif({ type: 'success', action: actionLabel, endpoint: API.postTask(), statusCode: 200, message: `✓ ${actionLabel} synced. Board now has ${serverCardCount} cards.` });
         }
@@ -410,26 +353,10 @@ export default function GrossGauntletNow() {
         if (m.modeTimestamp) setModeTimestamp(Number(m.modeTimestamp));
 
         if (!writePendingRef.current && data.board) {
+          // The server returns ALL undone cards across all sessions.
+          // No stash fallback needed — the server is authoritative.
           const apiBoard = data.board;
-          const boardCardCount = Object.values(apiBoard).reduce((s, col) => s + (col?.length || 0), 0);
-          const hasCards = boardCardCount > 0;
-          const hasSession = !!m.sessionNumber;
-          if (hasCards) {
-            setBoard(buildBoard(apiBoard));
-            try { localStorage.setItem('GG_STASHED_BOARD', JSON.stringify(apiBoard)); } catch { /* noop */ }
-          } else if (!hasSession) {
-            // No session at all AND empty board — fall back to stash for offline-first
-            const stashed = localStorage.getItem('GG_STASHED_BOARD');
-            if (stashed) {
-              try {
-                const parsed = JSON.parse(stashed);
-                if (parsed && Object.values(parsed).some(col => col && col.length > 0)) {
-                  setBoard(buildBoard(parsed));
-                }
-              } catch { /* ignore corrupt stash */ }
-            }
-          }
-          // If hasSession=true and board is empty, it's genuinely empty — show it as-is
+          setBoard(buildBoard(apiBoard));
         }
 
         setError(null);
